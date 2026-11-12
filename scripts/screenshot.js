@@ -162,7 +162,7 @@ async function shotSearch(browser) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 (async () => {
-  console.log(`\nCheevo Tracker — screenshot capture`);
+  console.log(`\nCheevodex — screenshot capture`);
   console.log(`App:    ${BASE}`);
   console.log(`User:   ${USER}`);
   console.log(`Game:   ${GAME_ID || '(skipped)'}`);

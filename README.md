@@ -1,17 +1,17 @@
 <div align="center">
 
-# Cheevo Tracker
+# Cheevodex
 
-**Personal [RetroAchievements](https://retroachievements.org) profile tracker — no server, no build step, runs entirely in your browser.**
+**A pocket companion for [RetroAchievements](https://retroachievements.org) — no server, no build step, runs entirely in your browser.**
 
-[![License](https://img.shields.io/github/license/yozuryu/cheevo-tracker?color=4a90d9)](LICENSE)
+[![License](https://img.shields.io/github/license/yozuryu/cheevodex?color=4a90d9)](LICENSE)
 [![PWA](https://img.shields.io/badge/PWA-ready-5A0FC8?logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
 [![No Build Step](https://img.shields.io/badge/build_step-none-brightgreen)](#tech-stack)
 [![Mobile Friendly](https://img.shields.io/badge/mobile-friendly-43a047?logo=android&logoColor=white)](#)
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38BDF8?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 
-**[→ Try it live](https://yozuryu.github.io/cheevo-tracker/)**
+**[→ Try it live](https://yozuryu.github.io/cheevodex/)**
 
 ![Profile overview](docs/screenshots/hero.png)
 
@@ -21,7 +21,7 @@
 
 ## What it is
 
-Cheevo Tracker is a client-side web app that connects to the [RetroAchievements API](https://api-docs.retroachievements.org/) using your own credentials. It gives you a richer view of your profile, friends, and game library than the official site — with no account to create, no server to run, and no build pipeline to maintain.
+Cheevodex is a client-side web app that connects to the [RetroAchievements API](https://api-docs.retroachievements.org/) using your own credentials. It gives you a richer view of your profile, friends, and game library than the official site — with no account to create, no server to run, and no build pipeline to maintain.
 
 <details>
 <summary><strong>Full feature list</strong></summary>
@@ -82,8 +82,8 @@ You need a [RetroAchievements](https://retroachievements.org) account. Your API 
 ### Run locally
 
 ```bash
-git clone https://github.com/yozuryu/cheevo-tracker.git
-cd cheevo-tracker
+git clone https://github.com/yozuryu/cheevodex.git
+cd cheevodex
 npx serve .
 ```
 

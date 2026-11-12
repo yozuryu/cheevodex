@@ -3,9 +3,9 @@ id: doc-011
 title: Game UI Themes — Theme System Plan
 type: specification
 created_date: '2026-09-27 02:34'
-updated_date: '2026-09-27 02:58'
+updated_date: '2026-11-12 23:37'
 ---
-> **Status:** plan, not started. Tasks CHV-016 … CHV-022 (milestone *Game UI Themes*). Architecture decision: decision-007 (proposed).
+> **Status:** abandoned (2026-11-12). The deployed style is the base going forward; the theme tasks were archived (their IDs CHV-016…CHV-022 have since been reused by the Cheevodex redesign tasks, see doc-012) and decision-007 rejected. Kept for reference only.
 > Line numbers below refer to the code as of 2026-09-27 and will drift; re-check them before each phase.
 
 ## Contents
@@ -149,7 +149,7 @@ Across the whole repo there are ~1,900 hardcoded hex values, mostly Tailwind arb
 ### 3.1 Folder layout
 
 ```
-cheevo-tracker/
+cheevodex/
 ├── profile/
 │   ├── index.html            # + theme loader snippet (§5.2)
 │   ├── core.js               # NEW  hooks: useProfilePage() — no JSX
@@ -432,7 +432,7 @@ Themes change colors freely, **but meanings must stay distinguishable and consis
 | Tilde tags (Hack/Homebrew/Demo/Prototype) | `#ff6b6b` / `#66c0f4` / `#57cbde` / `#8f98a0` | |
 | Own user / friend in the feed | cyan `#57cbde` / gold | |
 
-Note: cheevo-tracker's docs say Beaten is gray `#8f98a0`; gaming-hub standardized Beaten as silver `#b8c4ce`. Keep cheevo-tracker's own convention unless decided otherwise.
+Note: Cheevodex's docs say Beaten is gray `#8f98a0`; gaming-hub standardized Beaten as silver `#b8c4ce`. Keep Cheevodex's own convention unless decided otherwise.
 
 **Validation:** every theme's rarity and status palette is checked with the `dataviz` skill's `scripts/validate_palette.js` against that theme's card surface (as `docs/pages/profile.md` requires for Default), including CVD separation. Pixel/retro themes with few colors still need distinct lightness steps.
 

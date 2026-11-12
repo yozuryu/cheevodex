@@ -14,7 +14,7 @@ Three cache layers, each with a distinct purpose:
 
 | Layer | Storage | Used for | TTL |
 |---|---|---|---|
-| **IDB** (`cheevo_tracker`) | IndexedDB | Large structured data: games, consoles, progress, friend activity, backlog, friend list | 24 h per store |
+| **IDB** (`cheevodex`, formerly `cheevo_tracker`) | IndexedDB | Large structured data: games, consoles, progress, friend activity, backlog, friend list | 24 h per store |
 | **sessionStorage** | sessionStorage | In-page ephemeral state: API responses that only need to survive a single page session | Page session |
 | **localStorage** | localStorage | Small persistent values: credentials, settings flags, `ra_consoles` console list | Indefinite / 24 h |
 

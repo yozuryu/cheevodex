@@ -211,7 +211,7 @@ function slugify(name) {
 async function fetchJson(url, retries = 3) {
   for (let attempt = 0; attempt < retries; attempt++) {
     try {
-      const res = await fetch(url, { headers: { 'User-Agent': 'cheevo-tracker-poc-datagen/1.0' } });
+      const res = await fetch(url, { headers: { 'User-Agent': 'cheevodex-poc-datagen/1.0' } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } catch (e) {

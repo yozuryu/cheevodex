@@ -10,7 +10,7 @@ The app originally cached RA API responses in localStorage using chunked keys (`
 
 ## Decision
 
-Migrate all API cache to a single IndexedDB database named `cheevo_tracker` with structured object stores: `consoles`, `games`, `progress`, `friend_activity`, `backlog`, `friend_list`, `meta`. IDB has no practical quota limit (browser-managed, typically gigabytes). Data is stored as structured objects rather than serialised JSON strings, enabling index-based queries (e.g. all progress rows for a username without loading everything).
+Migrate all API cache to a single IndexedDB database named `cheevo_tracker` (renamed `cheevodex` in v26.11.13) with structured object stores: `consoles`, `games`, `progress`, `friend_activity`, `backlog`, `friend_list`, `meta`. IDB has no practical quota limit (browser-managed, typically gigabytes). Data is stored as structured objects rather than serialised JSON strings, enabling index-based queries (e.g. all progress rows for a username without loading everything).
 
 localStorage is retained only for small, simple values: credentials, settings flags, and the console list (`ra_consoles`) which is a short array.
 

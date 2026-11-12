@@ -2,7 +2,7 @@
 id: decision-007
 title: Theme Packs — Per-Theme View Files and CSS
 date: '2026-09-27 02:34'
-status: proposed
+status: rejected
 ---
 ## Context
 

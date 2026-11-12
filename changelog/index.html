@@ -7,9 +7,16 @@
     <title>Yozuryu · Changelog</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../assets/tw-config.js"></script>
+    <link rel="stylesheet" href="../assets/tokens.css">
+    <link rel="stylesheet" href="../assets/ui.css">
+    <link rel="stylesheet" href="../assets/motion.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Silkscreen&display=swap">
 
     <style>
-        html, body { background-color: #171a21; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+        html, body { background-color: var(--page); margin: 0; padding: 0; font-family: var(--font); }
         body { overflow-x: clip; }
 
         @keyframes shimmer {
@@ -17,7 +24,7 @@
             100% { background-position:  800px 0; }
         }
         .shimmer {
-            background: linear-gradient(90deg, #1b2838 25%, #2a3f52 50%, #1b2838 75%);
+            background: linear-gradient(90deg, var(--box) 25%, var(--shimmer) 50%, var(--box) 75%);
             background-size: 800px 100%;
             animation: shimmer 1.6s infinite linear;
             border-radius: 2px;
@@ -40,7 +47,7 @@
     <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
     <link rel="apple-touch-icon" href="../assets/icon-192.png">
 </head>
-<body class="bg-[#171a21]">
+<body class="bg-page">
     <div id="root"></div>
     <script type="text/babel" data-type="module" src="./app.js"></script>
     <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js');</script>

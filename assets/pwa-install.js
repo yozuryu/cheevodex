@@ -47,11 +47,11 @@
         transform: translateX(-50%) translateY(calc(100% + 28px));
         z-index: 250;
         width: min(380px, calc(100vw - 32px));
-        background: #1b2838;
-        border: 1px solid #2a475e;
+        background: var(--box);
+        border: 1px solid var(--line);
         border-radius: 12px;
         box-shadow: 0 8px 32px rgba(0,0,0,0.65);
-        font-family: 'Segoe UI', Arial, sans-serif;
+        font-family: var(--font);
         overflow: hidden;
         transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1);
       }
@@ -76,55 +76,55 @@
       .pwa-appicon {
         width: 40px; height: 40px;
         border-radius: 10px;
-        background: #171a21;
-        border: 1px solid #2a475e;
+        background: var(--page);
+        border: 1px solid var(--line);
         flex-shrink: 0;
         overflow: hidden;
         display: flex; align-items: center; justify-content: center;
       }
       .pwa-appicon img { width: 100%; height: 100%; display: block; }
       .pwa-text { flex: 1; min-width: 0; }
-      .pwa-title { font-size: 13px; font-weight: 600; color: #c6d4df; line-height: 1.2; }
-      .pwa-sub   { font-size: 11px; color: #546270; margin-top: 2px; line-height: 1.2; }
+      .pwa-title { font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.2; }
+      .pwa-sub   { font-size: 11px; color: var(--ink-3); margin-top: 2px; line-height: 1.2; }
       .pwa-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
       .pwa-install-btn {
         height: 30px; padding: 0 13px;
-        background: #1a9fff;
+        background: var(--install);
         color: #fff;
         border: none; border-radius: 6px;
         font-size: 12px; font-weight: 600;
         cursor: pointer;
-        font-family: 'Segoe UI', Arial, sans-serif;
+        font-family: var(--font);
         white-space: nowrap;
         transition: background 0.12s;
       }
-      .pwa-install-btn:hover  { background: #40b3ff; }
-      .pwa-install-btn:active { background: #1580cc; }
+      .pwa-install-btn:hover  { background: var(--install-hi); }
+      .pwa-install-btn:active { background: var(--install-press); }
       .pwa-close-btn {
         width: 26px; height: 26px;
         background: none; border: none;
-        color: #546270; cursor: pointer;
+        color: var(--ink-3); cursor: pointer;
         display: flex; align-items: center; justify-content: center;
         border-radius: 5px;
         flex-shrink: 0;
         transition: color 0.12s, background 0.12s;
         padding: 0;
       }
-      .pwa-close-btn:hover { color: #8f98a0; background: rgba(255,255,255,0.06); }
-      .pwa-progress { height: 2px; background: #253344; }
-      .pwa-bar { height: 100%; background: #1a9fff; width: 100%; }
+      .pwa-close-btn:hover { color: var(--ink-2); background: rgba(255,255,255,0.06); }
+      .pwa-progress { height: 2px; background: var(--box-hover); }
+      .pwa-bar { height: 100%; background: var(--install); width: 100%; }
     `;
     document.head.appendChild(style);
 
     banner = document.createElement('div');
     banner.className = 'pwa-banner';
     banner.setAttribute('role', 'dialog');
-    banner.setAttribute('aria-label', 'Install Cheevo Tracker');
+    banner.setAttribute('aria-label', 'Install Cheevodex');
     banner.innerHTML = `
       <div class="pwa-body">
         <div class="pwa-appicon"><img src="${iconSrc}" alt=""></div>
         <div class="pwa-text">
-          <div class="pwa-title">Install Cheevo Tracker</div>
+          <div class="pwa-title">Install Cheevodex</div>
           <div class="pwa-sub">Add to your home screen</div>
         </div>
         <div class="pwa-actions">

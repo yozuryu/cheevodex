@@ -1,12 +1,12 @@
 {
-  "name": "Cheevo Tracker",
-  "short_name": "Cheevo Tracker",
-  "description": "Personal RetroAchievements profile tracker",
+  "name": "Cheevodex",
+  "short_name": "Cheevodex",
+  "description": "A pocket companion for RetroAchievements",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#171a21",
-  "theme_color": "#1b2838",
+  "background_color": "#111111",
+  "theme_color": "#111111",
   "orientation": "portrait",
   "icons": [
     {

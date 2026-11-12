@@ -1,35 +1,37 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Trophy, Crown, Medal, Lock, ExternalLink, AlertCircle, AlertTriangle, Flame, Feather, Gamepad2, Tag, Code, Calendar, BookOpen, MessageSquare, Loader, X, MapPin, ArrowUpCircle, Egg, Sparkles, ChevronDown, CheckCircle2, Compass } from 'lucide-react';
 import { MEDIA_URL, SITE_URL, TILDE_TAG_COLORS } from '../profile/utils/constants.js';
 import { getMediaUrl, parseTitle, formatDate, formatTimeAgo } from '../profile/utils/helpers.js';
 import { getCredentials, clearCredentials, getGameInfoAndUserProgress, getGameHashes, getGameProgression, getGameExtended, getActiveClaims, getGameRankAndScore, getComments, getGameLeaderboards, getUserGameLeaderboards, getLeaderboardEntries, getGame, fetchSocial, getSocialProfileMap } from '../profile/utils/ra-api.js';
 import { Topbar, Footer } from '../assets/ui.js';
+import { TabBar, useSwipeTabs } from '../assets/tabs.js';
+import { ArtBg } from '../assets/sheet.js';
 import { findPocSubset, buildPocCheckpoints, checkPocTargets } from './utils/poc.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const TYPE_CONFIG = {
-  progression:   { label: 'Progression',  Icon: Trophy,        color: '#e5b143', tip: 'Required to complete the game' },
-  win_condition: { label: 'Win Condition', Icon: Crown,         color: '#ff6b6b', tip: 'Triggers game completion'      },
-  missable:      { label: 'Missable',      Icon: AlertTriangle, color: '#ff9800', tip: 'Can be permanently missed'     },
+  progression:   { label: 'Progression',  Icon: Trophy,        color: 'var(--gold)', tip: 'Required to complete the game' },
+  win_condition: { label: 'Win Condition', Icon: Crown,         color: 'var(--hc)', tip: 'Triggers game completion'      },
+  missable:      { label: 'Missable',      Icon: AlertTriangle, color: 'var(--warn)', tip: 'Can be permanently missed'     },
 };
 
 const AWARD_CONFIG = {
-  'mastered':        { label: 'Mastered',    color: '#e5b143', Icon: Trophy },
-  'completed':       { label: 'Completed',   color: '#e5b143', Icon: Trophy },
-  'beaten-hardcore': { label: 'Beaten',      color: '#b8c4ce', Icon: Medal  },
-  'beaten-softcore': { label: 'Beaten (SC)', color: '#8f98a0', Icon: Medal  },
+  'mastered':        { label: 'Mastered',    color: 'var(--gold)', Icon: Trophy },
+  'completed':       { label: 'Completed',   color: 'var(--gold)', Icon: Trophy },
+  'beaten-hardcore': { label: 'Beaten',      color: 'var(--silver)', Icon: Medal  },
+  'beaten-softcore': { label: 'Beaten (SC)', color: 'var(--ink-2)', Icon: Medal  },
 };
 
 // Same rarity ladder as the profile Stats tab's RARITY_BANDS — loot-tier colours,
 // kept in sync so one concept reads the same on both pages. See the comment there.
 const DIFFICULTY_BANDS = [
-  { key: 'common',    label: 'Common',     min: 0.50, color: '#8f98a0' },
-  { key: 'uncommon',  label: 'Uncommon',   min: 0.25, color: '#66c0f4' },
-  { key: 'rare',      label: 'Rare',       min: 0.10, color: '#e8813c' },
-  { key: 'veryrare',  label: 'Very rare',  min: 0.05, color: '#f5e08f' },
-  { key: 'ultrarare', label: 'Ultra rare', min: 0,    color: '#c94040' },
+  { key: 'common',    label: 'Common',     min: 0.50, color: 'var(--ink-2)' },
+  { key: 'uncommon',  label: 'Uncommon',   min: 0.25, color: 'var(--accent)' },
+  { key: 'rare',      label: 'Rare',       min: 0.10, color: 'var(--rare)' },
+  { key: 'veryrare',  label: 'Very rare',  min: 0.05, color: 'var(--very-rare)' },
+  { key: 'ultrarare', label: 'Ultra rare', min: 0,    color: 'var(--ultra-rare)' },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -60,14 +62,14 @@ function AchievementRow({ ach, totalPlayersCasual, totalPlayersHardcore, extAch,
     <div className={`flex items-center gap-3 p-2 rounded-[2px] border border-transparent border-l-[3px] transition-colors ${
       unlocked
         ? hardcore
-          ? 'border-l-[#e5b143] bg-[#202d39] hover:bg-[#253444]'
-          : 'border-l-[#8f98a0] bg-[#202d39] hover:bg-[#253444]'
-        : 'border-l-[#323f4c] bg-[#1b2838] opacity-60'
+          ? 'border-l-gold bg-box-hi hover:bg-box-hover'
+          : 'border-l-ink-2 bg-box-hi hover:bg-box-hover'
+        : 'border-l-line-2 bg-box opacity-60'
     }`}>
 
       {/* Badge */}
       <a href={`../achievement/?id=${ach.id}`}
-        className="relative shrink-0 w-10 h-10 rounded-[2px] border border-[#101214] overflow-hidden bg-black hover:scale-105 transition-transform block">
+        className="relative shrink-0 w-10 h-10 rounded-[2px] border border-well overflow-hidden bg-black hover:scale-105 transition-transform block">
         <img
           src={`${MEDIA_URL}/Badge/${ach.badgeName || '00001'}.png`}
           alt={ach.title}
@@ -80,13 +82,13 @@ function AchievementRow({ ach, totalPlayersCasual, totalPlayersHardcore, extAch,
       <div className="flex-1 min-w-0 flex flex-col justify-center">
         <div className="flex items-center gap-2 mb-1 flex-wrap">
           <a href={`../achievement/?id=${ach.id}`}
-            className={`text-[12px] font-medium tracking-wide leading-tight transition-colors ${unlocked ? 'text-[#e5b143] hover:text-[#f0c96a]' : 'text-[#8f98a0] hover:text-[#c6d4df]'}`}>
+            className={`text-[12px] font-medium tracking-wide leading-tight transition-colors ${unlocked ? 'text-gold hover:text-gold-hi' : 'text-ink-2 hover:text-ink'}`}>
             {ach.title}
           </a>
-          <span className="text-[9px] font-bold text-[#66c0f4] bg-[#101214] border border-[#323f4c] px-1.5 py-[1px] rounded-sm shrink-0">{ach.points} pts</span>
+          <span className="text-[9px] font-bold text-gold num bg-well border border-line-2 px-1.5 py-[1px] rounded-sm shrink-0">{ach.points} pts</span>
           {ratio > 1 && (
             <span className="text-[9px] shrink-0"
-              style={{ color: ratio >= 30 ? '#ff6b6b' : ratio >= 20 ? '#e5b143' : ratio >= 10 ? '#66c0f4' : '#8f98a0' }}>
+              style={{ color: ratio >= 30 ? 'var(--hc)' : ratio >= 20 ? 'var(--gold)' : ratio >= 10 ? 'var(--accent)' : 'var(--ink-2)' }}>
               ×{ratio.toFixed(1)}
             </span>
           )}
@@ -101,24 +103,24 @@ function AchievementRow({ ach, totalPlayersCasual, totalPlayersHardcore, extAch,
           )}
         </div>
 
-        <p className="text-[10px] text-[#8f98a0] leading-snug mb-1">{ach.description}</p>
+        <p className="text-[10px] text-ink-2 leading-snug mb-1">{ach.description}</p>
         {extAch?.author && (
-          <p className="text-[9px] text-[#546270] mb-1">by {extAch.author}{extAch.dateCreated ? ` · added ${formatDate(extAch.dateCreated)}` : ''}</p>
+          <p className="text-[9px] text-ink-3 mb-1">by {extAch.author}{extAch.dateCreated ? ` · added ${formatDate(extAch.dateCreated)}` : ''}</p>
         )}
 
         <div className="flex items-center justify-between gap-2">
           <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-            <div className="relative h-1.5 bg-[#101214] rounded-full overflow-hidden w-full max-w-[180px]">
-              {casualPct !== null && <div className="absolute top-0 left-0 h-full bg-[#546270]" style={{ width: `${casualPct}%` }} />}
-              {hardcorePct !== null && <div className="absolute top-0 left-0 h-full bg-[#ff6b6b]" style={{ width: `${hardcorePct}%` }} />}
+            <div className="relative h-1.5 bg-well rounded-full overflow-hidden w-full max-w-[180px]">
+              {casualPct !== null && <div className="absolute top-0 left-0 h-full bg-ink-3" style={{ width: `${casualPct}%` }} />}
+              {hardcorePct !== null && <div className="absolute top-0 left-0 h-full bg-hc" style={{ width: `${hardcorePct}%` }} />}
             </div>
             <div className="flex gap-3 text-[8px] font-medium w-full max-w-[180px]">
-              {hardcorePct !== null && <span className="flex items-center gap-0.5 text-[#ff6b6b]"><Flame size={8} />{hardcorePct}%</span>}
-              {casualPct   !== null && <span className="flex items-center gap-0.5 text-[#546270]"><Feather size={8} />{casualPct}%</span>}
+              {hardcorePct !== null && <span className="flex items-center gap-0.5 text-hc"><Flame size={8} />{hardcorePct}%</span>}
+              {casualPct   !== null && <span className="flex items-center gap-0.5 text-ink-3"><Feather size={8} />{casualPct}%</span>}
             </div>
           </div>
           {unlocked && (
-            <p className="text-[9px] text-[#66c0f4] shrink-0">Unlocked: {formatDate(ach.dateEarned)}</p>
+            <p className="text-[9px] text-accent shrink-0">Unlocked: {formatDate(ach.dateEarned)}</p>
           )}
         </div>
       </div>
@@ -127,19 +129,19 @@ function AchievementRow({ ach, totalPlayersCasual, totalPlayersHardcore, extAch,
       {friendUser !== undefined && (
         <>
           <div className="w-[3px] self-stretch rounded-full shrink-0" style={{
-            background: friendUser === null ? '#2a475e'
-              : friendAch?.dateEarnedHardcore ? '#e5b143'
-              : friendAch?.dateEarned         ? '#8f98a0'
-              : '#323f4c'
+            background: friendUser === null ? 'var(--line)'
+              : friendAch?.dateEarnedHardcore ? 'var(--gold)'
+              : friendAch?.dateEarned         ? 'var(--ink-2)'
+              : 'var(--line-2)'
           }} />
           <div className="w-[44px] shrink-0 flex items-center justify-center">
             {friendUser === null ? (
-              <Loader size={10} className="animate-spin" style={{ color: '#546270' }} />
+              <Loader size={10} className="animate-spin" style={{ color: 'var(--ink-3)' }} />
             ) : (
               <img
                 src={`${MEDIA_URL}/Badge/${ach.badgeName || '00001'}.png`}
                 alt={ach.title}
-                className={`w-7 h-7 rounded-[2px] border border-[#101214] object-cover ${friendAch?.dateEarned ? '' : 'grayscale brightness-40'}`}
+                className={`w-7 h-7 rounded-[2px] border border-well object-cover ${friendAch?.dateEarned ? '' : 'grayscale brightness-40'}`}
               />
             )}
           </div>
@@ -164,16 +166,16 @@ function getPocHint(name, reference, version) {
 }
 
 const POC_HINT_STYLE = {
-  evolve:    { Icon: ArrowUpCircle, color: '#8f98a0' },
-  location:  { Icon: MapPin,        color: '#66c0f4' },
-  breed:     { Icon: Egg,           color: '#ff9800' },
-  legendary: { Icon: Sparkles,      color: '#e5b143' },
+  evolve:    { Icon: ArrowUpCircle, color: 'var(--ink-2)' },
+  location:  { Icon: MapPin,        color: 'var(--accent)' },
+  breed:     { Icon: Egg,           color: 'var(--warn)' },
+  legendary: { Icon: Sparkles,      color: 'var(--gold)' },
 };
 
 function PocHintLine({ icon, text }) {
   const { Icon, color } = POC_HINT_STYLE[icon] || POC_HINT_STYLE.location;
   return (
-    <p className="flex items-start gap-1.5 text-[9px] text-[#8f98a0] leading-snug">
+    <p className="flex items-start gap-1.5 text-[9px] text-ink-2 leading-snug">
       <Icon size={10} className="shrink-0 mt-[1px]" style={{ color }} />
       <span>{text}</span>
     </p>
@@ -188,9 +190,9 @@ function PocEntryRow({ entry, reference, version }) {
     : [{ name: entry.names[0], hint: getPocHint(entry.names[0], reference, version) }].filter(x => x.hint);
 
   return (
-    <div className={`flex items-start gap-2.5 px-3 py-2 ${unlocked ? 'bg-[#202d39]' : ''}`}>
+    <div className={`flex items-start gap-2.5 px-3 py-2 ${unlocked ? 'bg-box-hi' : ''}`}>
       <a href={`../achievement/?id=${entry.ach.id}`}
-        className="relative shrink-0 w-8 h-8 rounded-[2px] border border-[#101214] overflow-hidden bg-black hover:scale-105 transition-transform block">
+        className="relative shrink-0 w-8 h-8 rounded-[2px] border border-well overflow-hidden bg-black hover:scale-105 transition-transform block">
         <img
           src={`${MEDIA_URL}/Badge/${entry.ach.badgeName || '00001'}.png`}
           alt={displayName}
@@ -199,8 +201,8 @@ function PocEntryRow({ entry, reference, version }) {
       </a>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-          <span className={`text-[11px] font-medium ${unlocked ? 'text-[#e5b143]' : 'text-[#c6d4df]'}`}>{displayName}</span>
-          {unlocked && <CheckCircle2 size={11} className="shrink-0" style={{ color: '#e5b143' }} />}
+          <span className={`text-[11px] font-medium ${unlocked ? 'text-gold' : 'text-ink'}`}>{displayName}</span>
+          {unlocked && <CheckCircle2 size={11} className="shrink-0" style={{ color: 'var(--gold)' }} />}
         </div>
         {!unlocked && (
           structuredHints.length > 0 ? (
@@ -210,7 +212,7 @@ function PocEntryRow({ entry, reference, version }) {
               ))}
             </div>
           ) : (
-            <p className="text-[9px] text-[#546270] italic mt-0.5">{entry.ach.description}</p>
+            <p className="text-[9px] text-ink-3 italic mt-0.5">{entry.ach.description}</p>
           )
         )}
       </div>
@@ -282,7 +284,7 @@ function GameApp() {
         setGame(data);
         setGameExtended(ext);
         setActiveClaims(claims.filter(c => String(c.gameId) === String(gameId)));
-        document.title = `Cheevo Tracker · ${data.title}`;
+        document.title = `Cheevodex · ${data.title}`;
         if (data.parentGameId) {
           getGame(creds.username, creds.apiKey, { i: data.parentGameId })
             .then(pg => setParentGame(pg))
@@ -446,6 +448,11 @@ function GameApp() {
     history.replaceState(null, '', url.toString());
   }
 
+  // Phone swipe between tabs, in the same order as the TabBar
+  const tabContentRef = useRef(null);
+  const tabIds = ['achievements', 'details', 'leaderboards', 'community', 'hashes', ...(pocSubset ? ['poc'] : [])];
+  useSwipeTabs(tabContentRef, tabIds, tab, switchTab, !loading && !error && !!game);
+
   useEffect(() => {
     if (expandedCheckpoint === null && currentCheckpointKey) setExpandedCheckpoint(currentCheckpointKey);
   }, [currentCheckpointKey]);
@@ -517,7 +524,7 @@ function GameApp() {
   const playtime        = game ? fmtPlaytime(game.userTotalPlaytime) : null;
 
   const crumbs = [
-    { label: 'Cheevo Tracker', href: '../profile/' },
+    { label: 'Cheevodex', href: '../profile/' },
     ...(game?.consoleId
       ? [{ label: game.consoleName, href: `../console/?id=${game.consoleId}` }]
       : [{ label: null }]),
@@ -525,7 +532,7 @@ function GameApp() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#171a21] flex flex-col [overflow-x:clip]">
+    <div className="min-h-screen bg-page flex flex-col [overflow-x:clip]">
       <Topbar crumbs={crumbs} />
 
       {loading && (
@@ -535,7 +542,7 @@ function GameApp() {
             {[...Array(4)].map((_, i) => <div key={i} className="shimmer h-14 flex-1 rounded-[3px]" />)}
           </div>
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="flex gap-3 py-3 border-b border-[#1b2838]">
+            <div key={i} className="flex gap-3 py-3 border-b border-box">
               <div className="shimmer w-12 h-12 rounded-[3px] shrink-0" />
               <div className="flex-1 flex flex-col gap-1.5">
                 <div className="shimmer h-3 w-40 rounded" />
@@ -548,7 +555,7 @@ function GameApp() {
 
       {error && (
         <div className="flex-1 flex items-center justify-center">
-          <div className="flex items-center gap-2 text-[#ff6b6b] text-[12px]">
+          <div className="flex items-center gap-2 text-hc text-[12px]">
             <AlertCircle size={16} /> {error}
           </div>
         </div>
@@ -557,36 +564,31 @@ function GameApp() {
       {game && !loading && (
         <>
           {/* ── Hero ── */}
-          <div className="relative overflow-hidden bg-[#1b2838] border-b border-[#2a475e]">
-            {/* Background */}
+          <div className="phead">
+            {/* Background: the game's art blurred (doc-012); plain charcoal if none loads */}
             {(() => {
               const isFallback = img => !img || img.includes('000002');
               const heroBg = (!isFallback(game.imageIngame) ? game.imageIngame : null)
                           || (!isFallback(game.imageTitle)  ? game.imageTitle  : null)
                           || parentGame?.imageIngame || parentGame?.imageTitle;
-              return heroBg ? (
-                <div className="absolute inset-0 bg-cover bg-center opacity-15"
-                  style={{ backgroundImage: `url(${getMediaUrl(heroBg)})` }} />
-              ) : null;
+              return heroBg ? <ArtBg urls={[getMediaUrl(heroBg)]} variant="art-header" /> : null;
             })()}
             <div className="relative max-w-4xl mx-auto px-4 md:px-8 pt-8 pb-4 md:pt-5">
               <div className="flex gap-4 items-start">
 
                 {/* Icon */}
-                <img
-                  src={getMediaUrl(game.imageIcon)}
-                  alt={game.title}
-                  className="w-16 h-16 md:w-20 md:h-20 rounded-[3px] border border-[#101214] shrink-0 object-cover bg-[#131a22]"
-                />
+                <div className={`phead-av game !w-16 !h-16 md:!w-20 md:!h-20 ${['mastered', 'completed'].includes(game.highestAwardKind) ? 'mastered' : game.highestAwardKind?.startsWith('beaten') ? 'beaten' : ''}`}>
+                  <img src={getMediaUrl(game.imageIcon)} alt={game.title} />
+                </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start gap-2 flex-wrap mb-1">
-                    <h1 className="text-[18px] md:text-[22px] font-semibold text-white leading-tight">
+                    <h1 className="text-[18px] md:text-[22px] font-semibold text-white leading-tight art-shadow">
                       {parsed?.baseTitle || game.title}
                     </h1>
                     {parsed?.isSubset && (
-                      <span className="text-[8px] font-bold uppercase tracking-[0.07em] px-1.5 py-[2px] rounded-[2px] border border-[rgba(229,177,67,0.3)] bg-[rgba(229,177,67,0.1)] text-[#c8a84b] shrink-0 mt-1">
+                      <span className="text-[8px] font-bold uppercase tracking-[0.07em] px-1.5 py-[2px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0 mt-1">
                         Subset
                       </span>
                     )}
@@ -604,14 +606,14 @@ function GameApp() {
                     })}
                     {activeClaims.length > 0 && (
                       <span className="text-[8px] font-bold uppercase tracking-[0.07em] px-1.5 py-[2px] rounded-[2px] border shrink-0 mt-1"
-                        style={{ color: '#e5b143', borderColor: 'rgba(229,177,67,0.3)', background: 'rgba(229,177,67,0.1)' }}>
+                        style={{ color: 'var(--gold)', borderColor: 'rgb(var(--c-gold) / 0.3)', background: 'rgb(var(--c-gold) / 0.1)' }}>
                         In Dev
                       </span>
                     )}
                     {award && (
                       <span
                         className="text-[8px] font-bold uppercase tracking-[0.07em] px-1.5 py-[2px] rounded-[2px] flex items-center gap-1 shrink-0 mt-1"
-                        style={{ color: award.color, background: `${award.color}18`, border: `1px solid ${award.color}44` }}
+                        style={{ color: award.color, background: `color-mix(in srgb, ${award.color} 9.4%, transparent)`, border: `1px solid color-mix(in srgb, ${award.color} 26.7%, transparent)` }}
                       >
                         <award.Icon size={9} /> {award.label}
                       </span>
@@ -619,43 +621,43 @@ function GameApp() {
                   </div>
 
                   {parsed?.isSubset && parsed?.subsetName && (
-                    <div className="text-[11px] text-[#c8a84b] mb-1">{parsed.subsetName}</div>
+                    <div className="text-[11px] text-gold-dim mb-1">{parsed.subsetName}</div>
                   )}
 
                   {parsed?.isSubset && parentGame && (
                     <div className="flex items-center gap-1.5 mb-2 bg-black/40 backdrop-blur-sm rounded-[3px] px-1.5 py-[3px] w-fit">
                       <img src={getMediaUrl(parentGame.imageIcon)} alt={parentGame.title}
-                        className="w-4 h-4 rounded-[2px] border border-[#101214] object-cover shrink-0 bg-black" />
-                      <span className="text-[10px] text-[#8f98a0]">Subset of</span>
+                        className="w-4 h-4 rounded-[2px] border border-well object-cover shrink-0 bg-black" />
+                      <span className="text-[10px] text-ink-2">Subset of</span>
                       <a href={`?id=${game.parentGameId}`}
-                        className="text-[10px] text-[#c6d4df] hover:text-white transition-colors truncate max-w-[200px]">
+                        className="text-[10px] text-ink hover:text-white transition-colors truncate max-w-[200px]">
                         {parseTitle(parentGame.title).baseTitle}
                       </a>
                     </div>
                   )}
 
                   <div className="flex items-center gap-2 flex-wrap text-[10px] mb-3">
-                    <span className="flex items-center gap-1 text-[#66c0f4]"><Gamepad2 size={10} className="shrink-0" />{game.consoleName}</span>
+                    <span className="flex items-center gap-1 text-accent"><Gamepad2 size={10} className="shrink-0" />{game.consoleName}</span>
                     {game.developer && <>
-                      <span className="text-[#546270] select-none">·</span>
-                      <span className="flex items-center gap-1 text-[#8f98a0]"><Code size={10} className="shrink-0 text-[#546270]" />{game.developer}</span>
+                      <span className="text-ink-3 select-none">·</span>
+                      <span className="flex items-center gap-1 text-ink-2"><Code size={10} className="shrink-0 text-ink-3" />{game.developer}</span>
                     </>}
-                    <span className="text-[#546270] select-none">·</span>
-                    <a href={`${SITE_URL}/game/${gameId}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[#546270] hover:text-[#66c0f4] transition-colors"><ExternalLink size={10} className="shrink-0" />RA</a>
+                    <span className="text-ink-3 select-none">·</span>
+                    <a href={`${SITE_URL}/game/${gameId}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-ink-3 hover:text-accent transition-colors"><ExternalLink size={10} className="shrink-0" />RA</a>
                   </div>
 
                   {/* Completion bar */}
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-[#101214] h-[5px] rounded-full overflow-hidden">
+                    <div className="flex-1 bg-well h-[5px] rounded-[2px] overflow-hidden">
                       <div
-                        className="h-full rounded-full transition-all"
+                        className="h-full rounded-[2px] transition-all"
                         style={{
                           width: `${completionPct}%`,
-                          background: completionPct === 100 ? '#e5b143' : '#66c0f4',
+                          background: completionPct === 100 ? 'var(--gold)' : 'var(--accent)',
                         }}
                       />
                     </div>
-                    <span className="text-[10px] font-semibold" style={{ color: completionPct === 100 ? '#e5b143' : '#66c0f4' }}>
+                    <span className="num text-[10px] font-semibold" style={{ color: completionPct === 100 ? 'var(--gold)' : 'var(--accent)' }}>
                       {completionPct.toFixed(1)}%
                     </span>
                   </div>
@@ -664,22 +666,22 @@ function GameApp() {
             </div>
 
             {/* ── Stats strip ── */}
-            <div className="relative border-t border-[#101214] bg-[#131a22]/50">
+            <div className="border-t border-line bg-well/50">
               <div className="max-w-4xl mx-auto px-2 md:px-8 py-2.5 grid grid-flow-col auto-cols-fr">
                 {[
-                  { label: 'Cheevos',  value: `${unlockedCount}`, sub: `/ ${achList.length}`,                         color: '#66c0f4' },
-                  { label: 'Points',   value: earnedPoints.toLocaleString(), sub: `/ ${totalPoints.toLocaleString()}`, color: '#e5b143' },
-                  { label: 'Hardcore', value: game.numAwardedToUserHardcore.toString(),                                color: '#e5b143' },
-                  playtime ? { label: 'Playtime', value: playtime,                                                     color: '#8f98a0' }
-                           : { label: 'Players',  value: game.numDistinctPlayersCasual.toLocaleString(),               color: '#546270' },
-                  playtime ? { label: 'Players',  value: game.numDistinctPlayersCasual.toLocaleString(),               color: '#546270' } : null,
+                  { label: 'Cheevos',  value: `${unlockedCount}`, sub: `/ ${achList.length}`,                         color: 'var(--accent)' },
+                  { label: 'Points',   value: earnedPoints.toLocaleString(), sub: `/ ${totalPoints.toLocaleString()}`, color: 'var(--gold)' },
+                  { label: 'Hardcore', value: game.numAwardedToUserHardcore.toString(),                                color: 'var(--gold)' },
+                  playtime ? { label: 'Playtime', value: playtime,                                                     color: 'var(--ink-2)' }
+                           : { label: 'Players',  value: game.numDistinctPlayersCasual.toLocaleString(),               color: 'var(--ink-3)' },
+                  playtime ? { label: 'Players',  value: game.numDistinctPlayersCasual.toLocaleString(),               color: 'var(--ink-3)' } : null,
                 ].filter(Boolean).map((s, i) => (
                   <div key={i} className="flex flex-col items-center py-1 px-2 min-w-0">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-[12px] md:text-[14px] font-bold" style={{ color: s.color }}>{s.value}</span>
-                      {s.sub && <span className="text-[9px] md:text-[10px] text-[#546270]">{s.sub}</span>}
+                      <span className="num text-[12px] md:text-[14px] font-bold" style={{ color: s.color }}>{s.value}</span>
+                      {s.sub && <span className="text-[9px] md:text-[10px] text-ink-3">{s.sub}</span>}
                     </div>
-                    <span className="text-[8px] md:text-[9px] text-[#546270] uppercase tracking-[0.07em] whitespace-nowrap">{s.label}</span>
+                    <span className="text-[8px] md:text-[9px] text-ink-3 uppercase tracking-[0.07em] whitespace-nowrap">{s.label}</span>
                   </div>
                 ))}
               </div>
@@ -688,15 +690,15 @@ function GameApp() {
 
           {/* ── Claims banner ── */}
           {activeClaims.length > 0 && (
-            <div className="border-b border-[#2a475e] bg-[rgba(229,177,67,0.06)]">
+            <div className="border-b border-line bg-gold/[0.06]">
               <div className="max-w-4xl mx-auto px-4 md:px-8 py-2 flex items-center gap-2.5">
-                <AlertTriangle size={13} className="shrink-0" style={{ color: '#e5b143' }} />
-                <span className="text-[11px] text-[#8f98a0] leading-snug">
+                <AlertTriangle size={13} className="shrink-0" style={{ color: 'var(--gold)' }} />
+                <span className="text-[11px] text-ink-2 leading-snug">
                   Achievement set actively claimed by{' '}
                   {activeClaims.map((c, i, arr) => (
                     <span key={c.user}>
                       <a href={`../profile/?u=${c.user}`}
-                        className="transition-colors hover:text-[#f0c96a]" style={{ color: '#e5b143' }}>{c.user}</a>
+                        className="transition-colors hover:text-gold-hi" style={{ color: 'var(--gold)' }}>{c.user}</a>
                       {i < arr.length - 1 ? ', ' : ''}
                     </span>
                   ))}
@@ -706,39 +708,26 @@ function GameApp() {
             </div>
           )}
 
-          {/* ── Tab bar ── */}
-          <div className="bg-[#131a22] border-b border-[#2a475e] sticky top-0 md:top-[26px] z-40">
-            <div className="max-w-4xl mx-auto px-4 md:px-8 py-2.5 flex items-center gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-              {[
-                { id: 'achievements',  label: 'Achievements'  },
-                { id: 'details',       label: 'Info'          },
-                { id: 'leaderboards',  label: 'Leaderboards'  },
-                { id: 'community',     label: 'Community'     },
-                { id: 'hashes',        label: 'Hashes'        },
-                ...(pocSubset ? [{ id: 'poc', label: 'Professor Oak' }] : []),
-              ].map(t => (
-                <button key={t.id} type="button" onClick={() => switchTab(t.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-[11px] font-semibold uppercase tracking-wider border transition-colors shrink-0 ${
-                    tab === t.id
-                      ? 'bg-[#1b2838] text-[#c6d4df] border-[#66c0f4]'
-                      : 'text-[#546270] border-[#323f4c] hover:text-[#8f98a0] hover:border-[#546270]'
-                  }`}>
-                  {t.label}
-                  {t.id === 'achievements' && <span className={`text-[9px] font-normal ${tab === t.id ? 'text-[#546270]' : 'text-[#323f4c]'}`}>{achList.length}</span>}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* ── Tab bar (assets/tabs.js) ── */}
+          <TabBar className="md:top-[26px] px-2 md:px-[max(1.375rem,calc((100%_-_56rem)/2_+_1.375rem))]" active={tab} onChange={switchTab} tabs={[
+            { id: 'achievements', label: 'Achievements', count: achList.length },
+            { id: 'details',      label: 'Info' },
+            { id: 'leaderboards', label: 'Leaderboards' },
+            { id: 'community',    label: 'Community' },
+            { id: 'hashes',       label: 'Hashes' },
+            ...(pocSubset ? [{ id: 'poc', label: 'Professor Oak' }] : []),
+          ]} />
 
+          <div ref={tabContentRef} className="flex-1 flex flex-col">
           {/* ── Achievements tab ── */}
           {tab === 'achievements' && (
             <div className="flex-1 max-w-4xl mx-auto w-full px-4 md:px-8 py-4">
               {/* ── Difficulty curve ── */}
               {difficulty && (
-                <div className="mb-3 bg-[#1b2838] border border-[#2a475e] rounded-[3px] p-2.5">
+                <div className="mb-3 bg-box border border-line rounded-[3px] p-2.5">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[9px] uppercase tracking-wider text-[#546270]">Difficulty curve</span>
-                    <span className="text-[9px] text-[#546270] ml-auto">share of {game.numDistinctPlayersCasual.toLocaleString()} players who unlocked each</span>
+                    <span className="text-[9px] uppercase tracking-wider text-ink-3">Difficulty curve</span>
+                    <span className="text-[9px] text-ink-3 ml-auto">share of {game.numDistinctPlayersCasual.toLocaleString()} players who unlocked each</span>
                   </div>
                   {/* Columns are capped at 46px and centred rather than stretched across the
                       card — filling the width rendered them as 157×40px slabs with no readable
@@ -752,14 +741,14 @@ function GameApp() {
                       <div key={b.key} className="flex-1 max-w-[46px] flex flex-col items-center gap-1 min-w-0">
                         <div className="w-full flex items-end" style={{ height: '80px' }}>
                           <div className="w-full flex flex-col justify-end rounded-t-[3px] overflow-hidden"
-                            style={{ height: `${Math.max((b.total / difficulty.max) * 80, b.total ? 4 : 1)}px`, background: '#232f3b' }}>
+                            style={{ height: `${Math.max((b.total / difficulty.max) * 80, b.total ? 4 : 1)}px`, background: 'var(--track)' }}>
                             <div style={{ height: `${b.total ? (b.unlocked / b.total) * 100 : 0}%`, background: b.color }} />
                           </div>
                         </div>
-                        <span className="text-[9px] tabular-nums leading-none" style={{ color: b.unlocked > 0 ? b.color : '#546270' }}>
-                          {b.unlocked}<span className="text-[#546270]">/{b.total}</span>
+                        <span className="text-[9px] tabular-nums leading-none" style={{ color: b.unlocked > 0 ? b.color : 'var(--ink-3)' }}>
+                          {b.unlocked}<span className="text-ink-3">/{b.total}</span>
                         </span>
-                        <span className="text-[7px] uppercase tracking-wider text-[#546270] text-center w-full" style={{ lineHeight: 1.15 }}>{b.label}</span>
+                        <span className="text-[7px] uppercase tracking-wider text-ink-3 text-center w-full" style={{ lineHeight: 1.15 }}>{b.label}</span>
                       </div>
                     ))}
                   </div>
@@ -769,7 +758,7 @@ function GameApp() {
               {/* Controls */}
               <div className="flex flex-col mb-3 gap-1.5">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[8px] uppercase tracking-wider text-[#546270] w-[44px] shrink-0">Status</span>
+                  <span className="text-[8px] uppercase tracking-wider text-ink-3 w-[44px] shrink-0">Status</span>
                   {[
                     { value: 'all',      label: 'All'      },
                     { value: 'unlocked', label: `Unlocked (${unlockedCount})` },
@@ -778,13 +767,13 @@ function GameApp() {
                     <button key={opt.value} type="button" onClick={() => setFilter(opt.value)}
                       className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border transition-colors ${
                         filter === opt.value
-                          ? 'bg-[#66c0f4] text-[#101214] border-[#66c0f4]'
-                          : 'bg-[#101214] text-[#8f98a0] border-[#323f4c] hover:text-[#c6d4df] hover:border-[#546270]'
+                          ? 'bg-accent text-well border-accent'
+                          : 'bg-well text-ink-2 border-line-2 hover:text-ink hover:border-ink-3'
                       }`}>{opt.label}</button>
                   ))}
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[8px] uppercase tracking-wider text-[#546270] w-[44px] shrink-0">Sort</span>
+                  <span className="text-[8px] uppercase tracking-wider text-ink-3 w-[44px] shrink-0">Sort</span>
                   {[
                     { value: 'order',  label: 'Default'  },
                     { value: 'points', label: 'Points'   },
@@ -793,14 +782,14 @@ function GameApp() {
                     <button key={opt.value} type="button" onClick={() => setSort(opt.value)}
                       className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border transition-colors ${
                         sort === opt.value
-                          ? 'bg-[#1b2838] text-[#c6d4df] border-[#2a475e]'
-                          : 'bg-[#101214] text-[#546270] border-[#323f4c] hover:text-[#c6d4df] hover:border-[#546270]'
+                          ? 'bg-box text-ink border-line'
+                          : 'bg-well text-ink-3 border-line-2 hover:text-ink hover:border-ink-3'
                       }`}>{opt.label}</button>
                   ))}
-                  <span className="ml-auto text-[9px] text-[#546270]">{filteredSorted.length} / {achList.length}</span>
+                  <span className="ml-auto text-[9px] text-ink-3">{filteredSorted.length} / {achList.length}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[8px] uppercase tracking-wider text-[#546270] w-[44px] shrink-0">Type</span>
+                  <span className="text-[8px] uppercase tracking-wider text-ink-3 w-[44px] shrink-0">Type</span>
                   {[
                     { value: 'all',         label: 'All',         color: null                            },
                     { value: 'progression', label: 'Progression', color: TYPE_CONFIG.progression.color   },
@@ -809,12 +798,12 @@ function GameApp() {
                     <button key={opt.value} type="button" onClick={() => setTypeFilter(opt.value)}
                       className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border transition-colors ${
                         typeFilter === opt.value
-                          ? 'text-[#101214] border-transparent'
-                          : 'bg-[#101214] text-[#8f98a0] border-[#323f4c] hover:text-[#c6d4df] hover:border-[#546270]'
+                          ? 'text-well border-transparent'
+                          : 'bg-well text-ink-2 border-line-2 hover:text-ink hover:border-ink-3'
                       }`}
                       style={typeFilter === opt.value ? {
-                        background: opt.color || '#66c0f4',
-                        borderColor: opt.color || '#66c0f4',
+                        background: opt.color || 'var(--accent)',
+                        borderColor: opt.color || 'var(--accent)',
                       } : {}}
                     >{opt.label}</button>
                   ))}
@@ -822,18 +811,18 @@ function GameApp() {
 
                 {/* Compare row */}
                 <div className="flex items-center gap-1.5 relative">
-                  <span className="text-[8px] uppercase tracking-wider text-[#546270] w-[44px] shrink-0">Compare</span>
+                  <span className="text-[8px] uppercase tracking-wider text-ink-3 w-[44px] shrink-0">Compare</span>
                   <button type="button"
                     onClick={() => { loadFollowing(); setShowFriendPicker(true); }}
-                    className="text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border bg-[#101214] text-[#8f98a0] border-[#323f4c] hover:text-[#c6d4df] hover:border-[#546270] transition-colors flex items-center gap-1">
+                    className="text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border bg-well text-ink-2 border-line-2 hover:text-ink hover:border-ink-3 transition-colors flex items-center gap-1">
                     {loadingFollowing ? <><Loader size={9} className="animate-spin" /> Loading…</> : selectedFriend ? 'Change ▾' : 'Select Friend ▾'}
                   </button>
                   {showFriendPicker && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setShowFriendPicker(false)} />
-                      <div className="absolute top-full left-[52px] z-50 mt-1 w-56 bg-[#131a22] border border-[#2a475e] rounded-[3px] shadow-2xl overflow-hidden">
+                      <div className="absolute top-full left-[52px] z-50 mt-1 w-56 bg-bar border border-line rounded-[3px] shadow-2xl overflow-hidden">
                         {!followingList || followingList.length === 0 ? (
-                          <div className="px-3 py-4 text-[10px] text-[#546270] text-center">
+                          <div className="px-3 py-4 text-[10px] text-ink-3 text-center">
                             {loadingFollowing ? 'Loading…' : 'No following found.'}
                           </div>
                         ) : (
@@ -841,12 +830,12 @@ function GameApp() {
                             {followingList.map(f => (
                               <button key={f.user} type="button"
                                 onClick={() => selectFriendForCompare(f)}
-                                className="w-full flex items-center gap-2 px-2.5 py-2 hover:bg-[#1b2838] transition-colors text-left">
+                                className="w-full flex items-center gap-2 px-2.5 py-2 hover:bg-box transition-colors text-left">
                                 <img src={(socialProfileMap.get(f.user)?.userPic || f.userPic) ? getMediaUrl(socialProfileMap.get(f.user)?.userPic || f.userPic) : `${MEDIA_URL}/UserPic/${f.user}.png`}
                                   alt={f.user}
-                                  className="w-5 h-5 rounded-full border border-[#101214] shrink-0 object-cover bg-[#1b2838]"
+                                  className="w-5 h-5 rounded-full border border-well shrink-0 object-cover bg-box"
                                   onError={e => { e.currentTarget.style.visibility = 'hidden'; }} />
-                                <span className="text-[11px] text-[#c6d4df] truncate">{f.user}</span>
+                                <span className="text-[11px] text-ink truncate">{f.user}</span>
                               </button>
                             ))}
                           </div>
@@ -859,16 +848,16 @@ function GameApp() {
 
               {/* Selected friend banner */}
               {selectedFriend && (
-                <div className="flex items-center gap-2.5 px-3 py-2 mb-2 bg-[#202d39] border border-[#2a475e] rounded-sm">
+                <div className="flex items-center gap-2.5 px-3 py-2 mb-2 bg-box-hi border border-line rounded-sm">
                   <img
                     src={(socialProfileMap.get(selectedFriend.user)?.userPic || selectedFriend.userPic) ? getMediaUrl(socialProfileMap.get(selectedFriend.user)?.userPic || selectedFriend.userPic) : `${MEDIA_URL}/UserPic/${selectedFriend.user}.png`}
                     alt={selectedFriend.user}
-                    className="w-6 h-6 rounded-full border border-[#101214] shrink-0 object-cover bg-[#131a22]"
+                    className="w-6 h-6 rounded-full border border-well shrink-0 object-cover bg-bar"
                     onError={e => { e.currentTarget.style.visibility = 'hidden'; }}
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="text-[8px] uppercase tracking-wider text-[#546270]">Comparing with</div>
-                    <div className="text-[11px] font-semibold text-[#e5b143] truncate">{selectedFriend.user}</div>
+                    <div className="text-[8px] uppercase tracking-wider text-ink-3">Comparing with</div>
+                    <div className="text-[11px] font-semibold text-gold truncate">{selectedFriend.user}</div>
                     {!loadingFriendData && friendAchMap.size > 0 && (() => {
                       const total = achList.length;
                       const hc    = [...friendAchMap.values()].filter(a => a.dateEarnedHardcore).length;
@@ -877,21 +866,21 @@ function GameApp() {
                       const scPct = total > 0 ? ((hc + sc) / total) * 100 : 0;
                       return (
                         <div className="flex items-center gap-2 mt-1">
-                          <div className="flex-1 relative h-[3px] bg-[#131a22] rounded-full overflow-hidden">
-                            <div className="absolute top-0 left-0 h-full rounded-full bg-[#8f98a0]" style={{ width: `${scPct}%` }} />
-                            <div className="absolute top-0 left-0 h-full rounded-full bg-[#e5b143]" style={{ width: `${hcPct}%` }} />
+                          <div className="flex-1 relative h-[3px] bg-bar rounded-full overflow-hidden">
+                            <div className="absolute top-0 left-0 h-full rounded-full bg-ink-2" style={{ width: `${scPct}%` }} />
+                            <div className="absolute top-0 left-0 h-full rounded-full bg-gold" style={{ width: `${hcPct}%` }} />
                           </div>
-                          <span className="text-[9px] shrink-0 tabular-nums" style={{ color: hcPct > 0 ? '#e5b143' : '#8f98a0' }}>
+                          <span className="text-[9px] shrink-0 tabular-nums" style={{ color: hcPct > 0 ? 'var(--gold)' : 'var(--ink-2)' }}>
                             {(hcPct > 0 ? hcPct : scPct).toFixed(1)}%
                           </span>
                         </div>
                       );
                     })()}
                   </div>
-                  {loadingFriendData && <Loader size={10} className="animate-spin shrink-0" style={{ color: '#546270' }} />}
+                  {loadingFriendData && <Loader size={10} className="animate-spin shrink-0" style={{ color: 'var(--ink-3)' }} />}
                   <button type="button"
                     onClick={() => { setSelectedFriend(null); setFriendGameData(null); const u = new URL(window.location.href); u.searchParams.delete('compare'); history.replaceState(null, '', u.toString()); }}
-                    className="text-[#546270] hover:text-[#c6d4df] transition-colors shrink-0">
+                    className="text-ink-3 hover:text-ink transition-colors shrink-0">
                     <X size={13} />
                   </button>
                 </div>
@@ -900,7 +889,7 @@ function GameApp() {
               {/* List */}
               <div className="flex flex-col gap-1.5">
                 {filteredSorted.length === 0 ? (
-                  <div className="py-10 text-center text-[11px] text-[#546270]">
+                  <div className="py-10 text-center text-[11px] text-ink-3">
                     {achList.length === 0 ? 'This game has no achievements yet.' : 'No achievements match this filter.'}
                   </div>
                 ) : (
@@ -927,9 +916,9 @@ function GameApp() {
               {/* Media gallery */}
               {(game.imageBoxArt || game.imageTitle || game.imageIngame) && (
                 <div className="mb-5">
-                  <div className="flex items-center gap-2 pb-2 mb-3 border-b border-[#2a475e]">
-                    <span className="w-[3px] h-[14px] bg-[#66c0f4] rounded-[1px] shrink-0" />
-                    <span className="text-[13px] text-white tracking-wide uppercase font-medium">Media</span>
+                  <div className="flex items-center gap-2 pb-2 mb-3 border-b border-line">
+                    <span className="sec-mark" />
+                    <span className="sec-t">Media</span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {[
@@ -939,10 +928,10 @@ function GameApp() {
                     ].filter(m => m.src).map(m => (
                       <div key={m.label} className="flex flex-col gap-1">
                         <a href={getMediaUrl(m.src)} target="_blank" rel="noreferrer"
-                          className="block rounded-[2px] border border-[#2a475e] overflow-hidden hover:border-[#546270] transition-colors bg-[#131a22]">
+                          className="block rounded-[2px] border border-line overflow-hidden hover:border-ink-3 transition-colors bg-bar">
                           <img src={getMediaUrl(m.src)} alt={m.label} className="w-full object-cover" />
                         </a>
-                        <span className="text-[9px] text-[#546270] uppercase tracking-wider text-center">{m.label}</span>
+                        <span className="text-[9px] text-ink-3 uppercase tracking-wider text-center">{m.label}</span>
                       </div>
                     ))}
                   </div>
@@ -952,9 +941,9 @@ function GameApp() {
               {/* Time to Beat */}
               {loadingInfoExtra && (
                 <div className="mb-5">
-                  <div className="flex items-center gap-2 pb-2 mb-3 border-b border-[#2a475e]">
-                    <span className="w-[3px] h-[14px] bg-[#e5b143] rounded-[1px] shrink-0" />
-                    <span className="text-[13px] text-white tracking-wide uppercase font-medium">Time to Beat</span>
+                  <div className="flex items-center gap-2 pb-2 mb-3 border-b border-line">
+                    <span className="sec-mark" />
+                    <span className="sec-t">Time to Beat</span>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {[...Array(4)].map((_, i) => (
@@ -964,27 +953,27 @@ function GameApp() {
                 </div>
               )}
               {gameProgression && [
-                { label: 'Beat',           value: gameProgression.medianTimeToBeat,          color: '#66c0f4' },
-                { label: 'Beat (Hardcore)', value: gameProgression.medianTimeToBeatHardcore,  color: '#e5b143' },
-                { label: 'Complete',        value: gameProgression.medianTimeToComplete,       color: '#66c0f4' },
-                { label: 'Master',          value: gameProgression.medianTimeToMaster,         color: '#e5b143' },
+                { label: 'Beat',           value: gameProgression.medianTimeToBeat,          color: 'var(--accent)' },
+                { label: 'Beat (Hardcore)', value: gameProgression.medianTimeToBeatHardcore,  color: 'var(--gold)' },
+                { label: 'Complete',        value: gameProgression.medianTimeToComplete,       color: 'var(--accent)' },
+                { label: 'Master',          value: gameProgression.medianTimeToMaster,         color: 'var(--gold)' },
               ].some(c => c.value) && (
                 <div className="mb-5">
-                  <div className="flex items-center gap-2 pb-2 mb-3 border-b border-[#2a475e]">
-                    <span className="w-[3px] h-[14px] bg-[#e5b143] rounded-[1px] shrink-0" />
-                    <span className="text-[13px] text-white tracking-wide uppercase font-medium">Time to Beat</span>
-                    <span className="text-[9px] text-[#546270] ml-1">median</span>
+                  <div className="flex items-center gap-2 pb-2 mb-3 border-b border-line">
+                    <span className="sec-mark" />
+                    <span className="sec-t">Time to Beat</span>
+                    <span className="text-[9px] text-ink-3 ml-1">median</span>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {[
-                      { label: 'Beat',           value: gameProgression.medianTimeToBeat,          color: '#66c0f4' },
-                      { label: 'Beat (Hardcore)', value: gameProgression.medianTimeToBeatHardcore,  color: '#e5b143' },
-                      { label: 'Complete',        value: gameProgression.medianTimeToComplete,       color: '#66c0f4' },
-                      { label: 'Master',          value: gameProgression.medianTimeToMaster,         color: '#e5b143' },
+                      { label: 'Beat',           value: gameProgression.medianTimeToBeat,          color: 'var(--accent)' },
+                      { label: 'Beat (Hardcore)', value: gameProgression.medianTimeToBeatHardcore,  color: 'var(--gold)' },
+                      { label: 'Complete',        value: gameProgression.medianTimeToComplete,       color: 'var(--accent)' },
+                      { label: 'Master',          value: gameProgression.medianTimeToMaster,         color: 'var(--gold)' },
                     ].filter(c => c.value).map(c => (
-                      <div key={c.label} className="bg-[#1b2838] border border-[#2a475e] rounded-[2px] flex flex-col items-center py-2.5 px-2">
+                      <div key={c.label} className="bg-box border border-line rounded-[2px] flex flex-col items-center py-2.5 px-2">
                         <span className="text-[14px] font-bold" style={{ color: c.color }}>{fmtPlaytime(c.value)}</span>
-                        <span className="text-[8px] uppercase tracking-[0.07em] text-[#546270] mt-0.5">{c.label}</span>
+                        <span className="text-[8px] uppercase tracking-[0.07em] text-ink-3 mt-0.5">{c.label}</span>
                       </div>
                     ))}
                   </div>
@@ -993,11 +982,11 @@ function GameApp() {
 
               {/* Metadata */}
               <div className="mb-5">
-                <div className="flex items-center gap-2 pb-2 mb-3 border-b border-[#2a475e]">
-                  <span className="w-[3px] h-[14px] bg-[#66c0f4] rounded-[1px] shrink-0" />
-                  <span className="text-[13px] text-white tracking-wide uppercase font-medium">Info</span>
+                <div className="flex items-center gap-2 pb-2 mb-3 border-b border-line">
+                  <span className="sec-mark" />
+                  <span className="sec-t">Info</span>
                 </div>
-                <div className="bg-[#1b2838] border border-[#2a475e] rounded-[2px] divide-y divide-[#2a475e]">
+                <div className="bg-box border border-line rounded-[2px] divide-y divide-line">
                   {[
                     { label: 'Console',    value: game.consoleName,   icon: <Gamepad2 size={11} /> },
                     { label: 'Developer',  value: game.developer,     icon: <Code     size={11} /> },
@@ -1009,9 +998,9 @@ function GameApp() {
                       : null,
                   ].filter(Boolean).filter(r => r.value).map(r => (
                     <div key={r.label} className="flex items-center gap-3 px-3 py-2">
-                      <span className="text-[#546270] shrink-0">{r.icon}</span>
-                      <span className="text-[9px] uppercase tracking-wider text-[#546270] w-20 shrink-0">{r.label}</span>
-                      <span className="text-[11px] text-[#c6d4df] break-words min-w-0">{r.value}</span>
+                      <span className="text-ink-3 shrink-0">{r.icon}</span>
+                      <span className="text-[9px] uppercase tracking-wider text-ink-3 w-20 shrink-0">{r.label}</span>
+                      <span className="text-[11px] text-ink break-words min-w-0">{r.value}</span>
                     </div>
                   ))}
                 </div>
@@ -1021,20 +1010,20 @@ function GameApp() {
               {/* Links */}
               {(game.guideUrl || game.forumTopicId) && (
                 <div>
-                  <div className="flex items-center gap-2 pb-2 mb-3 border-b border-[#2a475e]">
-                    <span className="w-[3px] h-[14px] bg-[#66c0f4] rounded-[1px] shrink-0" />
-                    <span className="text-[13px] text-white tracking-wide uppercase font-medium">Links</span>
+                  <div className="flex items-center gap-2 pb-2 mb-3 border-b border-line">
+                    <span className="sec-mark" />
+                    <span className="sec-t">Links</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {game.guideUrl && (
                       <a href={game.guideUrl} target="_blank" rel="noreferrer"
-                        className="flex items-center gap-1.5 text-[11px] text-[#8f98a0] hover:text-[#66c0f4] border border-[#2a475e] hover:border-[#66c0f4] bg-[#131a22] px-3 py-1.5 rounded-[2px] transition-colors">
+                        className="flex items-center gap-1.5 text-[11px] text-ink-2 hover:text-accent border border-line hover:border-accent bg-bar px-3 py-1.5 rounded-[2px] transition-colors">
                         <BookOpen size={12} /> Game Guide
                       </a>
                     )}
                     {game.forumTopicId && (
                       <a href={`${SITE_URL}/viewtopic.php?t=${game.forumTopicId}`} target="_blank" rel="noreferrer"
-                        className="flex items-center gap-1.5 text-[11px] text-[#8f98a0] hover:text-[#66c0f4] border border-[#2a475e] hover:border-[#66c0f4] bg-[#131a22] px-3 py-1.5 rounded-[2px] transition-colors">
+                        className="flex items-center gap-1.5 text-[11px] text-ink-2 hover:text-accent border border-line hover:border-accent bg-bar px-3 py-1.5 rounded-[2px] transition-colors">
                         <MessageSquare size={12} /> Forum Thread
                       </a>
                     )}
@@ -1049,13 +1038,13 @@ function GameApp() {
             <div className="flex-1 max-w-4xl mx-auto w-full px-4 md:px-8 py-4">
 
               {loadingLeaderboards && (
-                <div className="flex items-center gap-2 py-8 justify-center text-[#546270] text-[11px]">
+                <div className="flex items-center gap-2 py-8 justify-center text-ink-3 text-[11px]">
                   <Loader size={14} className="animate-spin" /> Loading leaderboards…
                 </div>
               )}
 
               {leaderboards && leaderboards.length === 0 && (
-                <div className="py-8 text-center text-[11px] text-[#546270]">No leaderboards for this game.</div>
+                <div className="py-8 text-center text-[11px] text-ink-3">No leaderboards for this game.</div>
               )}
 
               {leaderboards && leaderboards.length > 0 && (
@@ -1064,25 +1053,25 @@ function GameApp() {
                   {/* Top Scorers */}
                   {topScorers && topScorers.length > 0 && (
                     <div className="w-full md:w-[200px] md:shrink-0">
-                      <div className="flex items-center gap-2 pb-2 mb-2 border-b border-[#2a475e]">
-                        <span className="w-[3px] h-[14px] bg-[#e5b143] rounded-[1px] shrink-0" />
-                        <span className="text-[13px] text-white tracking-wide uppercase font-medium">Top Scorers</span>
+                      <div className="flex items-center gap-2 pb-2 mb-2 border-b border-line">
+                        <span className="sec-mark" />
+                        <span className="sec-t">Top Scorers</span>
                       </div>
-                      <div className="bg-[#1b2838] border border-[#2a475e] rounded-[2px] divide-y divide-[#2a475e] overflow-y-auto max-h-[220px]">
+                      <div className="bg-box border border-line rounded-[2px] divide-y divide-line overflow-y-auto max-h-[220px]">
                         {topScorers.map((s, i) => (
                           <div key={s.ulid || s.user} className="flex items-center gap-3 px-3 py-2">
                             <span className="text-[10px] font-bold w-5 text-right shrink-0"
-                              style={{ color: i === 0 ? '#e5b143' : i === 1 ? '#8f98a0' : i === 2 ? '#cd7f32' : '#546270' }}>
+                              style={{ color: i === 0 ? 'var(--gold)' : i === 1 ? 'var(--ink-2)' : i === 2 ? 'var(--bronze)' : 'var(--ink-3)' }}>
                               #{i + 1}
                             </span>
                             <img src={s.userPic ? getMediaUrl(s.userPic) : `${MEDIA_URL}/UserPic/${s.user}.png`} alt={s.user}
-                              className="w-6 h-6 rounded-full border border-[#2a475e] bg-[#131a22] object-cover shrink-0" />
+                              className="w-6 h-6 rounded-full border border-line bg-bar object-cover shrink-0" />
                             <a href={`../profile/?u=${s.user}`}
                               className="flex-1 text-[11px] font-medium transition-colors hover:text-white truncate"
-                              style={{ color: s.user === creds?.username ? '#57cbde' : '#c6d4df' }}>
+                              style={{ color: s.user === creds?.username ? 'var(--aqua)' : 'var(--ink)' }}>
                               {s.user}
                             </a>
-                            <span className="text-[11px] font-bold text-[#e5b143] shrink-0">{s.totalScore.toLocaleString()}</span>
+                            <span className="text-[11px] font-bold text-gold shrink-0">{s.totalScore.toLocaleString()}</span>
                           </div>
                         ))}
                       </div>
@@ -1091,46 +1080,46 @@ function GameApp() {
 
                   {/* Board list */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 pb-2 mb-2 border-b border-[#2a475e]">
-                      <span className="w-[3px] h-[14px] bg-[#66c0f4] rounded-[1px] shrink-0" />
-                      <span className="text-[13px] text-white tracking-wide uppercase font-medium">Boards</span>
-                      <span className="text-[11px] text-[#546270]">({leaderboards.length})</span>
+                    <div className="flex items-center gap-2 pb-2 mb-2 border-b border-line">
+                      <span className="sec-mark" />
+                      <span className="sec-t">Boards</span>
+                      <span className="text-[11px] text-ink-3">({leaderboards.length})</span>
                     </div>
                   <div className="flex flex-col gap-1.5">
                     {leaderboards.map(lb => {
-                      const fmtColor = lb.format === 'SCORE' ? '#e5b143' : ['TIME', 'TIMESECS', 'MILLISECS'].includes(lb.format) ? '#66c0f4' : '#8f98a0';
+                      const fmtColor = lb.format === 'SCORE' ? 'var(--gold)' : ['TIME', 'TIMESECS', 'MILLISECS'].includes(lb.format) ? 'var(--accent)' : 'var(--ink-2)';
                       const userEntry = userLbMap[lb.id];
                       const isExpanded = expandedBoardId === lb.id;
                       const entries = boardEntries[lb.id];
                       const isLoadingThis = loadingBoardId === lb.id;
 
                       return (
-                        <div key={lb.id} className="bg-[#1b2838] border border-[#2a475e] rounded-[2px] overflow-hidden">
+                        <div key={lb.id} className="bg-box border border-line rounded-[2px] overflow-hidden">
                           {/* Collapsed header — clickable */}
                           <button type="button" onClick={() => toggleBoard(lb.id)}
-                            className="w-full text-left px-3 py-2.5 hover:bg-[#202d39] transition-colors">
+                            className="w-full text-left px-3 py-2.5 hover:bg-box-hi transition-colors">
                             <div className="flex items-start justify-between gap-2 mb-1">
-                              <span className="text-[12px] font-medium text-[#c6d4df] leading-snug">{lb.title}</span>
+                              <span className="text-[12px] font-medium text-ink leading-snug">{lb.title}</span>
                               <div className="flex items-center gap-1.5 shrink-0">
                                 <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-[2px] rounded-sm border"
-                                  style={{ color: fmtColor, borderColor: `${fmtColor}40`, background: `${fmtColor}14` }}>
+                                  style={{ color: fmtColor, borderColor: `color-mix(in srgb, ${fmtColor} 25.1%, transparent)`, background: `color-mix(in srgb, ${fmtColor} 7.8%, transparent)` }}>
                                   {({ SCORE: 'Score', TIME: 'Time', TIMESECS: 'Time (s)', MILLISECS: 'Time (ms)', VALUE: 'Value' })[lb.format] ?? lb.format}
                                 </span>
-                                <span className="text-[#546270]" style={{ fontSize: 10 }}>{isExpanded ? '▲' : '▼'}</span>
+                                <span className="text-ink-3" style={{ fontSize: 10 }}>{isExpanded ? '▲' : '▼'}</span>
                               </div>
                             </div>
                             {lb.description && (
-                              <p className="text-[10px] text-[#546270] leading-snug mb-1.5">{lb.description}</p>
+                              <p className="text-[10px] text-ink-3 leading-snug mb-1.5">{lb.description}</p>
                             )}
                             <div className="flex items-center justify-between gap-2 flex-wrap">
                               {userEntry ? (
                                 <span className="text-[9px] px-1.5 py-[2px] rounded-sm border"
-                                  style={{ color: '#57cbde', borderColor: 'rgba(87,203,222,0.3)', background: 'rgba(87,203,222,0.08)' }}>
+                                  style={{ color: 'var(--aqua)', borderColor: 'rgb(var(--c-aqua) / 0.3)', background: 'rgb(var(--c-aqua) / 0.08)' }}>
                                   Your Entry: #{userEntry.rank} · {userEntry.formattedScore}
                                 </span>
                               ) : <span />}
                               {lb.topEntry && (
-                                <span className="text-[9px] text-[#546270]">
+                                <span className="text-[9px] text-ink-3">
                                   👑 {lb.topEntry.user} · {lb.topEntry.formattedScore}
                                 </span>
                               )}
@@ -1139,33 +1128,33 @@ function GameApp() {
 
                           {/* Expanded entries */}
                           {isExpanded && (
-                            <div className="border-t border-[#2a475e]">
+                            <div className="border-t border-line">
                               {isLoadingThis && (
-                                <div className="flex items-center gap-2 py-4 justify-center text-[#546270] text-[11px]">
+                                <div className="flex items-center gap-2 py-4 justify-center text-ink-3 text-[11px]">
                                   <Loader size={12} className="animate-spin" /> Loading…
                                 </div>
                               )}
                               {entries && entries.length === 0 && (
-                                <div className="py-4 text-center text-[11px] text-[#546270]">No entries yet.</div>
+                                <div className="py-4 text-center text-[11px] text-ink-3">No entries yet.</div>
                               )}
                               {entries && entries.length > 0 && (
-                                <div className="divide-y divide-[#2a475e]">
+                                <div className="divide-y divide-line">
                                   {entries.map(e => {
                                     const isMe = e.user === creds?.username;
                                     return (
                                       <div key={e.ulid || e.user}
-                                        className={`flex items-center gap-3 px-3 py-2 border-l-[3px] ${isMe ? 'bg-[#202d39]' : ''}`}
-                                        style={{ borderLeftColor: isMe ? '#57cbde' : 'transparent' }}>
-                                        <span className="text-[10px] font-bold w-5 text-right shrink-0 text-[#546270]">#{e.rank}</span>
+                                        className={`flex items-center gap-3 px-3 py-2 border-l-[3px] ${isMe ? 'bg-box-hi' : ''}`}
+                                        style={{ borderLeftColor: isMe ? 'var(--aqua)' : 'transparent' }}>
+                                        <span className="text-[10px] font-bold w-5 text-right shrink-0 text-ink-3">#{e.rank}</span>
                                         <img src={e.userPic ? getMediaUrl(e.userPic) : `${MEDIA_URL}/UserPic/${e.user}.png`} alt={e.user}
-                                          className="w-6 h-6 rounded-full border border-[#2a475e] bg-[#131a22] object-cover shrink-0" />
+                                          className="w-6 h-6 rounded-full border border-line bg-bar object-cover shrink-0" />
                                         <a href={`../profile/?u=${e.user}`}
                                           className="flex-1 text-[11px] transition-colors hover:text-white"
-                                          style={{ color: isMe ? '#57cbde' : '#c6d4df' }}>
+                                          style={{ color: isMe ? 'var(--aqua)' : 'var(--ink)' }}>
                                           {e.user}
                                         </a>
-                                        <span className="text-[11px] font-bold text-[#e5b143]">{e.formattedScore}</span>
-                                        <span className="text-[9px] text-[#546270] shrink-0">{formatDate(e.dateSubmitted)}</span>
+                                        <span className="text-[11px] font-bold text-gold">{e.formattedScore}</span>
+                                        <span className="text-[9px] text-ink-3 shrink-0">{formatDate(e.dateSubmitted)}</span>
                                       </div>
                                     );
                                   })}
@@ -1209,24 +1198,24 @@ function GameApp() {
                   {/* Recent Masters — fixed width, scrollable */}
                   {communityMasters.length > 0 && (
                     <div className="w-full md:w-[200px] md:shrink-0">
-                      <div className="flex items-center gap-2 pb-2 mb-2 border-b border-[#2a475e]">
-                        <span className="w-[3px] h-[14px] bg-[#e5b143] rounded-[1px] shrink-0" />
-                        <span className="text-[13px] text-white tracking-wide uppercase font-medium">Recent Masters</span>
+                      <div className="flex items-center gap-2 pb-2 mb-2 border-b border-line">
+                        <span className="sec-mark" />
+                        <span className="sec-t">Recent Masters</span>
                       </div>
-                      <div className="flex flex-col divide-y divide-[#1b2838] overflow-y-auto max-h-[220px]">
+                      <div className="flex flex-col divide-y divide-box overflow-y-auto max-h-[220px]">
                         {communityMasters.map(m => (
                           <div key={m.ulid || m.user} className="flex items-center gap-2 py-2">
                             <a href={`../profile/?u=${m.user}`} className="shrink-0">
                               <img
                                 src={m.userPic ? getMediaUrl(m.userPic) : `${MEDIA_URL}/UserPic/${m.user}.png`}
                                 alt={m.user}
-                                className="w-6 h-6 rounded-full border border-[#2a475e] bg-[#131a22] object-cover"
+                                className="w-6 h-6 rounded-full border border-line bg-bar object-cover"
                               />
                             </a>
                             <div className="flex-1 min-w-0">
                               <a href={`../profile/?u=${m.user}`}
-                                className="block text-[11px] font-medium text-[#e5b143] hover:text-[#f0c96a] transition-colors truncate">{m.user}</a>
-                              <span className="text-[9px] text-[#546270]">{formatTimeAgo(m.lastAward)}</span>
+                                className="block text-[11px] font-medium text-gold hover:text-gold-hi transition-colors truncate">{m.user}</a>
+                              <span className="text-[9px] text-ink-3">{formatTimeAgo(m.lastAward)}</span>
                             </div>
                           </div>
                         ))}
@@ -1236,34 +1225,34 @@ function GameApp() {
 
                   {/* Comments */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 pb-2 mb-2 border-b border-[#2a475e]">
-                      <span className="w-[3px] h-[14px] bg-[#66c0f4] rounded-[1px] shrink-0" />
-                      <span className="text-[13px] text-white tracking-wide uppercase font-medium">Comments</span>
-                      {commentsTotal > 0 && <span className="text-[11px] text-[#546270]">({commentsTotal})</span>}
+                    <div className="flex items-center gap-2 pb-2 mb-2 border-b border-line">
+                      <span className="sec-mark" />
+                      <span className="sec-t">Comments</span>
+                      {commentsTotal > 0 && <span className="text-[11px] text-ink-3">({commentsTotal})</span>}
                     </div>
 
                     {communityComments.length === 0 && (
-                      <div className="py-8 text-center text-[11px] text-[#546270]">No comments yet.</div>
+                      <div className="py-8 text-center text-[11px] text-ink-3">No comments yet.</div>
                     )}
 
                     {communityComments.length > 0 && (
                       <div className="flex flex-col">
                         {communityComments.map((c, i) => (
-                          <div key={`${c.ulid || c.user}-${i}`} className="flex gap-3 py-2.5 border-b border-[#1b2838]">
+                          <div key={`${c.ulid || c.user}-${i}`} className="flex gap-3 py-2.5 border-b border-box">
                             <a href={`../profile/?u=${c.user}`} className="shrink-0 mt-0.5">
                               <img
                                 src={c.userPic ? getMediaUrl(c.userPic) : `${MEDIA_URL}/UserPic/${c.user}.png`}
                                 alt={c.user}
-                                className="w-7 h-7 rounded-full border border-[#2a475e] bg-[#131a22] object-cover"
+                                className="w-7 h-7 rounded-full border border-line bg-bar object-cover"
                               />
                             </a>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-baseline gap-2 mb-1">
                                 <a href={`../profile/?u=${c.user}`}
-                                  className="text-[11px] font-medium text-[#e5b143] hover:text-[#f0c96a] transition-colors shrink-0">{c.user}</a>
-                                <span className="text-[9px] text-[#546270]">{formatTimeAgo(c.submitted)}</span>
+                                  className="text-[11px] font-medium text-gold hover:text-gold-hi transition-colors shrink-0">{c.user}</a>
+                                <span className="text-[9px] text-ink-3">{formatTimeAgo(c.submitted)}</span>
                               </div>
-                              <p className="text-[11px] text-[#c6d4df] leading-snug break-words">{c.commentText}</p>
+                              <p className="text-[11px] text-ink leading-snug break-words">{c.commentText}</p>
                             </div>
                           </div>
                         ))}
@@ -1274,7 +1263,7 @@ function GameApp() {
                     {communityComments.length < commentsTotal && (
                       <div className="mt-4 flex justify-center">
                         <button type="button" onClick={loadMoreComments} disabled={loadingMoreComments}
-                          className="flex items-center gap-2 text-[11px] text-[#66c0f4] border border-[#66c0f4]/40 bg-[#66c0f4]/10 hover:bg-[#66c0f4]/20 px-4 py-1.5 rounded-full transition-colors disabled:opacity-50">
+                          className="flex items-center gap-2 text-[11px] text-accent border border-accent/40 bg-accent/10 hover:bg-accent/20 px-4 py-1.5 rounded-full transition-colors disabled:opacity-50">
                           {loadingMoreComments
                             ? <><Loader size={12} className="animate-spin" /> Loading…</>
                             : <>Load more ({commentsTotal - communityComments.length} remaining)</>
@@ -1292,40 +1281,40 @@ function GameApp() {
           {/* ── Hashes tab ── */}
           {tab === 'hashes' && (
             <div className="flex-1 max-w-4xl mx-auto w-full px-4 md:px-8 py-4">
-              <div className="flex items-center gap-2 pb-2 mb-3 border-b border-[#2a475e]">
-                <span className="w-[3px] h-[14px] bg-[#66c0f4] rounded-[1px] shrink-0" />
-                <span className="text-[13px] text-white tracking-wide uppercase font-medium">Supported ROMs</span>
-                {hashes && <span className="text-[11px] text-[#546270]">({hashes.length})</span>}
+              <div className="flex items-center gap-2 pb-2 mb-3 border-b border-line">
+                <span className="sec-mark" />
+                <span className="sec-t">Supported ROMs</span>
+                {hashes && <span className="text-[11px] text-ink-3">({hashes.length})</span>}
               </div>
               {loadingHashes && (
-                <div className="flex items-center gap-2 py-8 justify-center text-[#546270] text-[11px]">
+                <div className="flex items-center gap-2 py-8 justify-center text-ink-3 text-[11px]">
                   <Loader size={14} className="animate-spin" /> Loading hashes…
                 </div>
               )}
               {hashes && hashes.length === 0 && (
-                <div className="py-8 text-center text-[11px] text-[#546270]">No hashes found for this game.</div>
+                <div className="py-8 text-center text-[11px] text-ink-3">No hashes found for this game.</div>
               )}
               {hashes && hashes.length > 0 && (
                 <div className="flex flex-col gap-1.5">
                   {hashes.map((h, i) => (
-                    <div key={i} className="bg-[#1b2838] border border-[#2a475e] rounded-[2px] px-3 py-2.5 flex flex-col gap-1.5">
+                    <div key={i} className="bg-box border border-line rounded-[2px] px-3 py-2.5 flex flex-col gap-1.5">
                       <div className="flex items-start justify-between gap-2 flex-wrap">
-                        <span className="text-[11px] text-[#c6d4df] leading-snug break-all">{h.name || '—'}</span>
+                        <span className="text-[11px] text-ink leading-snug break-all">{h.name || '—'}</span>
                         {h.patchUrl && (
                           <a href={h.patchUrl} target="_blank" rel="noreferrer"
-                            className="shrink-0 text-[9px] font-semibold uppercase tracking-wider text-[#66c0f4] border border-[#66c0f4]/40 bg-[#66c0f4]/10 px-2 py-[2px] rounded-sm hover:bg-[#66c0f4]/20 transition-colors flex items-center gap-1">
+                            className="shrink-0 text-[9px] font-semibold uppercase tracking-wider text-accent border border-accent/40 bg-accent/10 px-2 py-[2px] rounded-sm hover:bg-accent/20 transition-colors flex items-center gap-1">
                             <ExternalLink size={9} /> Patch
                           </a>
                         )}
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <code className="text-[9px] text-[#546270] font-mono tracking-wider break-all">{h.md5}</code>
+                        <code className="text-[9px] text-ink-3 font-mono tracking-wider break-all">{h.md5}</code>
                         {h.labels.map(l => {
                           const lc = l.toLowerCase();
-                          const color = lc === 'nointro' ? '#66c0f4' : lc === 'rapatches' ? '#e5b143' : lc === 'unverified' ? '#ff6b6b' : '#8f98a0';
+                          const color = lc === 'nointro' ? 'var(--accent)' : lc === 'rapatches' ? 'var(--gold)' : lc === 'unverified' ? 'var(--hc)' : 'var(--ink-2)';
                           return (
                             <span key={l} className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-[1px] rounded-sm border"
-                              style={{ color, borderColor: `${color}40`, background: `${color}14` }}>{l}</span>
+                              style={{ color, borderColor: `color-mix(in srgb, ${color} 25.1%, transparent)`, background: `color-mix(in srgb, ${color} 7.8%, transparent)` }}>{l}</span>
                           );
                         })}
                       </div>
@@ -1343,10 +1332,10 @@ function GameApp() {
               {/* Sibling version links */}
               {pocSubset.siblings.length > 0 && (
                 <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-                  <span className="text-[8px] uppercase tracking-wider text-[#546270]">Also see</span>
+                  <span className="text-[8px] uppercase tracking-wider text-ink-3">Also see</span>
                   {pocSubset.siblings.map(s => (
                     <a key={s.id} href={`?id=${s.id}&tab=poc`}
-                      className="text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border bg-[#101214] text-[#8f98a0] border-[#323f4c] hover:text-[#c6d4df] hover:border-[#546270] transition-colors">
+                      className="text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border bg-well text-ink-2 border-line-2 hover:text-ink hover:border-ink-3 transition-colors">
                       {s.label}
                     </a>
                   ))}
@@ -1354,15 +1343,15 @@ function GameApp() {
               )}
 
               {/* Rules blurb */}
-              <div className="flex items-start gap-2.5 px-3 py-2.5 mb-4 bg-[rgba(102,192,244,0.06)] border border-[#2a475e] rounded-[2px]">
-                <Compass size={14} className="shrink-0 mt-0.5" style={{ color: '#66c0f4' }} />
+              <div className="flex items-start gap-2.5 px-3 py-2.5 mb-4 bg-accent/[0.06] border border-line rounded-[2px]">
+                <Compass size={14} className="shrink-0 mt-0.5" style={{ color: 'var(--accent)' }} />
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] text-[#c6d4df] leading-snug">
+                  <p className="text-[11px] text-ink leading-snug">
                     Catch (and evolve to the required stage) every available Pokémon in this version before each checkpoint below — no trading in unavailable Pokémon, no version exclusives from the other game, no glitches.
                   </p>
                   {game.forumTopicId && (
                     <a href={`${SITE_URL}/viewtopic.php?t=${game.forumTopicId}`} target="_blank" rel="noreferrer"
-                      className="inline-flex items-center gap-1 mt-1.5 text-[10px] text-[#66c0f4] hover:text-[#8ed2fa] transition-colors">
+                      className="inline-flex items-center gap-1 mt-1.5 text-[10px] text-accent hover:text-accent-hi transition-colors">
                       <MessageSquare size={10} /> Full rules on the forum thread
                     </a>
                   )}
@@ -1379,10 +1368,10 @@ function GameApp() {
                   <>
                     {/* Overall progress */}
                     <div className="flex items-center gap-2 mb-4">
-                      <div className="flex-1 bg-[#101214] h-[5px] rounded-full overflow-hidden">
-                        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: pct === 100 ? '#e5b143' : '#66c0f4' }} />
+                      <div className="flex-1 bg-well h-[5px] rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: pct === 100 ? 'var(--gold)' : 'var(--accent)' }} />
                       </div>
-                      <span className="text-[10px] font-semibold shrink-0" style={{ color: pct === 100 ? '#e5b143' : '#66c0f4' }}>
+                      <span className="text-[10px] font-semibold shrink-0" style={{ color: pct === 100 ? 'var(--gold)' : 'var(--accent)' }}>
                         {unlockedAch} / {totalAch}
                       </span>
                     </div>
@@ -1394,31 +1383,31 @@ function GameApp() {
                         const cleared = !!cp.markerAch?.dateEarned;
                         const isOpen = expandedCheckpoint === cp.key;
                         return (
-                          <div key={cp.key} className="bg-[#1b2838] border border-[#2a475e] rounded-[2px] overflow-hidden">
+                          <div key={cp.key} className="bg-box border border-line rounded-[2px] overflow-hidden">
                             <button type="button" onClick={() => setExpandedCheckpoint(isOpen ? null : cp.key)}
-                              className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-[#202d39] transition-colors text-left">
+                              className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-box-hi transition-colors text-left">
                               {cleared
-                                ? <CheckCircle2 size={14} className="shrink-0" style={{ color: '#e5b143' }} />
-                                : <span className="shrink-0 w-[14px] h-[14px] rounded-full border border-[#546270]" />}
+                                ? <CheckCircle2 size={14} className="shrink-0" style={{ color: 'var(--gold)' }} />
+                                : <span className="shrink-0 w-[14px] h-[14px] rounded-full border border-ink-3" />}
                               <div className="flex-1 min-w-0">
-                                <span className="text-[12px] font-medium text-[#c6d4df]">{cp.leader}</span>
-                                {cp.title !== cp.leader && <span className="text-[9px] text-[#546270] ml-1.5">{cp.title}</span>}
+                                <span className="text-[12px] font-medium text-ink">{cp.leader}</span>
+                                {cp.title !== cp.leader && <span className="text-[9px] text-ink-3 ml-1.5">{cp.title}</span>}
                               </div>
                               {cp.entries.length > 0 && (
-                                <span className="text-[9px] font-semibold shrink-0" style={{ color: caught === cp.entries.length ? '#e5b143' : '#66c0f4' }}>
+                                <span className="text-[9px] font-semibold shrink-0" style={{ color: caught === cp.entries.length ? 'var(--gold)' : 'var(--accent)' }}>
                                   {caught} / {cp.entries.length}
                                 </span>
                               )}
-                              <ChevronDown size={13} className="shrink-0 text-[#546270] transition-transform" style={{ transform: isOpen ? 'rotate(180deg)' : 'none' }} />
+                              <ChevronDown size={13} className="shrink-0 text-ink-3 transition-transform" style={{ transform: isOpen ? 'rotate(180deg)' : 'none' }} />
                             </button>
 
                             {isOpen && (
-                              <div className="border-t border-[#2a475e] divide-y divide-[#1b2838]">
+                              <div className="border-t border-line divide-y divide-box">
                                 {cp.entries.map(entry => (
                                   <PocEntryRow key={entry.ach.id} entry={entry} reference={pocReference} version={version} />
                                 ))}
                                 {cp.entries.length === 0 && (
-                                  <div className="py-3 text-center text-[10px] text-[#546270]">No new species required for this checkpoint.</div>
+                                  <div className="py-3 text-center text-[10px] text-ink-3">No new species required for this checkpoint.</div>
                                 )}
                               </div>
                             )}
@@ -1431,6 +1420,7 @@ function GameApp() {
               })()}
             </div>
           )}
+          </div>
         </>
       )}
 
@@ -1439,28 +1429,28 @@ function GameApp() {
         .pop-wrap .pop-box {
           display: none; position: absolute;
           bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%);
-          background: #131a22; border: 1px solid #2a475e; border-radius: 2px;
+          background: var(--bar); border: 1px solid var(--line); border-radius: 2px;
           padding: 6px 8px; white-space: nowrap; z-index: 200;
           box-shadow: 0 4px 16px rgba(0,0,0,0.7); pointer-events: none;
           min-width: 110px;
         }
         .pop-wrap .pop-box::after {
           content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
-          border: 4px solid transparent; border-top-color: #2a475e;
+          border: 4px solid transparent; border-top-color: var(--line);
         }
         .pop-wrap:hover .pop-box { display: block; }
-        .pop-name { font-size: 10px; color: #c6d4df; font-weight: 600; margin-bottom: 2px; }
-        .pop-sub  { font-size: 9px; color: #546270; margin-bottom: 2px; }
+        .pop-name { font-size: 10px; color: var(--ink); font-weight: 600; margin-bottom: 2px; }
+        .pop-sub  { font-size: 9px; color: var(--ink-3); margin-bottom: 2px; }
       `}</style>
 
       <Footer
-        label={game ? `${parsed?.baseTitle || game.title} · ${game.consoleName}` : 'Cheevo Tracker · Game'}
+        label={game ? `${parsed?.baseTitle || game.title} · ${game.consoleName}` : 'Cheevodex · Game'}
         right={game
           ? React.createElement('a', {
               href: `${SITE_URL}/game/${gameId}`,
               target: '_blank',
               rel: 'noreferrer',
-              className: 'text-[10px] text-[#546270] hover:text-[#66c0f4] transition-colors flex items-center gap-1',
+              className: 'text-[10px] text-ink-3 hover:text-accent transition-colors flex items-center gap-1',
             }, 'retroachievements.org ↗')
           : null
         }

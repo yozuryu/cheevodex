@@ -3,13 +3,13 @@ id: doc-001
 title: IndexedDB Migration — Schema & Implementation Plan
 type: specification
 created_date: '2026-06-13 08:22'
-updated_date: '2026-06-13 08:22'
+updated_date: '2026-11-12 23:38'
 ---
 ## Overview
 
 Replace scattered localStorage API cache with a single, normalized IndexedDB named **cheevo_tracker**. The existing cheevo_search IDB is renamed — all code that opens it switches to cheevo_tracker. `deleteDatabase('cheevo_search')` is called once on first open of cheevo_tracker to clean up the old DB.
 
-## Schema — cheevo_tracker v1
+## Schema — cheevo_tracker v1 (renamed `cheevodex` in v26.11.13)
 
 ### consoles (keyPath: id)
 - id: number — PK

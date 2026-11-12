@@ -29,6 +29,8 @@ All in parallel:
 | Hashes | Supported ROM hashes |
 | Professor Oak | Only shown when `findPocSubset(gameId)` matches — i.e. when browsing a POC subset's own page — see below |
 
+The bar is `TabBar` from `assets/tabs.js` (uppercase labels, sliding blue underline, achievement count on the first tab). All tab sections sit in one wrapper (`tabContentRef`) so `useSwipeTabs` can switch tabs with a sideways swipe on phones, in `tabIds` order; `switchTab` keeps `?tab=` in sync.
+
 ## Difficulty Curve
 
 Strip above the Achievements tab controls. Renders only when `game.numDistinctPlayersCasual > 0`
@@ -185,10 +187,12 @@ One collapsible section per checkpoint (gym leader / Elite Four / Champion / fin
 
 ### Header
 
+The hero is a `.phead` (`assets/ui.css`): the game's in-game or title art blurred behind (`ArtBg` variant `art-header`, parent game's art for subsets; plain charcoal if none loads) with the gold/blue glows; the icon sits in `.phead-av.game`, ringed gold when mastered/completed and silver when beaten.
+
 ```jsx
 <div className="relative max-w-4xl mx-auto px-4 md:px-8 pt-8 pb-4 md:pt-5">
-  <img className="w-16 h-16 md:w-20 md:h-20 ...">  {/* game box art */}
-  <h1 className="text-[18px] md:text-[22px] ...">
+  <div className="phead-av game ...">  {/* game icon with award ring */}
+  <h1 className="text-[18px] md:text-[22px] ... art-shadow">
 ```
 
 ### Stats bar
@@ -197,7 +201,7 @@ Uses `grid grid-flow-col auto-cols-fr` — equal-width columns at all sizes. Sta
 
 ### Tab bar
 
-Sticky at `top-0 md:top-[26px]`. Tabs are text-only (no icon/label switch) — scrolls horizontally with `overflow-x-auto scrollbar-none`.
+`.ptabs` is sticky at the top (`md:top-[26px]` below the desktop Topbar). Labels only; the row scrolls sideways and keeps the active tab in view. Swipe on the content to change tab.
 
 ### Content sections (Leaderboards, Comments)
 

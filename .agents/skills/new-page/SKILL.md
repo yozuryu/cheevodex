@@ -1,6 +1,6 @@
 ---
 name: new-page
-description: Scaffold a new page in the cheevo-tracker project. Use this skill whenever the user asks to create a new page, add a new route, or build a new section of the app (e.g. "add a leaderboard page", "create a user stats page", "build a new page for X"). The skill generates the exact index.html + app.js boilerplate with all required CDN versions, auth pattern, mobile rules, and shared imports — avoiding the many easy mistakes when setting these up by hand.
+description: Scaffold a new page in the cheevodex project. Use this skill whenever the user asks to create a new page, add a new route, or build a new section of the app (e.g. "add a leaderboard page", "create a user stats page", "build a new page for X"). The skill generates the exact index.html + app.js boilerplate with all required CDN versions, auth pattern, mobile rules, and shared imports — avoiding the many easy mistakes when setting these up by hand.
 ---
 
 # Scaffold a New Page
@@ -9,7 +9,7 @@ description: Scaffold a new page in the cheevo-tracker project. Use this skill w
 
 Before writing any files, confirm:
 1. **Page name** — used as the directory name (e.g. `leaderboard`, `stats`, `user`)
-2. **Page title** — shown in `<title>` (e.g. `Cheevo Tracker · Leaderboard`)
+2. **Page title** — shown in `<title>` (e.g. `Cheevodex · Leaderboard`)
 3. **Needs auth?** — almost always yes; only skip for fully public pages
 4. **Rough purpose** — so you can pre-fill the right Lucide icons and initial state shape
 
@@ -38,19 +38,26 @@ Use this **exact** template. Do not change CDN versions — they are pinned inte
     <meta charset="UTF-8">
     <link rel="manifest" href="../manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Cheevo Tracker · {{Page Title}}</title>
+    <title>Cheevodex · {{Page Title}}</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../assets/tw-config.js"></script>
+    <link rel="stylesheet" href="../assets/tokens.css">
+    <link rel="stylesheet" href="../assets/ui.css">
+    <link rel="stylesheet" href="../assets/motion.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Silkscreen&display=swap">
 
     <style>
-        html, body { background-color: #171a21; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+        html, body { background-color: var(--page); margin: 0; padding: 0; font-family: var(--font); }
 
         @keyframes shimmer {
             0%   { background-position: -800px 0; }
             100% { background-position:  800px 0; }
         }
         .shimmer {
-            background: linear-gradient(90deg, #1b2838 25%, #2a3f52 50%, #1b2838 75%);
+            background: linear-gradient(90deg, var(--box) 25%, var(--shimmer) 50%, var(--box) 75%);
             background-size: 800px 100%;
             animation: shimmer 1.6s infinite linear;
             border-radius: 2px;
@@ -70,9 +77,10 @@ Use this **exact** template. Do not change CDN versions — they are pinned inte
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
     <link rel="apple-touch-icon" href="../assets/icon-192.png">
 </head>
-<body class="bg-[#171a21]">
+<body class="bg-page">
     <div id="root"></div>
     <script type="text/babel" data-type="module" src="./app.js"></script>
     <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js');</script>
@@ -116,7 +124,7 @@ function App() {
   if (!creds) return null;
 
   return (
-    <div className="min-h-screen bg-[#171a21] text-[#c6d4df]">
+    <div className="min-h-screen bg-page text-ink">
       <Topbar />
       <main className="max-w-4xl mx-auto px-4 md:px-8 pt-8 pb-5 md:pt-5">
         {/* page content */}
@@ -142,12 +150,12 @@ createRoot(document.getElementById('root')).render(<App />);
 
 ### Section header pattern
 ```jsx
-<div className="flex items-center gap-2 border-b border-[#2a475e] pb-1.5 mb-3">
-  <span className="w-[3px] h-[14px] bg-[#e5b143] rounded-[1px] shrink-0" />
-  <span className="text-[13px] text-white tracking-wide uppercase font-medium">Section Title</span>
+<div className="flex items-center gap-2 border-b border-line pb-1.5 mb-3">
+  <span className="sec-mark" />
+  <span className="sec-t">Section title</span>
 </div>
 ```
-Use `#e5b143` (gold) for RA data sections, `#66c0f4` (blue) for activity/engagement sections.
+Blue diamond + blue sentence-case title with a fading underline (styles in `assets/ui.css`). Colours only from tokens (`docs/rules.md`): never write a hex.
 
 ### Mobile layout
 - Single breakpoint: `md` = 768px.

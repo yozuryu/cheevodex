@@ -1,6 +1,6 @@
 ---
 name: add-ra-endpoint
-description: Add a new RetroAchievements API endpoint to ra-api.js in the cheevo-tracker project. Use this skill when the user wants to call a new RA API endpoint, add a raw wrapper, add an app composite with caching, or extend the API client. The skill knows the exact two-layer architecture (raw wrapper → camelCase map, app composite → sessionStorage cache), where to insert in the file, and how to update ra-api.md. Also use it when the user says "add an API call for X", "we need to fetch X from the RA API", or "wire up the X endpoint".
+description: Add a new RetroAchievements API endpoint to ra-api.js in the cheevodex project. Use this skill when the user wants to call a new RA API endpoint, add a raw wrapper, add an app composite with caching, or extend the API client. The skill knows the exact two-layer architecture (raw wrapper → camelCase map, app composite → sessionStorage cache), where to insert in the file, and how to update ra-api.md. Also use it when the user says "add an API call for X", "we need to fetch X from the RA API", or "wire up the X endpoint".
 ---
 
 # Add a New RA API Endpoint

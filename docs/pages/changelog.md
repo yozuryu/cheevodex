@@ -23,7 +23,7 @@ Fetches `/changelog.md` at runtime (network-first via service worker — always 
 }]
 ```
 
-Inline code (backtick-wrapped) is rendered as `<code>` via `renderText()`.
+Inline code (backtick-wrapped) is rendered as `<code>` and `**bold**` as `<strong>` via `renderText()`.
 
 ## Section Order & Colors
 

@@ -1,0 +1,214 @@
+/* Cheevodex shared component styles: things Tailwind classes express badly.
+ * Colours come from assets/tokens.css only. See docs/rules.md and decision-008. */
+
+/* ── Base ─────────────────────────────────────────────────────────────────────── */
+html, body { font-family: var(--font); background-color: var(--page); color: var(--ink); }
+body { -webkit-font-smoothing: antialiased; font-feature-settings: 'tnum' 1; }
+/* Numbers that line up or matter: points, counts, ranks, percentages */
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+/* ── Section heading (doc-012) ─────────────────────────────────────────────────────
+ * <div class="... border-b ..."><span class="sec-mark" /><span class="sec-t">Title</span></div>
+ * Blue diamond, blue title, and an underline that fades from 55% to 8% blue. Any
+ * element that directly holds a .sec-mark gets the underline. */
+.sec-mark { width: 7px; height: 7px; flex-shrink: 0; background: var(--accent); transform: rotate(45deg); margin: 0 3px 0 2px; box-shadow: 0 0 6px rgb(var(--c-accent) / 0.45); }
+.sec-t { font-size: 15px; font-weight: 500; color: var(--accent); letter-spacing: -0.005em; line-height: 1.3; }
+.sec-t svg { color: var(--accent); }
+:has(> .sec-mark) { border-bottom-width: 1px; border-image: linear-gradient(90deg, rgb(var(--c-accent) / 0.55), rgb(var(--c-accent) / 0.08)) 1; }
+/* Card header title: the same marker, smaller, inside a panel's header strip */
+.sec-mark.sm { width: 5px; height: 5px; margin: 0 2px 0 1px; box-shadow: none; }
+.card-t { font-size: 13px; font-weight: 500; color: var(--accent); line-height: 1.3; }
+.card-t svg { color: var(--accent); }
+/* Anything already marked tabular is a number column: give it the mono face too */
+.tabular-nums { font-family: var(--mono); letter-spacing: -0.01em; }
+
+/* ── Sheet: bottom sheet below md, centred dialog from md (assets/sheet.js) ──────────
+ * Ported from Savepoint. z-index sits above the mobile nav (200) so the sheet covers it. */
+.sheet-root { position: fixed; inset: 0; z-index: 210; display: flex; align-items: flex-end; justify-content: center; }
+.sheet-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); transition: opacity 220ms ease-in; }
+.sheet-leaving .sheet-backdrop { opacity: 0; }
+.sheet-panel {
+  position: relative; z-index: 1; width: 100%;
+  height: calc(100dvh - 48px - env(safe-area-inset-top, 0px));
+  display: flex; flex-direction: column; overflow: hidden;
+  background: var(--box); border-top: 1px solid var(--line); border-radius: 12px 12px 0 0;
+  box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.5);
+  animation: sheet-up 280ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
+}
+.sheet-scroll { overflow-y: auto; overscroll-behavior: contain; flex: 1; min-height: 0; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+@keyframes sheet-up { from { transform: translateY(100%); } }
+@media (min-width: 768px) {
+  .sheet-root { align-items: center; padding: 16px; }
+  .sheet-panel {
+    max-width: 36rem; height: auto; max-height: 90vh;
+    border: 1px solid var(--line); border-radius: 4px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    animation: motion-pop 180ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+  }
+  .sheet-panel.wide { max-width: 42rem; }
+  .sheet-scroll { padding-bottom: 12px; }
+}
+.sheet-head { position: relative; flex-shrink: 0; overflow: hidden; border-bottom: 1px solid var(--line); touch-action: none; }
+.sheet-grab { position: relative; z-index: 1; display: block; width: 40px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.45); margin: 8px auto 0; }
+.sheet-close {
+  position: absolute; z-index: 3; top: 12px; right: 12px; width: 30px; height: 30px; border-radius: 3px;
+  display: grid; place-items: center; color: #fff;
+  background: rgb(var(--c-well) / 0.72); border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: background-color 150ms;
+}
+.sheet-close:hover { background: rgb(var(--c-well) / 0.9); }
+.sheet-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sheet-title { text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7); }
+@media (min-width: 768px) { .sheet-grab { display: none; } .sheet-close { top: 10px; right: 10px; width: 28px; height: 28px; } }
+
+/* ── Blurred art background (sheet headers, page headers) ───────────────────────────
+ * One <img> bleeding 30px past every edge (more than the blur radius) so no dark rim shows. */
+.art-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.art-bg img {
+  position: absolute; top: -30px; left: -30px; width: calc(100% + 60px); height: calc(100% + 60px);
+  max-width: none; object-fit: cover; object-position: center;
+  filter: blur(6px) saturate(1.2) brightness(0.8);
+  opacity: 0; transition: opacity 300ms ease-out;
+}
+.art-bg img.loaded { opacity: 1; }
+.sheet-panel:not(.settled) .art-bg img { transition: none; }
+.art-bg.art-sheet img { filter: blur(3px) saturate(1.1) brightness(0.55); }
+.art-bg.art-sheet::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(var(--c-box) / 0) 0%, rgb(var(--c-box) / 0.4) 50%, var(--box) 100%); }
+.art-shadow { text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7); }
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-panel, .sheet-backdrop, .art-bg img { animation: none !important; transition: none !important; }
+}
+
+/* ── Tabs (assets/tabs.js) ─────────────────────────────────────────────────────────
+ * Uppercase 12px/600 labels, the active one in ink with a 3px blue underline that slides
+ * between tabs. Scrolls sideways when the tabs don't fit. Pages set the sticky offset. */
+.ptabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 40; background: rgb(var(--c-page) / 0.94); border-bottom: 1px solid var(--line); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.ptabs-row { position: relative; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.ptabs-row::-webkit-scrollbar { display: none; }
+.ptab {
+  flex-shrink: 0; display: flex; align-items: center; gap: 7px; height: 42px; padding: 0 10px;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; white-space: nowrap;
+  color: var(--ink-3); transition: color 150ms;
+}
+.ptab:hover { color: var(--ink); }
+.ptab.on { color: var(--ink); }
+.ptab:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
+.ptab-icon { display: grid; place-items: center; }
+.ptab-icon svg { width: 15px; height: 15px; }
+.ptab.on .ptab-icon { color: var(--accent); }
+.ptab-count { font-size: 10px; font-weight: 500; letter-spacing: 0; color: var(--ink-3); font-family: var(--mono); }
+.ptabs-ind { position: absolute; left: 0; bottom: 0; height: 3px; border-radius: 2px 2px 0 0; background: var(--accent); box-shadow: 0 0 8px rgb(var(--c-accent) / 0.35); transition: transform 250ms cubic-bezier(0.2, 0.8, 0.3, 1), width 250ms cubic-bezier(0.2, 0.8, 0.3, 1); }
+@media (min-width: 768px) { .ptabs-row { gap: 8px; } .ptab { height: 44px; font-size: 12.5px; } }
+/* Carousel swipe: the neighbouring tab as a skeleton beside the content while dragging */
+.tab-peek { position: absolute; width: 100%; overflow: hidden; pointer-events: none; }
+.tab-peek-in { display: flex; flex-direction: column; gap: 10px; }
+.pk-line { height: 11px; border-radius: 2px; }
+.pk-h2 { padding-bottom: 7px; border-bottom: 1px solid var(--line); }
+.pk-row { display: flex; gap: 10px; padding: 10px; background: var(--box); border: 1px solid var(--line-soft); border-radius: 3px; }
+.pk-icon { width: 44px; height: 44px; border-radius: 2px; flex-shrink: 0; }
+.pk-main { flex: 1; display: flex; flex-direction: column; gap: 7px; justify-content: center; }
+@media (prefers-reduced-motion: reduce) { .ptabs-ind { transition: none; } }
+
+/* ── Game lists: list / tiles toggle and tiles (profile; assets/game-view.js) ─────────
+ * Status colour (gold mastered / silver beaten / blue in progress / line not started)
+ * comes in from JS as the tile's bottom edge and the segmented bar's fill. */
+.vtoggle { display: inline-flex; flex-shrink: 0; background: var(--well); border: 1px solid var(--line); border-radius: 2px; overflow: hidden; }
+.vtoggle button { width: 30px; height: 24px; display: grid; place-items: center; color: var(--ink-3); transition: color 150ms, background-color 150ms; }
+.vtoggle button + button { border-left: 1px solid var(--line); }
+.vtoggle button:hover { color: var(--ink); }
+.vtoggle button.on { color: var(--ink); background: var(--box); box-shadow: inset 0 -2px 0 var(--accent); }
+.vtoggle button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Segmented progress: up to 20 segments, each filling in turn */
+.segbar { display: flex; gap: 2px; height: 5px; width: 100%; }
+.segbar > i { flex: 1; min-width: 0; background: var(--well); border-radius: 1px; overflow: hidden; }
+.segbar > i > b { display: block; height: 100%; }
+.segbar.glow > i > b { box-shadow: 0 0 6px rgb(var(--c-gold) / 0.6); }
+
+.gtiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.gtile {
+  display: flex; flex-direction: column; text-align: left; background: var(--box-hi);
+  border: 1px solid var(--line-2); border-bottom-width: 3px; border-radius: 3px; overflow: hidden;
+  transition: transform 150ms, background-color 150ms;
+}
+.gtile:hover { transform: translateY(-2px); background: var(--box-hover); }
+.gtile.mastered { box-shadow: 0 0 14px rgb(var(--c-gold) / 0.14); }
+.gtile-art { position: relative; aspect-ratio: 460 / 215; overflow: hidden; background: var(--well); }
+.gtile-art .bg { position: absolute; top: -12px; left: -12px; width: calc(100% + 24px); height: calc(100% + 24px); max-width: none; object-fit: cover; filter: blur(6px) saturate(1.2) brightness(0.7); }
+.gtile-art .icon { position: absolute; left: 50%; top: 50%; height: 72%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 3px; border: 2px solid rgba(255, 255, 255, 0.2); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.55); object-fit: cover; background: var(--well); }
+.gtile.mastered .gtile-art .icon { border-color: var(--gold); box-shadow: 0 0 12px rgb(var(--c-gold) / 0.45), 0 6px 16px rgba(0, 0, 0, 0.55); }
+.gtile.beaten .gtile-art .icon { border-color: var(--silver); }
+.gtile-ago { position: absolute; top: 6px; left: 6px; font-size: 10px; font-weight: 600; color: #fff; background: rgb(var(--c-well) / 0.85); padding: 1px 6px; border-radius: 2px; }
+.gtile-mode { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 2px; background: rgb(var(--c-well) / 0.85); border: 1px solid; }
+.gtile-body { display: flex; flex-direction: column; gap: 6px; padding: 9px 10px 10px; flex: 1; }
+.gtile-title { font-size: 12.5px; font-weight: 500; color: var(--ink); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.gtile-sub { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--accent); min-width: 0; }
+.gtile-sub > .shrink { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gtile-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: 11px; color: var(--ink-2); margin-top: auto; }
+.gtile-meta b { color: var(--ink); font-weight: 600; }
+@media (min-width: 768px) { .gtiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; } }
+@media (min-width: 1024px) { .gtiles { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; } }
+
+/* ── Page header (profile + game; doc-012) ────────────────────────────────────────────
+ * The latest game's art blurred behind (.art-bg.art-header), a gold glow top-left and a blue
+ * glow top-right, a gold-ringed avatar, identity lines, then the numbers strip and the
+ * mastered / beaten / in-progress status row. Phone: stacked; desktop: numbers on the right.
+ * With no art (or art that fails to load) it is a plain charcoal header. */
+.phead { position: relative; overflow: hidden; background: var(--box); border-bottom: 1px solid var(--line); }
+.phead::before { content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  background: radial-gradient(60% 120% at 0% 0%, rgb(var(--c-gold) / 0.13), transparent 60%),
+              radial-gradient(60% 120% at 100% 0%, rgb(var(--c-accent) / 0.16), transparent 60%); }
+.art-bg.art-header img { filter: blur(6px) saturate(1.1) brightness(0.55); }
+.art-bg.art-header::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgb(var(--c-box) / 0.4) 0%, rgb(var(--c-box) / 0.62) 55%, rgb(var(--c-box) / 0.96) 100%); }
+.phead > :not(.art-bg) { position: relative; z-index: 2; }
+.phead-in { max-width: 64rem; margin: 0 auto; padding: 28px 16px 16px; display: flex; flex-direction: column; gap: 14px; }
+.phead-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; flex: 1; }
+.phead-top { display: flex; align-items: center; gap: 14px; min-width: 0; }
+/* 2px gold conic ring around the avatar */
+.phead-av { position: relative; flex-shrink: 0; width: 72px; height: 72px; padding: 2px; border-radius: 3px;
+  background: conic-gradient(from 210deg, var(--gold-hi), var(--gold), var(--gold-press), var(--gold), var(--gold-hi));
+  box-shadow: 0 0 18px rgb(var(--c-gold) / 0.28), 0 2px 12px rgba(0, 0, 0, 0.5); }
+.phead-av img { width: 100%; height: 100%; object-fit: cover; border-radius: 2px; background: var(--well); display: block; }
+.phead-av .dot { position: absolute; right: -3px; bottom: -3px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--box); }
+.phead-av.game { background: var(--line-2); box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5); }
+.phead-av.game.mastered { background: conic-gradient(from 210deg, var(--gold-hi), var(--gold), var(--gold-press), var(--gold), var(--gold-hi)); box-shadow: 0 0 18px rgb(var(--c-gold) / 0.28), 0 2px 12px rgba(0, 0, 0, 0.5); }
+.phead-av.game.beaten { background: var(--silver); }
+.phead-id { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.phead-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.phead-name h1 { font-size: 22px; font-weight: 600; color: #fff; line-height: 1.15; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; }
+.phead-link { flex-shrink: 0; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 2px; border: 1px solid var(--line-2); background: rgb(var(--c-well) / 0.7); transition: border-color 150ms; }
+.phead-link:hover { border-color: var(--accent); }
+.phead-link img { width: 14px; height: 14px; object-fit: contain; }
+.phead-sub { font-size: 12px; color: var(--ink-2); line-height: 1.35; }
+.phead-sub b { font-weight: 600; }
+.phead-motto { font-size: 12.5px; font-style: italic; color: var(--ink); opacity: 0.85; line-height: 1.45; border-left: 2px solid rgb(var(--c-accent) / 0.5); padding-left: 9px; }
+.phead-side { display: flex; flex-direction: column; gap: 8px; }
+.phead-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); background: rgb(var(--c-well) / 0.6); border: 1px solid var(--line); border-radius: 3px; }
+.phead-stat { padding: 8px 12px; min-width: 0; }
+.phead-stat + .phead-stat { border-left: 1px solid var(--line); }
+.phead-stat b { display: block; font-size: 18px; font-weight: 600; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.phead-stat span { display: block; font-size: 11px; color: var(--ink-2); margin-top: 1px; }
+.phead-meta { font-size: 11px; color: var(--ink-3); }
+.phead-meta b { color: var(--ink-2); font-weight: 500; }
+/* Status row: tinted cells with a coloured bottom edge */
+.pstatus { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+.pstatus-cell { display: flex; align-items: center; gap: 5px; padding: 5px 8px; font-size: 11px; color: var(--ink-2); white-space: nowrap; overflow: hidden;
+  background: rgb(var(--c) / 0.1); border-bottom: 2px solid rgb(var(--c)); border-radius: 2px 2px 0 0; }
+.pstatus-cell svg { color: rgb(var(--c)); flex-shrink: 0; }
+.pstatus-cell b { color: var(--ink); font-weight: 600; }
+@media (min-width: 768px) {
+  .phead-in { flex-direction: row; align-items: center; gap: 32px; padding: 24px 32px; }
+  .phead-av { width: 96px; height: 96px; }
+  .phead-name h1 { font-size: 26px; }
+  .phead-side { width: 380px; flex-shrink: 0; }
+  .phead-meta { text-align: right; }
+}
+
+/* ── Brand (top bar, login) ────────────────────────────────────────────────────────
+ * Lens boy mark + wordmark "Cheevo" in ink and "dex" in RA blue, Geist 650 (doc-012). */
+.brand { display: inline-flex; align-items: center; gap: 7px; text-decoration: none; }
+.wm-mark { width: 18px; height: 18px; image-rendering: pixelated; flex-shrink: 0; }
+.wm { font-family: var(--font); font-weight: 650; font-size: 14px; letter-spacing: -0.02em; color: var(--ink); line-height: 1; white-space: nowrap; }
+.wm em { font-style: normal; color: var(--accent); }
+a.brand:hover .wm { color: #fff; }

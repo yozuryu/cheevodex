@@ -1,5 +1,56 @@
 # Changelog
 
+## v26.11.13 — Cheevodex: new name, Modern RA look, Savepoint components
+
+### Cache
+
+- Service worker cache renamed to `cheevodex-…` and bumped so installed apps pick up the new name, icons and styles; the new shared files (`tokens.css`, `tw-config.js`, `ui.css`, `motion.css`, `sheet.js`, `tabs.js`, `game-view.js`) are precached
+- IndexedDB renamed from `cheevo_tracker` to `cheevodex`; the old database is deleted on first open, so each browser re-downloads its cache once. Logins (`raCredentials`) and settings in localStorage are untouched
+
+### Structure
+
+- **Design tokens.** Every colour now comes from one stylesheet, `assets/tokens.css`, mapped into Tailwind by `assets/tw-config.js` (`text-gold`, `bg-box/60`, `var(--accent)`), instead of ~1,900 hex literals spread across every page. No visual change: before/after screenshots of all pages at phone and desktop width match (five near-duplicate greys were merged, ≤4/255 apart). Colours held in JS variables use `color-mix()` instead of appended hex alpha. New decision-008; `docs/rules.md` and `CLAUDE.md` document the tokens and lift the "no CSS files" rule
+- `404.html` points at `/cheevodex/` after the repo rename (its favicon and home link still used `/cheevo-tracker/`)
+- New `assets/ui.css` for shared component styles (base type, headings); `manifest.json` background/theme colours follow the new palette
+- New `assets/sheet.js` (Savepoint's `useSheet`, `useArtSrc`, plus an `ArtBg` helper) and sheet / blurred-art styles in `assets/ui.css`. The profile's per-game achievement modal uses it too, with the game's art blurred behind its header
+- Moved to **yozuryu.github.io/cheevodex/** with the repo rename. Old `/cheevo-tracker/…` links (any page, with query string) redirect to the same page at the new address via the root site's `404.html`; credentials survive because the origin is the same
+
+### Profile
+
+- **List or tiles.** Recent Games and Completion Progress have a list / tiles switch. Tiles show the game's art with its icon, last played, hardcore/softcore, achievement count and status, with a status-coloured bottom edge (gold mastered, silver beaten, blue in progress); mastered tiles glow. The choice is remembered on this device (`assets/game-view.js`, from Savepoint) and falls back to the list where storage is blocked
+- **Segmented progress bars.** Game progress is drawn as up to 20 segments filling in the game's status colour, in both views; the count and percentage are in Geist Mono
+- **New profile header.** The most recently played game's art sits blurred behind the header with a gold glow top-left and a blue glow top-right; the avatar has a gold ring; Points, Achievements and Site rank are a numbers strip; a status row counts mastered, beaten and in-progress games. If the art doesn't load the header stays plain charcoal. Replaces the centred avatar with three text pills
+
+### Social
+
+- **Compare opens as a sheet.** On phones the compare view slides up from the bottom over the nav bar and closes by dragging its header down, tapping outside, the close button or Escape; from tablet width it stays a centred dialog. Ported from Savepoint (`assets/sheet.js`), animations off under reduced motion
+
+### Game Page
+
+- **Art-lit header.** The game's in-game/title art is blurred behind the header (was a flat 15% wash) with the same gold/blue glows as the profile; the icon gets a gold ring when mastered and a silver one when beaten; header numbers are in Geist Mono and the completion bar has square ends
+
+### Achievement Page
+
+- Same art-lit header as the game page (blurred art, gold/blue glows); an unlocked badge gets a 2px gold ring with a glow, locked stays greyscale. Tabs use the new sliding-underline tab bar
+
+### Navigation
+
+- **New tab bars.** Profile (desktop) and game page tabs are one row of uppercase labels with a 3px blue underline that slides to the active tab; the row scrolls sideways when it doesn't fit and keeps the active tab in view. Game page tabs were bordered buttons. Ported from Savepoint (`assets/tabs.js`)
+- **Swipe between tabs on phones.** On the profile and game pages a sideways swipe on the content moves to the next or previous tab, with a skeleton of the next tab sliding in. Vertical scrolling, the heatmap and other sideways-scrolling rows are left alone; the `?tab=` URL stays in sync
+- **Page transitions.** Moving between pages fades the content while the top bar and the phone nav bar stay put (cross-document View Transitions, `assets/motion.css` from Savepoint). Browsers without support navigate as before; everything is off under reduced motion
+- **Cheevo Tracker is now Cheevodex.** New name in every page title, the top bar, footers, the install banner, the manifest and the README. The top bar shows the new Lens boy mark with the wordmark Cheevo**dex** ("dex" in blue); the login page shows the app icon and wordmark instead of the RetroAchievements logo
+- **New icon: Lens boy** — a pixel handheld whose screen is one big gold achievement-coin lens, with a d-pad and a gold button. Replaces the pixel trophy in `favicon.svg`, `favicon.ico` (16/32/48), `icon-192.png`, `icon-512.png` and `appicon.png`/`appicon.svg`
+- Every page says it is **unofficial and not affiliated with RetroAchievements**: in the footer on desktop, at the bottom of the phone menu sheet (phones hide the footer), and on the login page
+
+### Polish
+
+- **Modern RA look.** Warm charcoal surfaces instead of Steam blue-grey, RA blue (#2c97fa) for structure — headings, platforms, active filters, progress — and gold (#f2b731) for anything earned: points chips, mastered, unlocks. Points chips on the profile, game and achievement pages are now gold (were blue)
+- **Geist and Geist Mono.** UI text is Geist; stat values, counts and every tabular number use Geist Mono. Loaded from Google Fonts with system fallbacks
+- **New section headings** on every page: a blue diamond, blue sentence-case title and an underline that fades out, replacing the gold/blue bar with white uppercase text. Panel headers (Game Awards, Stats cards) use a smaller version
+- The profile's floating tab pill on phones has 3px corners instead of fully round ends, matching the rest of the app
+- Changelog page renders **bold** text (it showed the asterisks)
+- Login tagline is now "Register every unlock"; the app's install description and the README now call it "A pocket companion for RetroAchievements"
+
 ## v26.09.27 — Not-found page + silver Beaten + POC fixes, FireRed & LeafGreen + new icon
 
 ### Cache

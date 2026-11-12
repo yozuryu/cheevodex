@@ -1,0 +1,108 @@
+/* Cheevodex design tokens (Modern RA palette, doc-012) — the only place colours are defined.
+ * Each colour is stored twice:
+ *   --c-NAME  space-separated RGB channels, for alpha: rgb(var(--c-gold) / 0.3)
+ *   --NAME    the solid colour, for inline styles and SVG: var(--gold)
+ * Tailwind maps every NAME to a utility colour (assets/tw-config.js), so
+ * text-gold, bg-box/60, border-l-accent all work. See docs/rules.md. */
+:root {
+  --c-page:          17 17 17;  /* #111111 Page background */
+  --c-bar:           12 12 12;  /* #0c0c0c Top bar and mobile nav background */
+  --c-box:           26 25 24;  /* #1a1918 Panel / card */
+  --c-box-hi:        32 31 30;  /* #201f1e Raised row inside a panel */
+  --c-box-hover:     39 37 35;  /* #272523 Hovered row */
+  --c-head:          22 21 20;  /* #161514 Table and list header strip */
+  --c-chip:          42 40 38;  /* #2a2826 Neutral chip fill */
+  --c-well:          12 12 12;  /* #0c0c0c Deepest inset: inputs, bar tracks */
+  --c-well-edge:     7 7 7;  /* #070707 Edge around a well */
+  --c-inset:         14 14 13;  /* #0e0e0d Tooltip / inline inset */
+  --c-track:         36 35 33;  /* #242321 Chart bar track */
+  --c-shimmer:       42 41 39;  /* #2a2927 Skeleton shimmer highlight */
+  --c-disabled:      46 44 42;  /* #2e2c2a Disabled button fill */
+  --c-line:          44 43 41;  /* #2c2b29 Default border */
+  --c-line-2:        54 52 49;  /* #363431 Muted border, locked states */
+  --c-line-soft:     36 35 33;  /* #242321 Soft divider */
+  --c-line-faint:    31 30 28;  /* #1f1e1c Faintest divider */
+  --c-ink:           232 229 223;  /* #e8e5df Primary text */
+  --c-ink-2:         155 150 142;  /* #9b968e Secondary text */
+  --c-ink-3:         95 91 85;  /* #5f5b55 Muted text, labels */
+  --c-ink-4:         70 67 63;  /* #46433f Faintest text, separators */
+  --c-accent:        44 151 250;  /* #2c97fa RA blue: headings, rank, platforms, active tab, progress */
+  --c-accent-hi:     108 184 255;  /* #6cb8ff Accent hover */
+  --c-accent-edge:   44 151 250;  /* #2c97fa Avatar frame */
+  --c-heat-1:        18 58 99;  /* #123a63 Heatmap low */
+  --c-heat-2:        29 100 168;  /* #1d64a8 Heatmap mid */
+  --c-gold:          242 183 49;  /* #f2b731 Earned: mastered, points, unlocks (the only colour that glows) */
+  --c-gold-hi:       255 215 110;  /* #ffd76e Gold hover */
+  --c-gold-dim:      201 154 46;  /* #c99a2e Subset / secondary gold */
+  --c-gold-press:    214 158 34;  /* #d69e22 Gold button hover */
+  --c-link:          224 164 18;  /* #e0a412 Text links (RA's link gold) */
+  --c-silver:        196 202 209;  /* #c4cad1 Beaten */
+  --c-bronze:        205 127 50;  /* #cd7f32 Third place */
+  --c-aqua:          87 203 222;  /* #57cbde Info / auth / changelog */
+  --c-hc:            255 93 74;  /* #ff5d4a Hardcore, errors, log out */
+  --c-danger:        240 86 74;  /* #f0564a Destructive / fetch failure text */
+  --c-danger-hi:     255 122 107;  /* #ff7a6b Destructive hover */
+  --c-danger-edge:   110 43 37;  /* #6e2b25 Error box border */
+  --c-warn:          255 152 0;  /* #ff9800 Missable */
+  --c-ok:            107 207 127;  /* #6bcf7f Success */
+  --c-online:        76 175 80;  /* #4caf50 Online presence dot */
+  --c-rare:          232 129 60;  /* #e8813c Rarity: rare */
+  --c-very-rare:     245 224 143;  /* #f5e08f Rarity: very rare */
+  --c-ultra-rare:    201 64 64;  /* #c94040 Rarity: ultra rare */
+  --c-install:       44 151 250;  /* #2c97fa Install banner button */
+  --c-install-hi:    90 174 252;  /* #5aaefc Install button hover */
+  --c-install-press: 31 127 214;  /* #1f7fd6 Install button active */
+
+  --page:          rgb(var(--c-page));
+  --bar:           rgb(var(--c-bar));
+  --box:           rgb(var(--c-box));
+  --box-hi:        rgb(var(--c-box-hi));
+  --box-hover:     rgb(var(--c-box-hover));
+  --head:          rgb(var(--c-head));
+  --chip:          rgb(var(--c-chip));
+  --well:          rgb(var(--c-well));
+  --well-edge:     rgb(var(--c-well-edge));
+  --inset:         rgb(var(--c-inset));
+  --track:         rgb(var(--c-track));
+  --shimmer:       rgb(var(--c-shimmer));
+  --disabled:      rgb(var(--c-disabled));
+  --line:          rgb(var(--c-line));
+  --line-2:        rgb(var(--c-line-2));
+  --line-soft:     rgb(var(--c-line-soft));
+  --line-faint:    rgb(var(--c-line-faint));
+  --ink:           rgb(var(--c-ink));
+  --ink-2:         rgb(var(--c-ink-2));
+  --ink-3:         rgb(var(--c-ink-3));
+  --ink-4:         rgb(var(--c-ink-4));
+  --accent:        rgb(var(--c-accent));
+  --accent-hi:     rgb(var(--c-accent-hi));
+  --accent-edge:   rgb(var(--c-accent-edge));
+  --heat-1:        rgb(var(--c-heat-1));
+  --heat-2:        rgb(var(--c-heat-2));
+  --gold:          rgb(var(--c-gold));
+  --gold-hi:       rgb(var(--c-gold-hi));
+  --gold-dim:      rgb(var(--c-gold-dim));
+  --gold-press:    rgb(var(--c-gold-press));
+  --link:          rgb(var(--c-link));
+  --silver:        rgb(var(--c-silver));
+  --bronze:        rgb(var(--c-bronze));
+  --aqua:          rgb(var(--c-aqua));
+  --hc:            rgb(var(--c-hc));
+  --danger:        rgb(var(--c-danger));
+  --danger-hi:     rgb(var(--c-danger-hi));
+  --danger-edge:   rgb(var(--c-danger-edge));
+  --warn:          rgb(var(--c-warn));
+  --ok:            rgb(var(--c-ok));
+  --online:        rgb(var(--c-online));
+  --rare:          rgb(var(--c-rare));
+  --very-rare:     rgb(var(--c-very-rare));
+  --ultra-rare:    rgb(var(--c-ultra-rare));
+  --install:       rgb(var(--c-install));
+  --install-hi:    rgb(var(--c-install-hi));
+  --install-press: rgb(var(--c-install-press));
+
+  /* type */
+  --font: 'Geist', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --pixel: 'Silkscreen', 'Courier New', monospace;
+}

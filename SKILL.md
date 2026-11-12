@@ -1,9 +1,9 @@
 ---
-name: cheevo-tracker
-description: Project-level skills for the cheevo-tracker RetroAchievements profile tracker. Provides specialised workflows for this codebase — changelog writing, page scaffolding, RA API endpoint wiring, and docs maintenance. Use these skills whenever working in this repo.
+name: cheevodex
+description: Project-level skills for the cheevodex RetroAchievements profile tracker. Provides specialised workflows for this codebase — changelog writing, page scaffolding, RA API endpoint wiring, and docs maintenance. Use these skills whenever working in this repo.
 ---
 
-# cheevo-tracker
+# cheevodex
 
 Personal RetroAchievements profile tracker. Static site — React 18, Tailwind, Lucide via CDN, Babel JSX in-browser. No build step, no backend.
 

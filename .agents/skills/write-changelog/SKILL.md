@@ -1,6 +1,6 @@
 ---
 name: write-changelog
-description: Write or update the cheevo-tracker changelog after making code changes. Use this skill whenever you finish implementing a feature, bug fix, or refactor and need to record it in changelog.md. Also use it when the user says "update changelog", "write changelog entry", "add to changelog", or "log this change". This skill knows the exact version format, valid section names, section order rules, and duplicate-prevention workflow for this project.
+description: Write or update the cheevodex changelog after making code changes. Use this skill whenever you finish implementing a feature, bug fix, or refactor and need to record it in changelog.md. Also use it when the user says "update changelog", "write changelog entry", "add to changelog", or "log this change". This skill knows the exact version format, valid section names, section order rules, and duplicate-prevention workflow for this project.
 ---
 
 # Write Changelog Entry

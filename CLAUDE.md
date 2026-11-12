@@ -1,4 +1,4 @@
-# cheevo-tracker — Claude Context
+# cheevodex — Claude Context
 
 ## Working Style
 
@@ -52,7 +52,7 @@ These are enforced on every task. Details in the linked docs.
 
 **Styling**
 - Tailwind `className` for fixed styles. Inline `style={{}}` for dynamic values. `<style>` + `@keyframes` for animations.
-- No CSS files.
+- Colours come only from design tokens (`assets/tokens.css`, mapped into Tailwind by `assets/tw-config.js`): `text-gold`, `bg-box/60`, `var(--accent)`. Never write a hex or brand `rgba()` literal; add a token first. Shared component CSS lives in `assets/*.css` (decision-008).
 
 **Changelog**
 - **Always update `changelog.md` after every code change.** Do not wait to be asked.

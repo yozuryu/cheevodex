@@ -33,14 +33,14 @@ function DebugEntryRow({ entry }) {
 
   return React.createElement(
     'div',
-    { style: { borderBottom: '1px solid #2a475e' } },
+    { style: { borderBottom: '1px solid var(--line)' } },
     React.createElement(
       'button',
       {
         type: 'button',
         onClick: () => setExpanded(v => !v),
         style: { display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '6px 12px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit' },
-        onMouseEnter: e => { e.currentTarget.style.background = '#202d39'; },
+        onMouseEnter: e => { e.currentTarget.style.background = 'var(--box-hi)'; },
         onMouseLeave: e => { e.currentTarget.style.background = 'none'; },
       },
       React.createElement(
@@ -49,16 +49,16 @@ function DebugEntryRow({ entry }) {
           style: {
             fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em',
             padding: '1px 5px', borderRadius: 2, flexShrink: 0,
-            color: isErr ? '#ff6b6b' : '#6bcf7f',
-            background: isErr ? 'rgba(255,107,107,0.15)' : 'rgba(107,207,127,0.15)',
+            color: isErr ? 'var(--hc)' : 'var(--ok)',
+            background: isErr ? 'rgb(var(--c-hc) / 0.15)' : 'rgb(var(--c-ok) / 0.15)',
           },
         },
         isErr ? (entry.status === 'network_error' ? 'NET' : entry.status) : entry.status,
       ),
-      React.createElement('span', { style: { fontSize: 11, color: '#c6d4df', fontFamily: 'monospace', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, entry.endpoint),
-      React.createElement('span', { style: { fontSize: 9, color: '#546270', flexShrink: 0, marginLeft: 6 } }, `${entry.ms}ms`),
-      React.createElement('span', { style: { fontSize: 9, color: '#546270', flexShrink: 0, marginLeft: 6 } }, timeStr),
-      React.createElement('span', { style: { fontSize: 10, color: '#546270', flexShrink: 0, marginLeft: 4, transform: expanded ? 'rotate(90deg)' : 'none', display: 'inline-block', transition: 'transform 0.15s' } }, '▸'),
+      React.createElement('span', { style: { fontSize: 11, color: 'var(--ink)', fontFamily: 'monospace', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, entry.endpoint),
+      React.createElement('span', { style: { fontSize: 9, color: 'var(--ink-3)', flexShrink: 0, marginLeft: 6 } }, `${entry.ms}ms`),
+      React.createElement('span', { style: { fontSize: 9, color: 'var(--ink-3)', flexShrink: 0, marginLeft: 6 } }, timeStr),
+      React.createElement('span', { style: { fontSize: 10, color: 'var(--ink-3)', flexShrink: 0, marginLeft: 4, transform: expanded ? 'rotate(90deg)' : 'none', display: 'inline-block', transition: 'transform 0.15s' } }, '▸'),
     ),
     expanded ? React.createElement(
       'div',
@@ -66,17 +66,17 @@ function DebugEntryRow({ entry }) {
       React.createElement(
         'div',
         { style: { display: 'flex', flexDirection: 'column', gap: 4 } },
-        React.createElement('span', { style: { fontSize: 9, color: '#546270', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 } }, 'Request Params'),
+        React.createElement('span', { style: { fontSize: 9, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 } }, 'Request Params'),
         React.createElement('pre', {
-          style: { fontSize: 10, color: '#8f98a0', background: '#101214', borderRadius: 2, padding: '6px 8px', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontFamily: 'monospace', margin: 0 },
+          style: { fontSize: 10, color: 'var(--ink-2)', background: 'var(--well)', borderRadius: 2, padding: '6px 8px', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontFamily: 'monospace', margin: 0 },
         }, JSON.stringify(entry.params || {}, null, 2)),
       ),
       React.createElement(
         'div',
         { style: { display: 'flex', flexDirection: 'column', gap: 4 } },
-        React.createElement('span', { style: { fontSize: 9, color: '#546270', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 } }, 'Response'),
+        React.createElement('span', { style: { fontSize: 9, color: 'var(--ink-3)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 } }, 'Response'),
         React.createElement('pre', {
-          style: { fontSize: 10, color: '#8f98a0', background: '#101214', borderRadius: 2, padding: '6px 8px', overflowX: 'auto', overflowY: 'auto', maxHeight: 220, whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontFamily: 'monospace', margin: 0 },
+          style: { fontSize: 10, color: 'var(--ink-2)', background: 'var(--well)', borderRadius: 2, padding: '6px 8px', overflowX: 'auto', overflowY: 'auto', maxHeight: 220, whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontFamily: 'monospace', margin: 0 },
         }, entry.error ? `Error: ${entry.error}` : JSON.stringify(entry.data, null, 2)),
       ),
     ) : null,
@@ -112,22 +112,22 @@ function DebugModal({ onClose }) {
       'div',
       {
         onClick: e => e.stopPropagation(),
-        style: { background: '#171a21', border: '1px solid #2a475e', borderRadius: '0 0 6px 6px', width: '100%', maxWidth: 680, display: 'flex', flexDirection: 'column', maxHeight: '85vh' },
+        style: { background: 'var(--page)', border: '1px solid var(--line)', borderRadius: '0 0 6px 6px', width: '100%', maxWidth: 680, display: 'flex', flexDirection: 'column', maxHeight: '85vh' },
       },
       // Header
       React.createElement(
         'div',
-        { style: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderBottom: '1px solid #2a475e', background: '#1b2838', borderRadius: '0', flexShrink: 0 } },
-        React.createElement(Bug, { size: 13, color: '#e5b143' }),
-        React.createElement('span', { style: { fontSize: 12, fontWeight: 600, color: '#c6d4df', flex: 1 } }, 'API Debug Log'),
-        React.createElement('span', { style: { fontSize: 10, color: '#546270', marginRight: 8 } }, `${entries.length} call${entries.length !== 1 ? 's' : ''}`),
-        React.createElement('button', { type: 'button', style: btnStyle('#8f98a0'), onClick: refresh }, 'Refresh'),
-        React.createElement('button', { type: 'button', style: { ...btnStyle('#ff6b6b'), marginRight: 8 }, onClick: clear }, 'Clear'),
-        React.createElement('button', { type: 'button', style: { ...btnStyle('#546270'), display: 'flex', alignItems: 'center' }, onClick: onClose }, React.createElement(X, { size: 13 })),
+        { style: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderBottom: '1px solid var(--line)', background: 'var(--box)', borderRadius: '0', flexShrink: 0 } },
+        React.createElement(Bug, { size: 13, color: 'var(--gold)' }),
+        React.createElement('span', { style: { fontSize: 12, fontWeight: 600, color: 'var(--ink)', flex: 1 } }, 'API Debug Log'),
+        React.createElement('span', { style: { fontSize: 10, color: 'var(--ink-3)', marginRight: 8 } }, `${entries.length} call${entries.length !== 1 ? 's' : ''}`),
+        React.createElement('button', { type: 'button', style: btnStyle('var(--ink-2)'), onClick: refresh }, 'Refresh'),
+        React.createElement('button', { type: 'button', style: { ...btnStyle('var(--hc)'), marginRight: 8 }, onClick: clear }, 'Clear'),
+        React.createElement('button', { type: 'button', style: { ...btnStyle('var(--ink-3)'), display: 'flex', alignItems: 'center' }, onClick: onClose }, React.createElement(X, { size: 13 })),
       ),
       // Body
       entries.length === 0
-        ? React.createElement('div', { style: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40, color: '#546270', fontSize: 11 } }, 'No API calls logged yet.')
+        ? React.createElement('div', { style: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40, color: 'var(--ink-3)', fontSize: 11 } }, 'No API calls logged yet.')
         : React.createElement(
             'div',
             { style: { overflowY: 'auto', flex: 1 } },
@@ -157,7 +157,7 @@ function DebugFab() {
         type: 'button',
         title: 'API Debug Log',
         onClick: () => setOpen(o => !o),
-        style: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, background: 'none', border: 'none', cursor: 'pointer', color: '#e5b143' },
+        style: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gold)' },
       },
       React.createElement(Bug, { size: 14 }),
     ),
@@ -192,7 +192,7 @@ function MenuDropdown({ onClose }) {
     // Clear only ephemeral IDB stores — keep consoles + games (expensive catalog data)
     if (window.indexedDB) {
       await new Promise(resolve => {
-        const req = indexedDB.open('cheevo_tracker');
+        const req = indexedDB.open('cheevodex');
         req.onsuccess = e => {
           const db = e.target.result;
           const toClean = ['progress', 'friend_activity', 'backlog', 'friend_list', 'meta']
@@ -231,37 +231,37 @@ function MenuDropdown({ onClose }) {
   }
 
   const rows = [
-    { Icon: Gamepad2,  label: 'Consoles',    href: '../console/',   color: '#e5b143' },
-    { Icon: FileText,  label: 'Changelog',   href: '../changelog/', color: '#57cbde' },
+    { Icon: Gamepad2,  label: 'Consoles',    href: '../console/',   color: 'var(--gold)' },
+    { Icon: FileText,  label: 'Changelog',   href: '../changelog/', color: 'var(--aqua)' },
     null, // divider
-    { Icon: RotateCcw, label: 'Refresh Data', onClick: handleRefresh,    color: '#66c0f4' },
-    { Icon: Trash2,    label: 'Purge Cache',  onClick: handlePurgeCache, color: '#8f98a0' },
+    { Icon: RotateCcw, label: 'Refresh Data', onClick: handleRefresh,    color: 'var(--accent)' },
+    { Icon: Trash2,    label: 'Purge Cache',  onClick: handlePurgeCache, color: 'var(--ink-2)' },
     null, // divider
-    { Icon: Bug, label: debugMode ? 'Debug: On' : 'Debug: Off', onClick: handleToggleDebug, color: debugMode ? '#e5b143' : '#546270', labelColor: debugMode ? '#e5b143' : '#8f98a0' },
+    { Icon: Bug, label: debugMode ? 'Debug: On' : 'Debug: Off', onClick: handleToggleDebug, color: debugMode ? 'var(--gold)' : 'var(--ink-3)', labelColor: debugMode ? 'var(--gold)' : 'var(--ink-2)' },
     null, // divider
-    { Icon: LogOut, label: 'Log Out', onClick: handleLogout, color: '#ff6b6b', labelColor: '#ff6b6b' },
+    { Icon: LogOut, label: 'Log Out', onClick: handleLogout, color: 'var(--hc)', labelColor: 'var(--hc)' },
   ];
 
   return React.createElement(
     'div',
     {
       ref,
-      className: 'absolute top-full right-0 mt-1 w-44 bg-[#1b2838] border border-[#2a475e] rounded-[3px] overflow-hidden shadow-xl z-50',
+      className: 'absolute top-full right-0 mt-1 w-44 bg-box border border-line rounded-[3px] overflow-hidden shadow-xl z-50',
       style: { animation: 'menuDropIn 0.15s ease-out' },
     },
     ...rows.map((row, i) => {
       if (row === null) {
-        return React.createElement('div', { key: `div-${i}`, className: 'border-t border-[#2a475e]' });
+        return React.createElement('div', { key: `div-${i}`, className: 'border-t border-line' });
       }
       const inner = [
         React.createElement(row.Icon, { key: 'icon', size: 13, color: row.color, strokeWidth: 2 }),
         React.createElement('span', {
           key: 'label',
           className: 'text-[12px]',
-          style: { color: row.labelColor || '#c6d4df' },
+          style: { color: row.labelColor || 'var(--ink)' },
         }, row.label),
       ];
-      const cls = 'flex items-center gap-2.5 w-full px-3 py-2.5 hover:bg-[#202d39] active:bg-[#202d39] transition-colors text-left';
+      const cls = 'flex items-center gap-2.5 w-full px-3 py-2.5 hover:bg-box-hi active:bg-box-hi transition-colors text-left';
       if (row.href) {
         return React.createElement('a', { key: i, href: row.href, className: cls }, ...inner);
       }
@@ -281,7 +281,7 @@ function TopbarMenu() {
       {
         type: 'button',
         onClick: () => setOpen(o => !o),
-        className: 'flex items-center justify-center w-6 h-6 text-[#546270] hover:text-[#c6d4df] transition-colors',
+        className: 'flex items-center justify-center w-6 h-6 text-ink-3 hover:text-ink transition-colors',
       },
       React.createElement(open ? X : Menu, { size: 14 })
     ),
@@ -297,7 +297,7 @@ export function Topbar({ crumbs = [], right }) {
     const isLast  = i === crumbs.length - 1;
 
     const sep = i > 0
-      ? React.createElement('span', { key: `sep-${i}`, className: 'text-[#2a475e] select-none' }, '›')
+      ? React.createElement('span', { key: `sep-${i}`, className: 'text-line select-none' }, '›')
       : null;
 
     let el;
@@ -308,31 +308,29 @@ export function Topbar({ crumbs = [], right }) {
         className: 'shimmer inline-block w-16 h-[8px] rounded align-middle',
       });
     } else if (isFirst) {
+      // The brand: Lens boy mark + "Cheevo" in ink, "dex" in RA blue (doc-012)
+      const brand = [
+        React.createElement('img', { key: 'mark', src: '../assets/favicon.svg', alt: '', className: 'wm-mark' }),
+        React.createElement('span', { key: 'wm', className: 'wm' }, 'Cheevo', React.createElement('em', null, 'dex')),
+      ];
       el = crumb.href
-        ? React.createElement('a', {
-            key: `crumb-${i}`,
-            href: crumb.href,
-            className: 'text-[#546270] font-bold tracking-[0.15em] uppercase hover:text-[#8f98a0] transition-colors',
-          }, crumb.label)
-        : React.createElement('span', {
-            key: `crumb-${i}`,
-            className: 'text-[#546270] font-bold tracking-[0.15em] uppercase',
-          }, crumb.label);
+        ? React.createElement('a', { key: `crumb-${i}`, href: crumb.href, className: 'brand', 'aria-label': 'Cheevodex' }, ...brand)
+        : React.createElement('span', { key: `crumb-${i}`, className: 'brand' }, ...brand);
     } else if (isLast) {
       el = React.createElement('span', {
         key: `crumb-${i}`,
-        className: 'text-[#c6d4df]',
+        className: 'text-ink',
       }, crumb.label);
     } else if (crumb.href) {
       el = React.createElement('a', {
         key: `crumb-${i}`,
         href: crumb.href,
-        className: 'text-[#546270] hover:text-[#8f98a0] transition-colors',
+        className: 'text-ink-3 hover:text-ink-2 transition-colors',
       }, crumb.label);
     } else {
       el = React.createElement('span', {
         key: `crumb-${i}`,
-        className: 'text-[#546270]',
+        className: 'text-ink-3',
       }, crumb.label);
     }
 
@@ -348,7 +346,7 @@ export function Topbar({ crumbs = [], right }) {
 
   return React.createElement(
     'div',
-    { className: 'page-topbar sticky top-0 z-50 bg-[#131a22] border-b border-[#101214] px-4 md:px-8 py-1.5 flex items-center gap-2 text-[10px]' },
+    { className: 'page-topbar sticky top-0 z-50 bg-bar border-b border-well px-4 md:px-8 py-1.5 flex items-center gap-2 text-[10px]' },
     ...items
   );
 }
@@ -358,9 +356,10 @@ export function Topbar({ crumbs = [], right }) {
 export function Footer({ label, right }) {
   return React.createElement(
     'footer',
-    { className: 'bg-[#1b2838] border-t-2 border-[#2a475e] px-4 md:px-8 py-2.5 flex items-center gap-3 mt-auto' },
-    React.createElement('div', { className: 'w-[3px] h-[18px] rounded-[1px] bg-[#66c0f4] opacity-50 shrink-0' }),
-    React.createElement('div', { className: 'text-[10px] text-[#546270]' }, label),
-    right ? React.createElement('div', { key: 'right', className: 'ml-auto shrink-0' }, right) : null
+    { className: 'bg-box border-t-2 border-line px-4 md:px-8 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 mt-auto' },
+    React.createElement('div', { className: 'w-[3px] h-[18px] rounded-[1px] bg-accent opacity-50 shrink-0' }),
+    React.createElement('div', { className: 'text-[10px] text-ink-3 min-w-0' }, label),
+    React.createElement('div', { key: 'unofficial', className: 'text-[10px] text-ink-3 ml-auto' }, 'Unofficial. Not affiliated with RetroAchievements.'),
+    right ? React.createElement('div', { key: 'right', className: 'shrink-0' }, right) : null
   );
 }

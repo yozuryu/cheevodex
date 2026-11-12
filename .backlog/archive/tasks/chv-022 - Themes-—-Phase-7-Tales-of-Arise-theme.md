@@ -4,12 +4,11 @@ title: 'Themes — Phase 7: Tales of Arise theme'
 status: To Do
 assignee: []
 created_date: '2026-09-27 02:36'
-updated_date: '2026-09-27 02:55'
+updated_date: '2026-11-12 14:00'
 labels:
   - themes
 milestone: m-0
-dependencies:
-  - CHV-019
+dependencies: []
 documentation:
   - doc-011
 priority: low

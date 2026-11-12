@@ -1,6 +1,6 @@
 # ra-api.js — RetroAchievements API Reference
 
-Browser-side RA API client for cheevo-tracker. No build step, no npm.  
+Browser-side RA API client for cheevodex. No build step, no npm.  
 All raw RA responses are PascalCase; everything exported from this module is camelCase.
 
 **Base URL:** `https://retroachievements.org/API`  

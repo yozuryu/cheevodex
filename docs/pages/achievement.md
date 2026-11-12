@@ -6,6 +6,8 @@
 
 ## Tabs
 
+Rendered with `TabBar` from `assets/tabs.js` (sliding blue underline; unlock count on the first tab). The hero is a `.phead` with the game art blurred behind (`ArtBg`, `art-header`); an earned badge gets a 2px gold ring and glow, a locked one stays greyscale.
+
 | Tab | Contents |
 |---|---|
 | Unlocks | List of players who unlocked the achievement (HC + SC) |

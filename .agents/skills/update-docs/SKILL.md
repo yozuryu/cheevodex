@@ -1,6 +1,6 @@
 ---
 name: update-docs
-description: Update the docs/ documentation files in the cheevo-tracker project to reflect code changes. Use this skill when a page feature changes, a new component or tab is added, a fetch flow is modified, or any behaviour described in docs/ becomes stale. Also use it when the user says "update the docs", "keep docs in sync", or "document this". The skill knows which doc file maps to which page and what each doc covers so updates stay consistent with the existing format.
+description: Update the docs/ documentation files in the cheevodex project to reflect code changes. Use this skill when a page feature changes, a new component or tab is added, a fetch flow is modified, or any behaviour described in docs/ becomes stale. Also use it when the user says "update the docs", "keep docs in sync", or "document this". The skill knows which doc file maps to which page and what each doc covers so updates stay consistent with the existing format.
 ---
 
 # Update Docs

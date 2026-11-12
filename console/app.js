@@ -104,18 +104,18 @@ function ConsoleCard({ console: c, onClick }) {
   const [imgError, setImgError] = useState(false);
   return (
     <button type="button" onClick={onClick}
-      className="flex items-center gap-3 p-3 bg-[#1b2838] hover:bg-[#202d39] active:bg-[#202d39] border border-[#2a475e] rounded-[3px] text-left transition-colors w-full group">
-      <span className="w-8 h-8 rounded-[3px] bg-[#131a22] border border-[#101214] flex items-center justify-center shrink-0 overflow-hidden">
+      className="flex items-center gap-3 p-3 bg-box hover:bg-box-hi active:bg-box-hi border border-line rounded-[3px] text-left transition-colors w-full group">
+      <span className="w-8 h-8 rounded-[3px] bg-bar border border-well flex items-center justify-center shrink-0 overflow-hidden">
         {c.iconUrl && !imgError
           ? <img src={c.iconUrl} alt={c.name} className="w-6 h-6 object-contain"
               onError={() => setImgError(true)} />
-          : <Gamepad2 size={14} color="#546270" />}
+          : <Gamepad2 size={14} color="var(--ink-3)" />}
       </span>
       <span className="flex-1 min-w-0">
-        <span className="block text-[12px] font-medium text-[#c6d4df] group-hover:text-white transition-colors leading-snug truncate">{c.name}</span>
-        {!c.active && <span className="text-[9px] text-[#546270] uppercase tracking-wider">Inactive</span>}
+        <span className="block text-[12px] font-medium text-ink group-hover:text-white transition-colors leading-snug truncate">{c.name}</span>
+        {!c.active && <span className="text-[9px] text-ink-3 uppercase tracking-wider">Inactive</span>}
       </span>
-      <ChevronRight size={12} color="#2a475e" className="shrink-0" />
+      <ChevronRight size={12} color="var(--line)" className="shrink-0" />
     </button>
   );
 }
@@ -157,25 +157,25 @@ function ConsoleListView({ onSelect }) {
   );
 
   return (
-    <div className="min-h-screen bg-[#171a21] flex flex-col">
-      <Topbar crumbs={[{ label: 'Cheevo Tracker', href: '../profile/' }, { label: 'Consoles' }]} />
+    <div className="min-h-screen bg-page flex flex-col">
+      <Topbar crumbs={[{ label: 'Cheevodex', href: '../profile/' }, { label: 'Consoles' }]} />
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 md:px-8 pt-8 pb-5 md:pt-5">
         {/* Header + group controls */}
         <div className="flex items-center gap-3 mb-4 flex-wrap">
           <div className="flex items-center gap-2">
-            <span className="w-[3px] h-[14px] bg-[#e5b143] rounded-[1px] shrink-0" />
-            <span className="text-[13px] text-white tracking-wide uppercase font-medium">Consoles</span>
-            {consoles && <span className="text-[10px] text-[#546270]"><span className="text-[#66c0f4]">{consoles.length}</span> systems</span>}
+            <span className="sec-mark" />
+            <span className="sec-t">Consoles</span>
+            {consoles && <span className="text-[10px] text-ink-3"><span className="text-accent">{consoles.length}</span> systems</span>}
           </div>
           <div className="flex items-center gap-3 ml-auto">
             <a href="../search/"
-              className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider text-[#546270] hover:text-[#66c0f4] transition-colors">
+              className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider text-ink-3 hover:text-accent transition-colors">
               <Search size={11} />
               Search
             </a>
-            <span className="text-[#2a475e] text-[10px] select-none">|</span>
-            <span className="text-[9px] text-[#546270] uppercase tracking-wider">Group</span>
+            <span className="text-line text-[10px] select-none">|</span>
+            <span className="text-[9px] text-ink-3 uppercase tracking-wider">Group</span>
             {[
               { value: 'publisher', label: 'Publisher' },
               { value: 'era',       label: 'Gen'       },
@@ -183,8 +183,8 @@ function ConsoleListView({ onSelect }) {
               <button key={opt.value} type="button" onClick={() => switchGrouping(opt.value)}
                 className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-[2px] border transition-colors ${
                   grouping === opt.value
-                    ? 'bg-[#1b2838] text-[#c6d4df] border-[#2a475e]'
-                    : 'bg-[#101214] text-[#546270] border-[#323f4c] hover:text-[#c6d4df] hover:border-[#546270]'
+                    ? 'bg-box text-ink border-line'
+                    : 'bg-well text-ink-3 border-line-2 hover:text-ink hover:border-ink-3'
                 }`}>
                 {opt.label}
               </button>
@@ -193,11 +193,11 @@ function ConsoleListView({ onSelect }) {
         </div>
 
         {error ? (
-          <div className="text-[11px] text-[#546270] py-8 text-center">{error}</div>
+          <div className="text-[11px] text-ink-3 py-8 text-center">{error}</div>
         ) : consoles === null ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {[...Array(18)].map((_, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 bg-[#1b2838] border border-[#2a475e] rounded-[3px]">
+              <div key={i} className="flex items-center gap-3 p-3 bg-box border border-line rounded-[3px]">
                 <div className="shimmer w-8 h-8 rounded-[3px] shrink-0" />
                 <div className="shimmer h-3 flex-1 rounded" />
               </div>
@@ -208,9 +208,9 @@ function ConsoleListView({ onSelect }) {
             {grouped.map(group => (
               <div key={group.name}>
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="w-[3px] h-[12px] bg-[#2a475e] rounded-[1px] shrink-0" />
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#c6d4df]">{group.name}</span>
-                  <span className="text-[9px] text-[#66c0f4]">{group.consoles.length}</span>
+                  <span className="w-[3px] h-[12px] bg-line rounded-[1px] shrink-0" />
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-ink">{group.name}</span>
+                  <span className="text-[9px] text-accent">{group.consoles.length}</span>
                 </div>
                 {grid(group.consoles)}
               </div>
@@ -221,7 +221,7 @@ function ConsoleListView({ onSelect }) {
         )}
       </main>
 
-      <Footer label="Cheevo Tracker · Consoles" />
+      <Footer label="Cheevodex · Consoles" />
     </div>
   );
 }
@@ -283,9 +283,9 @@ function GameListView({ consoleId, consoleName, onBack }) {
   }, [games, search, achFilter]);
 
   return (
-    <div className="min-h-screen bg-[#171a21] flex flex-col">
+    <div className="min-h-screen bg-page flex flex-col">
       <Topbar crumbs={[
-        { label: 'Cheevo Tracker', href: '../profile/' },
+        { label: 'Cheevodex', href: '../profile/' },
         { label: consoleName || null },
       ]} />
 
@@ -293,30 +293,30 @@ function GameListView({ consoleId, consoleName, onBack }) {
         {/* Header row */}
         <div className="flex items-center gap-3 mb-4">
           <button type="button" onClick={onBack}
-            className="flex items-center gap-1.5 text-[11px] text-[#546270] hover:text-[#c6d4df] transition-colors shrink-0">
+            className="flex items-center gap-1.5 text-[11px] text-ink-3 hover:text-ink transition-colors shrink-0">
             <ArrowLeft size={13} />
             <span className="hidden md:inline">Consoles</span>
           </button>
-          <span className="text-[#2a475e] select-none">·</span>
+          <span className="text-line select-none">·</span>
           <div className="flex items-center gap-2 min-w-0">
-            <span className="w-[3px] h-[14px] bg-[#e5b143] rounded-[1px] shrink-0" />
-            <span className="text-[13px] text-white tracking-wide uppercase font-medium truncate">{consoleName}</span>
-            {games && <span className="text-[10px] text-[#546270] shrink-0"><span className="text-[#66c0f4]">{games.length}</span> games</span>}
+            <span className="sec-mark" />
+            <span className="sec-t truncate">{consoleName}</span>
+            {games && <span className="text-[10px] text-ink-3 shrink-0"><span className="text-accent">{games.length}</span> games</span>}
           </div>
         </div>
 
         {/* Library coverage — how much of this system you have actually played */}
         {coverage && (
-          <div className="flex items-center gap-2.5 mb-3 px-2.5 py-2 bg-[#1b2838] border border-[#2a475e] rounded-[3px]">
-            <span className="text-[9px] uppercase tracking-wider text-[#546270] shrink-0">Coverage</span>
-            <div className="flex-1 min-w-0 h-[6px] bg-[#101214] rounded-full overflow-hidden flex">
-              <div className="h-full transition-all duration-500" style={{ width: `${(coverage.mastered / coverage.total) * 100}%`, background: '#e5b143' }} />
-              <div className="h-full transition-all duration-500" style={{ width: `${((coverage.played - coverage.mastered) / coverage.total) * 100}%`, background: '#66c0f4' }} />
+          <div className="flex items-center gap-2.5 mb-3 px-2.5 py-2 bg-box border border-line rounded-[3px]">
+            <span className="text-[9px] uppercase tracking-wider text-ink-3 shrink-0">Coverage</span>
+            <div className="flex-1 min-w-0 h-[6px] bg-well rounded-full overflow-hidden flex">
+              <div className="h-full transition-all duration-500" style={{ width: `${(coverage.mastered / coverage.total) * 100}%`, background: 'var(--gold)' }} />
+              <div className="h-full transition-all duration-500" style={{ width: `${((coverage.played - coverage.mastered) / coverage.total) * 100}%`, background: 'var(--accent)' }} />
             </div>
-            <span className="text-[10px] tabular-nums text-[#546270] shrink-0">
-              <span className="text-[#66c0f4] font-semibold">{coverage.played.toLocaleString()}</span>
+            <span className="text-[10px] tabular-nums text-ink-3 shrink-0">
+              <span className="text-accent font-semibold">{coverage.played.toLocaleString()}</span>
               {' / '}{coverage.total.toLocaleString()}{' sets'}
-              {coverage.mastered > 0 && <span className="text-[#e5b143] ml-1.5">{coverage.mastered}★</span>}
+              {coverage.mastered > 0 && <span className="text-gold ml-1.5">{coverage.mastered}★</span>}
             </span>
           </div>
         )}
@@ -324,23 +324,23 @@ function GameListView({ consoleId, consoleName, onBack }) {
         {/* Search + filter */}
         <div className="flex flex-col gap-2 mb-3">
           <div className="relative">
-            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#546270]" />
+            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3" />
             <input
               type="text"
               placeholder="Search games…"
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full bg-[#1b2838] border border-[#2a475e] focus:border-[#66c0f4] outline-none text-[11px] text-[#c6d4df] placeholder-[#546270] pl-7 pr-7 py-2 rounded-[3px] transition-colors"
+              className="w-full bg-box border border-line focus:border-accent outline-none text-[11px] text-ink placeholder-ink-3 pl-7 pr-7 py-2 rounded-[3px] transition-colors"
             />
             {search && (
               <button type="button" onClick={() => setSearch('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#546270] hover:text-[#c6d4df] transition-colors">
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink transition-colors">
                 <X size={12} />
               </button>
             )}
           </div>
           <div className="flex items-center gap-1.5 overflow-x-auto">
-            <span className="text-[9px] text-[#546270] uppercase tracking-wider shrink-0">Achievements</span>
+            <span className="text-[9px] text-ink-3 uppercase tracking-wider shrink-0">Achievements</span>
             {[
               { value: 'all',     label: 'All'     },
               { value: 'with',    label: 'With'    },
@@ -354,8 +354,8 @@ function GameListView({ consoleId, consoleName, onBack }) {
               }}
                 className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-[2px] border shrink-0 transition-colors ${
                   achFilter === opt.value
-                    ? 'bg-[#1b2838] text-[#c6d4df] border-[#2a475e]'
-                    : 'bg-[#101214] text-[#546270] border-[#323f4c] hover:text-[#c6d4df] hover:border-[#546270]'
+                    ? 'bg-box text-ink border-line'
+                    : 'bg-well text-ink-3 border-line-2 hover:text-ink hover:border-ink-3'
                 }`}>
                 {opt.label}
               </button>
@@ -365,11 +365,11 @@ function GameListView({ consoleId, consoleName, onBack }) {
 
         {/* Game list */}
         {error ? (
-          <div className="text-[11px] text-[#546270] py-8 text-center">{error}</div>
+          <div className="text-[11px] text-ink-3 py-8 text-center">{error}</div>
         ) : games === null ? (
           <div className="flex flex-col gap-[2px]">
             {[...Array(12)].map((_, i) => (
-              <div key={i} className="flex items-center gap-3 px-3 py-2.5 bg-[#1b2838] rounded-[2px]">
+              <div key={i} className="flex items-center gap-3 px-3 py-2.5 bg-box rounded-[2px]">
                 <div className="shimmer w-8 h-8 rounded-[2px] shrink-0" />
                 <div className="flex-1 flex flex-col gap-1.5">
                   <div className="shimmer h-3 w-2/3 rounded" />
@@ -379,7 +379,7 @@ function GameListView({ consoleId, consoleName, onBack }) {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-[11px] text-[#546270] py-8 text-center">
+          <div className="text-[11px] text-ink-3 py-8 text-center">
             {search ? `No games matching "${search}"` : 'No games found.'}
           </div>
         ) : (
@@ -388,19 +388,19 @@ function GameListView({ consoleId, consoleName, onBack }) {
               const { baseTitle, tags, subsetName, isSubset } = parseTitle(g.title);
               return (
                 <a key={g.id} href={`../game/?id=${g.id}`}
-                  className="flex items-center gap-3 px-3 py-2.5 bg-[#1b2838] hover:bg-[#202d39] active:bg-[#202d39] rounded-[2px] transition-colors group">
+                  className="flex items-center gap-3 px-3 py-2.5 bg-box hover:bg-box-hi active:bg-box-hi rounded-[2px] transition-colors group">
                   {g.imageIcon
                     ? <img src={getMediaUrl(g.imageIcon)} alt={baseTitle}
-                        className="w-8 h-8 rounded-[2px] border border-[#101214] object-cover shrink-0 bg-[#131a22]"
+                        className="w-8 h-8 rounded-[2px] border border-well object-cover shrink-0 bg-bar"
                         onError={e => { e.currentTarget.style.visibility = 'hidden'; }} />
-                    : <span className="w-8 h-8 rounded-[2px] border border-[#101214] bg-[#131a22] flex items-center justify-center shrink-0">
-                        <Gamepad2 size={14} color="#546270" />
+                    : <span className="w-8 h-8 rounded-[2px] border border-well bg-bar flex items-center justify-center shrink-0">
+                        <Gamepad2 size={14} color="var(--ink-3)" />
                       </span>}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[12px] font-medium text-[#c6d4df] group-hover:text-white transition-colors leading-snug">{baseTitle}</span>
+                      <span className="text-[12px] font-medium text-ink group-hover:text-white transition-colors leading-snug">{baseTitle}</span>
                       {isSubset && (
-                        <span className="text-[7px] font-bold uppercase tracking-[0.07em] px-1 py-[1px] rounded-[2px] border border-[rgba(229,177,67,0.3)] bg-[rgba(229,177,67,0.1)] text-[#c8a84b] shrink-0">Subset</span>
+                        <span className="text-[7px] font-bold uppercase tracking-[0.07em] px-1 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">Subset</span>
                       )}
                       {tags.map(tag => {
                         const tc = TILDE_TAG_COLORS[tag] || TILDE_TAG_COLORS['Prototype'];
@@ -416,17 +416,17 @@ function GameListView({ consoleId, consoleName, onBack }) {
                       })}
                     </div>
                     {isSubset && subsetName && (
-                      <span className="text-[9px] text-[#c8a84b] truncate block">{subsetName}</span>
+                      <span className="text-[9px] text-gold-dim truncate block">{subsetName}</span>
                     )}
                     {g.numAchievements > 0 && (
-                      <span className="text-[9px] text-[#546270] flex items-center gap-1">
-                        <span className="text-[#66c0f4]">{g.numAchievements}</span> achievements
-                        <span className="text-[#2a475e]">·</span>
-                        <span className="text-[#e5b143]">{g.points.toLocaleString()}</span> pts
+                      <span className="text-[9px] text-ink-3 flex items-center gap-1">
+                        <span className="text-accent">{g.numAchievements}</span> achievements
+                        <span className="text-line">·</span>
+                        <span className="text-gold">{g.points.toLocaleString()}</span> pts
                       </span>
                     )}
                   </div>
-                  <ChevronRight size={12} color="#2a475e" className="shrink-0" />
+                  <ChevronRight size={12} color="var(--line)" className="shrink-0" />
                 </a>
               );
             })}
@@ -434,13 +434,13 @@ function GameListView({ consoleId, consoleName, onBack }) {
         )}
 
         {games && search && filtered.length > 0 && (
-          <p className="text-[10px] text-[#546270] mt-2 px-1">
-            <span className="text-[#66c0f4]">{filtered.length}</span> of <span className="text-[#66c0f4]">{games.length}</span> games
+          <p className="text-[10px] text-ink-3 mt-2 px-1">
+            <span className="text-accent">{filtered.length}</span> of <span className="text-accent">{games.length}</span> games
           </p>
         )}
       </main>
 
-      <Footer label={`Cheevo Tracker · ${consoleName || 'Games'}`} />
+      <Footer label={`Cheevodex · ${consoleName || 'Games'}`} />
     </div>
   );
 }

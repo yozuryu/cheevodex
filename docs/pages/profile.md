@@ -16,7 +16,15 @@
 | Social | Users | `?tab=social` | Following / followers; triggers `fetchSocial` on first open |
 | Stats | PieChart | `?tab=stats` | Own profile only. Desktop tab bar + mobile menu sheet — deliberately **not** in the floating pill |
 
-Tab state persists in URL query param. Floating pill (mobile) appears when tab bar scrolls off screen; animated via `slideUpPill`/`slideDownPill` CSS keyframes.
+Tab state persists in URL query param. `profileTabs` (in `ProfilePage`) is the single ordered list: it feeds the desktop `TabBar` (`assets/tabs.js`: uppercase labels, sliding 3px blue underline, sideways scroll) and the phone swipe (`useSwipeTabs` on the tab content wrapper `tabContentRef`). Floating pill (mobile) appears when tab bar scrolls off screen; animated via `slideUpPill`/`slideDownPill` CSS keyframes.
+
+## Game lists: list / tiles
+
+Recent Games and Completion Progress render either `GameCard` rows (list) or `GameTile`s in a `.gtiles` grid (2 / 3 / 4 columns), chosen with `ViewToggle` and remembered per device by `useGameView()` (`assets/game-view.js`, localStorage `cheevodex:gameView`, falls back to list). `gameStatus(game)` gives the status colour (gold mastered, silver beaten, blue in progress, `line-2` not started); `SegBar` draws progress as ≤20 segments in that colour, glowing only when mastered. Recent shows 5 rows or 8 tiles before "Show more".
+
+## Header
+
+`.phead` (styles in `assets/ui.css`): the most recently played game's `background` blurred behind (`ArtBg` variant `art-header`), gold glow top-left and blue glow top-right, gold conic-ring avatar with status dot, name + RA link, rank and last active, motto; on the right (stacked on phones) a numbers strip (Points, Achievements, Site rank) and the `.pstatus` row counting mastered / beaten / in-progress games from `ALL_GAMES`. No art → plain charcoal.
 
 ## Mount Sequence
 
@@ -230,6 +238,8 @@ Computed via `useMemo` from `achievementChunks`. Format: `{ "YYYY-MM-DD": { coun
 
 ## Game Achievement Modal
 
+> Rendered as a sheet (`useSheet` from `assets/sheet.js`: bottom sheet below md, dialog from md; drag/backdrop/✕/Escape close) with the game art blurred behind its header. **Nothing calls `openGameDetails` today** — game cards and tiles link to the game page — so the modal is currently unreachable.
+
 `openGameDetails(game)` flow:
 1. `setSelectedGame(game)` immediately — modal opens with shimmer
 2. If `game.achievements` is empty → fetch `API_GetGameInfoAndUserProgress`
@@ -239,9 +249,9 @@ Computed via `useMemo` from `achievementChunks`. Format: `{ "YYYY-MM-DD": { coun
 ## Compare Modal
 
 - Shows side-by-side completion progress between the authed user and another user.
-- Leading side (higher %) gets `rgba(102,192,244,0.15)` background highlight on a 120×py-2.5 cell.
-- Trailing side gets `transparent`.
-- Divider between cells: `w-px self-stretch bg-[#2a475e]`.
+- Rendered as a sheet (`sheet-panel wide`): bottom sheet on phones covering the nav, centred dialog from md; closes by dragging the header down, backdrop, ✕ or Escape.
+- Leading side (higher %) gets an `accent`-tinted highlight on a 120×py-2.5 cell; trailing side is transparent.
+- Divider between cells: `w-px self-stretch bg-line`.
 
 ## Visitor Mode
 
@@ -307,8 +317,4 @@ Short hint (`sm:hidden`) vs full hint (`hidden sm:block`) shown depending on scr
 
 ### Header layout
 
-```jsx
-<div className="flex flex-col md:flex-row items-center md:items-start gap-5">
-  <div className="w-20 h-20 md:w-24 md:h-24 ...">  {/* avatar */}
-  <div className="flex-1 flex flex-col gap-1.5 text-center md:text-left">
-```
+See **Header** above: identity block and numbers stack on phones (`.phead-in` column), side by side from md.

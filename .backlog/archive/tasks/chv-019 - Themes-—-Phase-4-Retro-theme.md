@@ -4,13 +4,11 @@ title: 'Themes — Phase 4: Retro theme'
 status: To Do
 assignee: []
 created_date: '2026-09-27 02:35'
-updated_date: '2026-09-27 02:58'
+updated_date: '2026-11-12 14:00'
 labels:
   - themes
 milestone: m-0
-dependencies:
-  - CHV-017
-  - CHV-018
+dependencies: []
 documentation:
   - doc-011
 priority: low

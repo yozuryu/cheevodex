@@ -46,9 +46,9 @@ function cacheSet(key, data) {
   try { sessionStorage.setItem(key, JSON.stringify({ ts: Date.now(), data })); } catch {}
 }
 
-// ── IndexedDB (cheevo_tracker) ────────────────────────────────────────────────
+// ── IndexedDB (cheevodex) ────────────────────────────────────────────────────
 
-const DB_NAME    = 'cheevo_tracker';
+const DB_NAME    = 'cheevodex';
 const DB_VERSION = 2;
 let   _db        = null;
 
@@ -81,7 +81,8 @@ function openDB() {
     };
     req.onsuccess = e => {
       _db = e.target.result;
-      indexedDB.deleteDatabase('cheevo_search'); // clean up old DB
+      indexedDB.deleteDatabase('cheevo_search');  // clean up old DBs
+      indexedDB.deleteDatabase('cheevo_tracker'); // pre-rename name (v26.11.13)
       resolve(_db);
     };
     req.onerror = e => reject(e.target.error);

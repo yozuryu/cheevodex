@@ -13,57 +13,62 @@ Rules that apply to every file in this repo. Page-specific rules are in `docs/pa
 
 | Use | When |
 |---|---|
-| Tailwind `className` | Fixed structural styles |
-| Inline `style={{}}` | Dynamic values (colors from data, computed widths) |
+| Tailwind `className` with token colours | Fixed structural styles: `text-ink-2`, `bg-box`, `border-l-gold`, `bg-gold/10` |
+| Inline `style={{}}` with `var(--token)` | Dynamic values (colours from data, computed widths) |
 | `<style>` tag with `@keyframes` | CSS animations — inject inside the React return |
+| `assets/*.css` | Shared component styles that classes express badly (tokens, sheets, tabs, motion) — decision-008 |
 
-- Arbitrary Tailwind values are fine: `text-[11px]`, `w-[140px]`, `tracking-[0.07em]`.
-- Do not use CSS files. No external stylesheets beyond the CDN Tailwind script.
+- Arbitrary Tailwind values are fine for sizes: `text-[11px]`, `w-[140px]`, `tracking-[0.07em]`.
+- **Never write a colour literal.** No hex, no `rgba(r,g,b,a)` with a brand colour. Use a token. If no token fits, add one to `assets/tokens.css` (and its name to `assets/tw-config.js`) first. Pure black/white overlays (`bg-black/70`, `rgba(0,0,0,.6)`) are fine.
+- Alpha: classes take Tailwind's modifier (`bg-accent/15`, `bg-gold/[0.06]`); inline styles use `rgb(var(--c-gold) / 0.3)`; a colour held in a JS variable uses `color-mix(in srgb, ${color} 25%, transparent)` — never append hex alpha.
+- Every page `index.html` loads, right after the Tailwind CDN script:
+  ```html
+  <script src="../assets/tw-config.js"></script>
+  <link rel="stylesheet" href="../assets/tokens.css">
+  ```
+- `<meta name="theme-color">` and `manifest.json` cannot read CSS variables; keep them in sync with `--page` / `--bar` by hand.
 
 ## Design System
 
-### Colors
+### Colour tokens
 
-```
-Background:        #171a21
-Card bg:           #1b2838
-Card bg hover:     #202d39
-Card bg dark:      #131a22   (topbar, FAB buttons)
-Border:            #2a475e
-Border dark:       #101214   (inner/inset)
-Text primary:      #c6d4df
-Text secondary:    #8f98a0
-Text muted:        #546270
+Values live only in `assets/tokens.css`. Each token exists as `--NAME` (solid) and `--c-NAME` (RGB channels for alpha), and as a Tailwind colour `NAME`.
 
-RA gold:           #e5b143
-Cyan accent:       #57cbde
-Blue:              #66c0f4
-```
+| Group | Tokens | Role |
+|---|---|---|
+| Surfaces | `page`, `bar`, `box`, `box-hi`, `box-hover`, `head`, `chip`, `well`, `well-edge`, `inset`, `track`, `shimmer`, `disabled` | Page, top bar/nav, panels, raised and hovered rows, table headers, neutral chips, insets and tracks |
+| Lines | `line`, `line-2`, `line-soft`, `line-faint` | Default border → faintest divider |
+| Text | `ink`, `ink-2`, `ink-3`, `ink-4` | Primary → faintest |
+| Structure | `accent`, `accent-hi`, `accent-edge`, `heat-1`, `heat-2` | Links/active/in-progress, hover, avatar frame, heatmap steps |
+| Earned | `gold`, `gold-hi`, `gold-dim`, `gold-press`, `silver`, `bronze` | Mastered/points, hover, subsets, pressed, beaten, third place |
+| Status | `aqua`, `hc`, `danger`, `danger-hi`, `danger-edge`, `warn`, `ok`, `online` | Info, hardcore/error, destructive, missable, success, presence |
+| Rarity | `rare`, `very-rare`, `ultra-rare` | Rarity scale (with `ink-2`, `accent` for common/uncommon) |
+| Install banner | `install`, `install-hi`, `install-press` | PWA install button |
 
 ### Stat number colors (by semantic meaning)
 
-| Color | Hex | Used for |
+| Color | Token | Used for |
 |---|---|---|
-| Gold | `#e5b143` | Earned value: Points, Mastered |
-| White | `#c6d4df` | Identity: Rank |
-| Blue | `#66c0f4` | Engagement: Achievements |
-| Silver | `#b8c4ce` | Second tier: Beaten |
-| Muted | `#546270` | Context/breadth: Games |
+| Gold | `gold` | Earned value: Points, Mastered |
+| White | `ink` | Identity: Rank |
+| Blue | `accent` | Engagement: Achievements |
+| Silver | `silver` | Second tier: Beaten |
+| Muted | `ink-3` | Context/breadth: Games |
 
 ### Completion status colors
 
 | Status | Color |
 |---|---|
-| Mastered | `#e5b143` (gold) |
-| Beaten | `#b8c4ce` (silver) — pairs with gold like a medal; badge bg `#2a3440`, badge text `#c6d4df`; beaten award icons get a 1px silver border (mastered: 2px gold) |
-| In Progress | `#66c0f4` (blue) |
-| Not started / border | `#323f4c` |
+| Mastered | `gold` (gold) |
+| Beaten | `silver` (silver) — pairs with gold like a medal; badge bg `chip`, badge text `ink`; beaten award icons get a 1px silver border (mastered: 2px gold) |
+| In Progress | `accent` (blue) |
+| Not started / border | `line-2` |
 
 Note: the game page's award *badge* is a different surface — `AWARD_CONFIG` in `game/app.js`
-uses silver `#b8c4ce` for beaten-hardcore and gray `#8f98a0` for beaten-softcore. The status colors above
+uses silver `silver` for beaten-hardcore and gray `ink-2` for beaten-softcore. The status colors above
 govern everywhere else.
 
-**Charts use these colors unchanged.** Note that beaten silver↔`#66c0f4` is a close pair (ΔE2000
+**Charts use these colors unchanged.** Note that beaten silver↔`accent` is a close pair (ΔE2000
 15.5 — the old gray was 13.9 on the `dataviz` skill's `validate_palette.js` metric, below its 15 floor):
 silver has almost no chroma, so no blue at a similar lightness separates well from it. Where both appear in one chart,
 give every segment its own visible count and icon so identity never rests on color alone.
@@ -72,28 +77,39 @@ give every segment its own visible count and icon so identity never rests on col
 
 | Tag | Color |
 |---|---|
-| Hack | `#ff6b6b` |
-| Homebrew | `#66c0f4` |
-| Demo | `#57cbde` |
-| Prototype | `#8f98a0` |
+| Hack | `hc` |
+| Homebrew | `accent` |
+| Demo | `aqua` |
+| Prototype | `ink-2` |
+
+### Blue and gold
+
+Cheevodex follows RetroAchievements' own split (doc-012):
+
+- **Blue (`accent`) is structure:** section headings, rank, platform names, the active tab, filters that are on, and progress bars for anything not yet earned.
+- **Gold (`gold`) is reward:** points, mastered, unlocked achievements, user links. Only earned things glow (gold ring/shadow); nothing blue glows except the heading diamond.
+- Surfaces are warm charcoal (`page` → `box` → `box-hi`), never blue-grey.
 
 ### Section headers
 
-Consistent pattern across all pages:
+Every page section uses the same heading (styles in `assets/ui.css`):
 
 ```jsx
-<span className="w-[3px] h-[14px] bg-[#e5b143] rounded-[1px] shrink-0" />
-<span className="text-[13px] text-white tracking-wide uppercase font-medium">Title</span>
+<div className="flex items-center gap-2 border-b border-line pb-1.5 mb-3">
+  <span className="sec-mark" />
+  <span className="sec-t">Title</span>
+</div>
 ```
 
-Use `#e5b143` (gold) for RA data sections. Use `#66c0f4` (blue) for activity/engagement sections.
+`.sec-mark` is a rotated blue diamond; `.sec-t` is blue 15px/500, sentence case. Any element that directly holds a `.sec-mark` gets an underline fading from 55% to 8% blue. Inside a panel's header strip use `<span className="sec-mark sm" />` + `<span className="card-t">`.
 
 ### Typography
 
-- Font: `'Segoe UI', Arial, sans-serif`
-- Sizes: 7–15px (compact, dashboard-style)
-- Labels: `uppercase tracking-[0.07em]` or `tracking-[0.1em]` with `font-semibold`
-- Border radius: 2–3px
+- UI: **Geist** (`var(--font)`, Tailwind `font-sans`, the default). Numbers: **Geist Mono** (`var(--mono)`, `font-mono`); anything with `tabular-nums` or `.num` gets it automatically. **Silkscreen** (`font-pixel`) only for tiny accents.
+- Fonts load from Google Fonts in each page's `<head>`, with system fallbacks in the token stacks.
+- Sizes: 7–15px body (compact, dashboard-style); headings 15px.
+- Labels: `uppercase tracking-[0.07em]` with `font-semibold`.
+- Corners: 2–3px on cards, chips, icons; 4px for cards inside sheets; no pills (Savepoint geometry).
 
 ### Shimmer skeleton
 
@@ -102,7 +118,7 @@ Defined in each page's `index.html` `<style>` block. Class: `.shimmer`. Use on l
 ### Scroll-to-top button
 
 ```jsx
-<button className="scroll-top-btn w-10 h-10 rounded-full bg-[#131a22] border border-[#2a475e] active:scale-90">
+<button className="scroll-top-btn w-10 h-10 rounded-full bg-bar border border-line active:scale-90">  {/* round is fine for this floating button */}
 ```
 
 Class `scroll-top-btn` is required — `mobile-nav.js` repositions it above the nav bar.
@@ -129,7 +145,7 @@ All page `<main>` sections use `px-4 md:px-8`. Sticky bars that span edge-to-edg
 
 ### Tab bars (sticky)
 
-All sticky tab bars use `top-0 md:top-[26px]` — on desktop the global Topbar is 26px tall.
+Use `TabBar` from `assets/tabs.js` for page tabs (uppercase 12px/600, sliding 3px blue underline). It is sticky at the top; pass `className="md:top-[26px]"` (the global Topbar is 26px tall on desktop) plus any page padding. Wrap the tab content in one element and call `useSwipeTabs(ref, ids, active, onChange, ready)` for phone swipe.
 
 ### Layout direction
 

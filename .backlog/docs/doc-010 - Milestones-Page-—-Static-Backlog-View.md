@@ -3,11 +3,11 @@ id: doc-010
 title: Milestones Page — Static Backlog View
 type: specification
 created_date: '2026-06-13 12:39'
-updated_date: '2026-06-13 12:39'
+updated_date: '2026-11-12 23:37'
 ---
 ## Overview
 
-A read-only milestones/backlog page built into the cheevo-tracker app, following the same pattern as the changelog page. Renders task data from a pre-generated JSON file so it works on GitHub Pages without any server or CI/CD.
+A read-only milestones/backlog page built into the Cheevodex app, following the same pattern as the changelog page. Renders task data from a pre-generated JSON file so it works on GitHub Pages without any server or CI/CD.
 
 ## Architecture
 

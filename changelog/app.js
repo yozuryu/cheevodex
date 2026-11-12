@@ -32,12 +32,14 @@ const parseChangelog = (md) => {
     return releases;
 };
 
-// Inline code: `foo` → <code>
+// Inline markdown: `foo` → <code>, **foo** → <strong>
 const renderText = (text) => {
-    const parts = text.split(/(`[^`]+`)/g);
+    const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g);
     return parts.map((part, i) =>
         part.startsWith('`') && part.endsWith('`')
-            ? <code key={i} className="text-[#57cbde] bg-[#101214] border border-[#2a475e] px-1 py-px rounded-[2px] text-[10px] font-mono">{part.slice(1, -1)}</code>
+            ? <code key={i} className="text-aqua bg-well border border-line px-1 py-px rounded-[2px] text-[10px] font-mono">{part.slice(1, -1)}</code>
+        : part.startsWith('**') && part.endsWith('**') && part.length > 4
+            ? <strong key={i} className="text-ink font-semibold">{part.slice(2, -2)}</strong>
             : part
     );
 };
@@ -71,31 +73,31 @@ const sortSections = (sections) => {
 };
 
 const SECTION_COLORS = {
-    'RetroAchievements API': '#e5b143',
-    'Auth':                  '#57cbde',
-    'Cache':                 '#57cbde',
-    'Structure':             '#8f98a0',
-    'Profile':               '#66c0f4',
-    'Social':                '#66c0f4',
-    'Game Page':             '#8f98a0',
-    'Console Page':          '#e5b143',
-    'Achievement Page':      '#57cbde',
-    'Backlog':               '#66c0f4',
-    'Settings':              '#8f98a0',
-    'Search':                '#66c0f4',
-    'Navigation':            '#66c0f4',
-    'Polish':                '#546270',
-    'User Page':             '#e5b143',
+    'RetroAchievements API': 'var(--gold)',
+    'Auth':                  'var(--aqua)',
+    'Cache':                 'var(--aqua)',
+    'Structure':             'var(--ink-2)',
+    'Profile':               'var(--accent)',
+    'Social':                'var(--accent)',
+    'Game Page':             'var(--ink-2)',
+    'Console Page':          'var(--gold)',
+    'Achievement Page':      'var(--aqua)',
+    'Backlog':               'var(--accent)',
+    'Settings':              'var(--ink-2)',
+    'Search':                'var(--accent)',
+    'Navigation':            'var(--accent)',
+    'Polish':                'var(--ink-3)',
+    'User Page':             'var(--gold)',
 };
 
 const sectionColor = (title) =>
-    SECTION_COLORS[title] ?? '#8f98a0';
+    SECTION_COLORS[title] ?? 'var(--ink-2)';
 
 // ── Components ────────────────────────────────────────────────────────────────
 
 const Entry = ({ text }) => (
-    <li className="flex items-start gap-2 text-[11px] text-[#8f98a0] leading-relaxed py-[3px]">
-        <span className="mt-[5px] w-[4px] h-[4px] rounded-full bg-[#2a475e] shrink-0" />
+    <li className="flex items-start gap-2 text-[11px] text-ink-2 leading-relaxed py-[3px]">
+        <span className="mt-[5px] w-[4px] h-[4px] rounded-full bg-line shrink-0" />
         <span>{renderText(text)}</span>
     </li>
 );
@@ -110,7 +112,7 @@ const Section = ({ title, entries }) => {
                     {title}
                 </span>
             </div>
-            <ul className="ml-3 border-l border-[#1e2d3a] pl-3 flex flex-col">
+            <ul className="ml-3 border-l border-line-soft pl-3 flex flex-col">
                 {entries.map((e, i) => <Entry key={i} text={e} />)}
             </ul>
         </div>
@@ -132,27 +134,27 @@ const Release = ({ date, summary, sections, defaultOpen }) => {
                 onClick={() => setOpen(o => !o)}
                 className="w-full flex items-center gap-3 group outline-none"
             >
-                <div className="w-2.5 h-2.5 rounded-full border-2 border-[#66c0f4] bg-[#171a21] shrink-0 group-hover:bg-[#66c0f4] transition-colors" />
+                <div className="w-2.5 h-2.5 rounded-full border-2 border-accent bg-page shrink-0 group-hover:bg-accent transition-colors" />
                 <div className="flex flex-col items-start min-w-0">
-                    <span className="text-[13px] font-semibold text-[#c6d4df] group-hover:text-white transition-colors leading-snug">
+                    <span className="text-[13px] font-semibold text-ink group-hover:text-white transition-colors leading-snug">
                         {formatted}
                     </span>
-                    {label && <span className="text-[10px] text-[#546270] font-normal leading-snug truncate max-w-full">{label}</span>}
+                    {label && <span className="text-[10px] text-ink-3 font-normal leading-snug truncate max-w-full">{label}</span>}
                 </div>
-                <div className="flex-1 h-px bg-[#1e2d3a]" />
-                <span className="text-[9px] text-[#546270] shrink-0">
+                <div className="flex-1 h-px bg-line-soft" />
+                <span className="text-[9px] text-ink-3 shrink-0">
                     {totalEntries} change{totalEntries !== 1 ? 's' : ''}
                 </span>
                 <ChevronDown
                     size={12}
-                    className={`text-[#546270] transition-transform duration-200 shrink-0 ${open ? 'rotate-180' : ''}`}
+                    className={`text-ink-3 transition-transform duration-200 shrink-0 ${open ? 'rotate-180' : ''}`}
                 />
             </button>
 
             {open && (
-                <div className="ml-[18px] border-l-2 border-[#1e2d3a] pl-4 pt-3 mt-2">
+                <div className="ml-[18px] border-l-2 border-line-soft pl-4 pt-3 mt-2">
                     {summary && (
-                        <p className="text-[11px] text-[#546270] italic mb-4">{renderText(summary)}</p>
+                        <p className="text-[11px] text-ink-3 italic mb-4">{renderText(summary)}</p>
                     )}
                     {sortSections(sections).map((sec, i) => <Section key={i} title={sec.title} entries={sec.entries} />)}
                 </div>
@@ -174,21 +176,21 @@ const App = () => {
     }, []);
 
     return (
-        <div className="bg-[#171a21] text-[#c6d4df] min-h-screen flex flex-col font-sans selection:bg-[#66c0f4] selection:text-[#171a21]">
+        <div className="bg-page text-ink min-h-screen flex flex-col font-sans selection:bg-accent selection:text-page">
 
-            <Topbar crumbs={[{ label: 'Cheevo Tracker', href: '../profile/' }, { label: 'Changelog' }]} />
+            <Topbar crumbs={[{ label: 'Cheevodex', href: '../profile/' }, { label: 'Changelog' }]} />
 
             {/* Header */}
-            <header className="bg-[#1b2838] border-b border-[#2a475e] px-4 md:px-8 pt-8 pb-5 md:pt-5 shadow-md">
+            <header className="bg-box border-b border-line px-4 md:px-8 pt-8 pb-5 md:pt-5 shadow-md">
                 <div className="max-w-3xl mx-auto">
                     <div className="flex items-center gap-3">
-                        <span className="w-[3px] h-6 bg-[#66c0f4] rounded-[1px] shrink-0" />
+                        <span className="w-[3px] h-6 bg-accent rounded-[1px] shrink-0" />
                         <h1 className="text-2xl md:text-[26px] text-white font-medium tracking-wide leading-none flex items-center gap-3">
-                            <GitCommit size={22} className="text-[#66c0f4]" /> Changelog
+                            <GitCommit size={22} className="text-accent" /> Changelog
                         </h1>
                         {releases && (
-                            <span className="ml-2 text-[9px] font-semibold uppercase tracking-[0.07em] px-2 py-[3px] rounded-[2px] border border-[#323f4c] bg-[#101214] text-[#546270]">
-                                <span className="text-[#c6d4df]">{releases.length}</span> releases
+                            <span className="ml-2 text-[9px] font-semibold uppercase tracking-[0.07em] px-2 py-[3px] rounded-[2px] border border-line-2 bg-well text-ink-3">
+                                <span className="text-ink">{releases.length}</span> releases
                             </span>
                         )}
                     </div>
@@ -202,13 +204,13 @@ const App = () => {
                             <div key={i} className="flex items-center gap-3">
                                 <div className="shimmer w-2.5 h-2.5 rounded-full shrink-0" />
                                 <div className="shimmer h-3 w-28 rounded" />
-                                <div className="flex-1 h-px bg-[#1e2d3a]" />
+                                <div className="flex-1 h-px bg-line-soft" />
                                 <div className="shimmer h-2.5 w-16 rounded" />
                             </div>
                         ))}
                     </div>
                 ) : releases.length === 0 ? (
-                    <div className="text-center py-16 text-[#546270] text-[11px]">Could not load changelog.</div>
+                    <div className="text-center py-16 text-ink-3 text-[11px]">Could not load changelog.</div>
                 ) : (
                     <div className="flex flex-col">
                         {releases.map((r, i) => (
@@ -218,7 +220,7 @@ const App = () => {
                 )}
             </main>
 
-            <Footer label="Cheevo Tracker · Changelog" />
+            <Footer label="Cheevodex · Changelog" />
 
         </div>
     );
