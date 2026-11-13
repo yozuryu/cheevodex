@@ -33,11 +33,11 @@ The bar is `TabBar` from `assets/tabs.js` (icon + uppercase label, sliding blue 
 
 ## Reading as a dex (CHV-036)
 
-The game page is the game's **dex**: "Dex No.<RA game ID>" above the title (`.dex-no.lg`), the completion card, then a summary (`.dsum`: Developer, Publisher, Genre, Released, Players). In the default achievement view (All, all types, default order) the list is split into chapters (`.dchap`): **Progression** (progression + win-condition achievements, in set order) and **Everything else**, each with its done count and missables flagged. Any filter, type or sort shows the plain list. **See also** (`.seealso`) at the end of the Achievements tab links related dexes: the base game of a subset, and the other Professor Oak subsets.
+The game page is the game's **dex**: "Dex No.<RA game ID>" above the title (`.dex-no.lg`), the dex record, then a summary (`.dsum`: Developer, Publisher, Genre, Released, Players). In the default achievement view (All, all types, default order) the list is split into chapters (`.dchap`): **Progression** (progression + win-condition achievements, in set order) and **Everything else**, each with its done count and missables flagged. Any filter, type or sort shows the plain list. **See also** (`.seealso`) at the end of the Achievements tab links related dexes: the base game of a subset, and the other Professor Oak subsets.
 
-## Completion Card
+## Dex Record
 
-Under the title (Savepoint's game-sheet card, `.shd-*` in `assets/ui.css`): % complete large on the left in the status colour (blue, gold at 100%), then Achievements (earned/total), Points (earned/total) and Played (or Players when there's no playtime; with playtime the player count moves to the meta line), the RA progression as a gold segmented meter (one segment per progression / win-condition achievement up to 20, longer chains grouped, the group in progress lit partly), and the bar along the card's bottom edge. The card is tinted up to the % (`.wash`). A Hardcore / Softcore tag sits under the meta line once anything is unlocked.
+Under the title (CHV-040, replaced the Savepoint-style completion card): a `.dring` with the % (blue, gold + glow at 100%), then Achievements (earned/total), Points (earned/total) and Played (or Players without playtime) as `.dledger` index lines (stacked on phones, three across from md), then the progression as a `.dpath` of diamonds (one per progression / win-condition achievement up to 20; longer chains grouped, a partly done group half-lit) with the done count. A Hardcore / Softcore tag sits under the meta line once anything is unlocked.
 
 ## Achievement Controls
 
@@ -207,9 +207,9 @@ The hero is a `.phead` (`assets/ui.css`): the game's in-game or title art blurre
   <h1 className="text-[18px] md:text-[22px] ... art-shadow">
 ```
 
-### Completion card
+### Dex record
 
-Three stat cells beside the % at every width (`.shd-cells.n3`); padding grows from md.
+Ring beside the index lines; the lines stack on phones and sit three across from md. The facts are one line on phones (`md:hidden`) and a labelled block from md.
 
 ### Tab bar
 

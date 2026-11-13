@@ -147,6 +147,15 @@ All page `<main>` sections use `px-4 md:px-8`. Sticky bars that span edge-to-edg
 
 Use `TabBar` from `assets/tabs.js` for page tabs (an icon on every tab + uppercase 12px/600 label, sliding 3px blue underline), on phones too. It is sticky at the top; pass `className="md:top-[26px]"` (the global Topbar is 26px tall on desktop) plus any page padding. Wrap the tab content in one element and call `useSwipeTabs(ref, ids, active, onChange, ready)` for phone swipe.
 
+### Cheevodex motifs
+
+Cheevodex's own pieces, not Savepoint's (CHV-040; styles in `assets/ui.css`):
+- **Ring** (`.dring`, `--p` %, `--c` colour, `--s` size, `--w` width) for completion: the game page record and the game rows. Gold with a glow only when mastered.
+- **Index lines** (`.dledger` / `.dl-row`: `.dl-k` label, `.dl-dots` dotted leader, `.dl-v` value) for lists of numbers: the game record, user stats, award counts. Not boxed stat tiles.
+- **Diamond path** (`.dpath`) for progression: one diamond per progression achievement (grouped past 20), gold when done, on a line that fills up to the last done one.
+
+Shared with Savepoint on purpose: the tab bar, filter chips, sheets, the activity timeline and watchlist rows.
+
 ### Dex numbers
 
 A game's dex number is its RA game ID, written `No.<id>` (or `Dex No.<id>` in page headings) with class `.dex-no` — the only place the Silkscreen pixel face is used. "Dex" is the word for an entry in the codex; never seen / caught or other Pokédex wording.

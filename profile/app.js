@@ -149,12 +149,14 @@ const ModeIcon = ({ game, size = 11 }) => {
     : <Feather size={size} className="text-ink-2 shrink-0" aria-label="Softcore" />;
 };
 
+// Count beside a small completion ring (Cheevodex's ring motif, CHV-040)
 const GameProgress = ({ game }) => (
   <>
     <span className="gcount num" style={game.isMastered ? { color: 'var(--gold)' } : undefined}>
       {game.achievementsUnlocked}<span>/{game.achievementsTotal}</span>
     </span>
-    <div className="gbar"><i style={{ width: `${game.rawProgress}%`, background: game.isMastered ? 'var(--gold)' : 'var(--accent)' }} /></div>
+    <span className={`dring ${game.isMastered ? 'full' : ''}`} title={`${Math.floor(game.rawProgress)}% complete`}
+      style={{ '--p': game.rawProgress, '--c': game.isMastered ? 'var(--gold)' : game.isBeaten ? 'var(--silver)' : 'var(--accent)', '--s': '26px', '--w': '4px' }} />
   </>
 );
 
@@ -168,7 +170,7 @@ const GameListRow = ({ game, extra = null }) => {
       {game.background && <div className="grow-art"><img src={game.background} alt="" loading="lazy" onError={e => { e.currentTarget.style.display = 'none'; }} /></div>}
       <img src={game.icon} alt="" loading="lazy" className="grow-icon" />
       <div className="grow-main">
-        <span className="grow-title">{game.baseTitle || game.title}</span>
+        <span className="grow-title"><span className="dex-no mr-1.5 align-[1px]">No.<b>{game.id}</b></span>{game.baseTitle || game.title}</span>
         <div className="grow-sub">
           <span className="text-accent keep">{game.console}</span>
           {game.isSubset && game.subsetName && <span className="text-gold-dim shrink">{game.subsetName}</span>}
@@ -178,8 +180,7 @@ const GameListRow = ({ game, extra = null }) => {
         </div>
         {extra}
       </div>
-      <div className="grow-prog">
-        <span className="dex-no">No.<b>{game.id}</b></span>
+      <div className="grow-prog dprog">
         {hasAch ? <GameProgress game={game} /> : <span className="text-[11px] text-ink-3">No achievements</span>}
       </div>
     </a>
@@ -381,12 +382,18 @@ const DexTab = ({ games, filter, onFilter }) => {
 };
 
 // ── Overview stat tiles (styles .stiles / .stile in assets/ui.css) ─────────────
+// User stats as index lines: label, dotted leader, value (Cheevodex's codex motif, CHV-040)
 const StatTiles = ({ items }) => (
-  <div className="stiles">
+  <div className="sledger dledger">
     {items.map(st => {
-      // "#37,546 of 172,642": the total after the rank as small text, so it fits the narrow rail
+      // "#37,546 of 172,642": the total after the rank as small text
       const [main, rest] = String(st.value).split(/ (?=of )/);
-      return <div key={st.label} className="stile"><b title={st.value} className={st.dim ? 'text-ink-3 italic' : 'num'}>{main}{rest && <small>{rest}</small>}</b><span>{st.label}</span></div>;
+      return (
+        <div key={st.label} className="dl-row">
+          <span className="dl-k">{st.label}</span><span className="dl-dots" />
+          <span className={`dl-v ${st.dim ? '!text-ink-3 italic !font-normal' : ''}`} title={st.value}>{main}{rest && <small>{rest}</small>}</span>
+        </div>
+      );
     })}
   </div>
 );

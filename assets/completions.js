@@ -141,11 +141,13 @@ export function CompletionsPanel({ title, labels, items, shape, loading, empty =
       h('div', { className: `cmp-grid ${shape}`, style: { gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` } },
         ...Array.from({ length: cols }, (_, i) => h('div', { key: i, className: `shimmer cmp-tile ${shape}` }))))
     : h('div', { className: 'anim-in' },
-      h('div', { className: 'cmp-tiers' },
-        [['gold', gold, 'star'], ['silver', silver, 'medal']].map(([t, n, icon]) =>
-          h('div', { key: t, className: `cmp-tier ${t}${n ? '' : ' zero'}` },
-            h('span', { className: 'cmp-tier-ic' }, h(Icon, { name: icon, size: t === 'gold' ? 15 : 16 })),
-            h('span', null, h('b', null, n), h('small', null, labels[t]))))),
+      // Tier counts as index lines (Cheevodex's codex motif, replacing Savepoint's tier boxes)
+      h('div', { className: 'sledger dledger cmp-ledger' },
+        [['gold', gold, 'star', 'var(--gold)'], ['silver', silver, 'medal', 'var(--silver)']].map(([t, n, icon, c]) =>
+          h('div', { key: t, className: 'dl-row' },
+            h('span', { className: 'dl-k' }, h(Icon, { name: icon, size: 12, style: { color: c } }), labels[t]),
+            h('span', { className: 'dl-dots' }),
+            h('span', { className: 'dl-v', style: { color: n ? c : 'var(--ink-3)' } }, n)))),
       !items.length ? h('div', { className: 'cmp-empty' }, empty) : h(Latest, { g: latest, labels, shape }),
       rest.length > 0 && h('div', {
         ref: boxRef, key: `${view}-${open ? 'open' : 'folded'}`, onScroll: open ? onScroll : undefined,

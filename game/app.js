@@ -656,55 +656,58 @@ function GameApp() {
               </div>
             </div>
 
-            {/* ── Completion card (Savepoint's SheetHead card; .shd-* in assets/ui.css): % big, the numbers beside it,
-                 the progression meter, the bar along the bottom edge, tinted up to the % in the status colour ── */}
+            {/* ── Dex record (Cheevodex's own, CHV-040): completion ring, the numbers as index lines,
+                 and the progression path as diamonds on a line ── */}
             {(() => {
               const done = completionPct >= 100;
               const color = done ? 'var(--gold)' : 'var(--accent)';
-              const lit = Math.floor(completionPct) > 0;
               const prog = achList.filter(a => a.type === 'progression' || a.type === 'win_condition');
               const progDone = prog.filter(a => !!a.dateEarned).length;
-              const MAX_SEG = 20;
-              let meter = null;
+              const MAX = 20;
+              let marks = [];
               if (prog.length > 0) {
                 const n = prog.length;
-                if (n <= MAX_SEG) meter = Array.from({ length: n }, (_, i) => <i key={i} className={i < progDone ? 'on' : ''} />);
+                if (n <= MAX) marks = Array.from({ length: n }, (_, i) => (i < progDone ? 'on' : ''));
                 else {
-                  const per = Math.ceil(n / MAX_SEG), segs = Math.ceil(n / per);
-                  meter = Array.from({ length: segs }, (_, i) => {
+                  const per = Math.ceil(n / MAX), segs = Math.ceil(n / per);
+                  marks = Array.from({ length: segs }, (_, i) => {
                     const size = Math.min(per, n - i * per), part = Math.max(0, Math.min(size, progDone - i * per)) / size;
-                    return <i key={i} className={part >= 1 ? 'on' : ''}>{part > 0 && part < 1 && <u style={{ width: `${part * 100}%` }} />}</i>;
+                    return part >= 1 ? 'on' : part > 0 ? 'part' : '';
                   });
                 }
               }
-              const stats = [
-                { value: unlockedCount, total: achList.length, label: 'Achievements', color: 'var(--accent)' },
-                { value: earnedPoints.toLocaleString(), total: totalPoints.toLocaleString(), label: 'Points', color: 'var(--gold)' },
-                playtime ? { value: playtime, label: 'Played', color: 'var(--ink)' }
-                         : { value: game.numDistinctPlayersCasual.toLocaleString(), label: 'Players', color: 'var(--ink)' },
+              const lit = marks.filter(m => m === 'on').length;
+              const rows = [
+                { k: 'Achievements', v: <>{unlockedCount}<em>/{achList.length}</em></>, c: 'var(--accent)' },
+                { k: 'Points', v: <>{earnedPoints.toLocaleString()}<em>/{totalPoints.toLocaleString()}</em></>, c: 'var(--gold)' },
+                playtime ? { k: 'Played', v: playtime } : { k: 'Players', v: game.numDistinctPlayersCasual.toLocaleString() },
               ];
               return (
                 <div className="relative max-w-4xl mx-auto px-4 md:px-8 pb-4">
-                  <div className={`shd-card !mx-0 !mb-0${lit ? ' wash' : ''}`} style={{ '--p': `${Math.min(100, completionPct)}%`, '--c': color }}>
-                    <div className="shd-hrow">
-                      <div className="shd-big"><b className="num" style={{ color }}>{Math.floor(completionPct)}<small>%</small></b><span>Complete</span></div>
-                      <div className="shd-cells n3">
-                        {stats.map(st => (
-                          <div key={st.label} className="shd-stat">
-                            <div className="shd-v num"><b style={{ color: st.color }}>{st.value}</b>{st.total != null && <em>/{st.total}</em>}</div>
-                            <div className="shd-l">{st.label}</div>
+                  <div className="drec">
+                    <div className="drec-top">
+                      <div className={`dring ${done ? 'full' : ''}`} style={{ '--p': Math.min(100, completionPct), '--c': color, '--s': '68px', '--w': '6px' }}
+                        role="img" aria-label={`${Math.floor(completionPct)}% complete`}>
+                        <b style={{ fontSize: 20 }}>{Math.floor(completionPct)}<small>%</small></b>
+                      </div>
+                      <div className="dledger">
+                        {rows.map(r => (
+                          <div key={r.k} className="dl-row">
+                            <span className="dl-k">{r.k}</span><span className="dl-dots" />
+                            <span className="dl-v" style={r.c ? { color: r.c } : undefined}>{r.v}</span>
                           </div>
                         ))}
                       </div>
                     </div>
-                    {meter && (
-                      <div className="shd-steps">
-                        <Trophy size={12} className="shrink-0" /><span className="shd-steps-l">Progression</span>
-                        <span className="shd-meter">{meter}</span>
-                        <b className="num">{progDone}<span>/{prog.length}</span></b>
+                    {marks.length > 0 && (
+                      <div className="dpath">
+                        <span className="dpath-l"><Trophy size={12} className="text-gold" />Progression</span>
+                        <span className="dpath-t" style={{ '--done': marks.length > 1 ? `calc((100% - 8px) * ${Math.max(0, lit - 1) / (marks.length - 1)})` : '0%' }}>
+                          {marks.map((m, i) => <i key={i} className={m} />)}
+                        </span>
+                        <span className="dpath-n">{progDone}<span>/{prog.length}</span></span>
                       </div>
                     )}
-                    <span className="shd-track">{lit && <i style={{ width: `max(${Math.min(100, completionPct)}%, 8px)`, '--c': color }} />}</span>
                   </div>
                   {/* The dex's facts, like the summary box at the top of a guide entry: one line on phones, labelled from md */}
                   {(() => {

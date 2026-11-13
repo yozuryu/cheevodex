@@ -30,6 +30,7 @@
 - **The Dex**, the new first tab: every game you've played is a dex, numbered by its RA game ID ("No.16244"), with its icon, title, console, count and a state in RA's words: played, beaten, mastered (games with no unlocks yet are dimmed). It reads as an index: dexes grouped by console under sticky headings, a jump list of consoles and a "96 dexes · 14 consoles" line; search (title or dex number), console, sort (Dex No., last played, progress, title) and All / Unbeaten / Beaten / Mastered chips. A Played / Beaten / Mastered counter sits in the header on phones; tapping it opens the Dex on that filter
 - **Identity rail on desktop.** From 1024px the profile is two columns: a pinned card on the left with the player (avatar, rank, motto, points, achievements, rank), the dex counter, the stat tiles and member since; tabs and content on the right, in place of the wide header
 - Game rows show their dex number
+- Game rows show the count beside a small completion ring (blue in progress, silver beaten, gold mastered) and the dex number before the title, in place of Savepoint's thin bar. User stats (Overview and the desktop rail) and the Mastered / Beaten award counts are index lines with dotted leaders instead of boxed tiles
 
 ### Social
 
@@ -41,6 +42,7 @@
 - **Completion card** under the title, as on Savepoint's game sheet: % complete large, Achievements, Points and Played beside it, a gold progression meter and the bar along the card's edge. The player count moved to the details line. Hardcore / Softcore shows as a tag
 - Achievement filters are one row of chips with counts (All, Unlocked, Locked, Progression, Missable), then the count, a sort select and a Compare chip; tabs have icons
 - **Each game reads as its dex**: "Dex No." above the title, the facts (developer, publisher, genre, release, players) as a labelled block on desktop and one line on phones, and in the default view the achievements in two chapters, Progression (needed to beat the game) and Everything else, each with its done count and missables. A See also section links a subset's base game and the other Professor Oak subsets
+- **Dex record** in place of Savepoint's completion card: a completion ring (gold and glowing when mastered), Achievements / Points / Played as index lines with dotted leaders, and the progression as a path of diamonds on a line (one per progression achievement, grouped past 20)
 
 ### Achievement Page
 
