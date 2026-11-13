@@ -32,7 +32,8 @@ The page reads as the codex's edition log (styles: the "Changelog" block in `ass
 - **Header**: the title with the diamond mark, then index lines for releases, total changes, and the first release's date (versions are `vYY.MM.DD`, read as dates by `versionDate`)
 - **Jump list** (`.dindex`): the six newest versions as links to `#r-<version>`, with "all N" to show every release
 - **Release** = a volume (`.dvol`): a sticky heading button (`.dvol-h.clog-rh`) with the version in mono, the title (two lines max), the change count and a chevron; under it the date and summary. The newest release opens by default
-- **Section** = an index line (`.clog-sh`): a diamond in the section's colour, the name, a dotted leader and the change count; it opens to its entries. Sections of the newest release start open
+- **Section** = an index line (`.clog-sh`): a diamond in the section's colour, the name, a dotted leader and the change count; it opens to its entries. Sections of the newest release start open, except the developer notes (`TECHNICAL`: RetroAchievements API, Cache, Structure)
+- **Entry**: only its headline shows (`splitEntry`: the `**bold lead**`, else the first sentence under 160 characters); entries with more text are buttons that open the rest underneath
 
 ## Section Order & Colors
 

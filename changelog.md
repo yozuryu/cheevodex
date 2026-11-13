@@ -63,7 +63,7 @@
 - **New icon: Lens boy** — a pixel handheld whose screen is one big gold achievement-coin lens, with a d-pad and a gold button. Replaces the pixel trophy in `favicon.svg`, `favicon.ico` (16/32/48), `icon-192.png`, `icon-512.png` and `appicon.png`/`appicon.svg`
 - Every page says it is **unofficial and not affiliated with RetroAchievements**: in the footer on desktop, at the bottom of the phone menu sheet (phones hide the footer), and on the login page
 - The phone bottom nav goes to pages (Profile, Search, Consoles, Changelog, Menu) instead of profile tabs, which now live in the profile's own tab bar; the menu sheet keeps the account and cache actions
-- **Changelog as volumes.** Each release is a volume with a sticky heading (version in mono, title, change count) and its date; sections are index lines with their change count that open to the entries. The header shows releases, changes and the first release date as index lines, with a jump list of releases under it. Replaces the Steam-era dot timeline
+- **Changelog as volumes.** Each release is a volume with a sticky heading (version in mono, title, change count) and its date; sections are index lines with their change count that open to the entries. Each entry shows only its headline (its bold lead, else its first sentence) and opens to the rest on tap; Cache, Structure and RetroAchievements API start closed; code reads as quiet mono text instead of boxed chips. The header shows releases, changes and the first release date as index lines, with a jump list of releases under it. Replaces the Steam-era dot timeline
 
 ### Polish
 

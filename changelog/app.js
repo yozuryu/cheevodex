@@ -90,6 +90,9 @@ const SECTION_COLORS = {
     'User Page':             'var(--gold)',
 };
 
+// Developer notes: closed by default even in the newest release
+const TECHNICAL = new Set(['RetroAchievements API', 'Cache', 'Structure']);
+
 const sectionColor = (title) =>
     SECTION_COLORS[title] ?? 'var(--ink-2)';
 
@@ -108,12 +111,31 @@ const splitTitle = (date) => {
 };
 const slug = (v) => 'r-' + v.replace(/[^\w]+/g, '-');
 
-const Entry = ({ text }) => (
-    <li className="clog-e">
-        <i style={{ background: 'var(--line-2)' }} />
-        <span>{renderText(text)}</span>
-    </li>
-);
+// An entry shows its headline (the **bold lead**, else the first sentence); the rest opens on tap
+const splitEntry = (text) => {
+    const bold = text.match(/^\*\*([^*]+)\*\*\s*(.*)$/s);
+    if (bold) return { head: bold[1].replace(/[.:]\s*$/, ''), rest: bold[2].trim() };
+    const m = text.match(/^(.{20,}?[.;])\s+(?=[A-Z`(])(.*)$/s);
+    if (m && m[1].length < 160) return { head: m[1].replace(/[.;]$/, ''), rest: m[2].trim() };
+    return { head: text, rest: '' };
+};
+
+const Entry = ({ text }) => {
+    const [open, setOpen] = useState(false);
+    const { head, rest } = splitEntry(text);
+    if (!rest) return (
+        <li className="clog-e"><i /><span className="clog-eh">{renderText(head)}</span></li>
+    );
+    return (
+        <li className={`clog-e more ${open ? 'open' : ''}`}>
+            <i />
+            <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open}>
+                <span className="clog-eh">{renderText(head)}<ChevronDown size={11} className="clog-ec" /></span>
+                {open && <span className="clog-er anim-fade">{renderText(rest)}</span>}
+            </button>
+        </li>
+    );
+};
 
 // A section as an index line: diamond in the section's colour, name, dotted leader, change count; opens to its entries
 const Section = ({ title, entries, defaultOpen }) => {
@@ -161,7 +183,7 @@ const Release = ({ date, summary, sections, defaultOpen }) => {
             )}
             {open && (
                 <div className="dledger clog-ss anim-fade">
-                    {sortSections(sections).map(sec => <Section key={sec.title} title={sec.title} entries={sec.entries} defaultOpen={defaultOpen} />)}
+                    {sortSections(sections).map(sec => <Section key={sec.title} title={sec.title} entries={sec.entries} defaultOpen={defaultOpen && !TECHNICAL.has(sec.title)} />)}
                 </div>
             )}
         </section>
