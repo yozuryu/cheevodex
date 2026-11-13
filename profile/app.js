@@ -263,6 +263,7 @@ const DEX_FILTERS = [
 ];
 const DEX_SORTS = [
   { value: 'no',       label: 'Dex No.'     },
+  { value: 'console',  label: 'By console'  },
   { value: 'recent',   label: 'Last played' },
   { value: 'progress', label: 'Progress'    },
   { value: 'title',    label: 'Title'       },
@@ -291,8 +292,9 @@ const DexTab = ({ games, filter, onFilter }) => {
         : sort === 'progress' ? (a, b) => b.rawProgress - a.rawProgress || a.id - b.id
         : sort === 'title' ? (a, b) => (a.baseTitle || a.title).localeCompare(b.baseTitle || b.title)
         : (a, b) => a.id - b.id);
-  // Shown as an index (grouped by console, biggest volume first) in Dex No. order with no console or search picked
-  const asIndex = sort === 'no' && consoleName === 'all' && !search;
+  // Dex No. (the default) is one list in number order. By console shows it as an index: console volumes, biggest
+  // first, each in number order, with a jump list (only when no console or search is picked)
+  const asIndex = sort === 'console' && consoleName === 'all' && !search;
   const volumes = useMemo(() => {
     if (!asIndex) return [];
     const m = new Map();

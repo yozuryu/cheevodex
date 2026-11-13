@@ -26,7 +26,7 @@ Cheevodex's centre: the player's cheevo codex. Each game in `ALL_GAMES` is a **d
 - **States, in RA's words:** played (every game), beaten (`isBeaten || isMastered`), mastered. A game with no unlocks shows its icon dimmed grey (`.dent.unstarted`). Never seen / caught: Cheevodex is a codex, not a Pokédex (doc-012).
 - **Entry:** Dex No., state icon (gold star mastered, silver medal beaten, blue dot in progress, empty circle not started), icon, title, console (or subset name), count and %; gold edge + glow when mastered, silver when beaten. Links to the game page.
 - **Controls:** search (title, subset or a dex number), console select, sort (Dex No. · Last played · Progress · Title), chips All / Unbeaten / Beaten / Mastered with counts, and a count line ("96 dexes · 12 consoles").
-- **Index:** in Dex No. order with no console or search picked, dexes are grouped by console (biggest first) under sticky `.dvol-h` headings with counts, and a jump list of console chips scrolls to each group.
+- **Order:** the default sort, **Dex No.**, is one continuous list from the lowest number (roughly the order RA added the sets). **Index:** the **By console** sort, with no console or search picked, groups dexes by console (biggest first) under sticky `.dvol-h` headings with counts, and a jump list of console chips scrolls to each group.
 - **Dex counter** (`DexCounter`): Played / Beaten / Mastered with a bar each (started, beaten, mastered as a share of played). In the header on phones, in the identity rail on desktop; tapping a cell opens the Dex on that filter.
 
 ## Identity rail (≥1024px, CHV-034)
