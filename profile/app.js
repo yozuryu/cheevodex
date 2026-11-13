@@ -705,6 +705,13 @@ const RAchievementModal = ({ game, onClose, loadingDetails }) => {
   );
 };
 
+// A friend's stable colour from the friend palette (tokens --pal-1..6), by their username
+const friendColor = (u) => {
+  let h = 0;
+  for (const ch of String(u).toLowerCase()) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return `var(--pal-${(h % 6) + 1})`;
+};
+
 // ── FriendRun / FriendPost — the Friends timeline: one post per friend per stretch of the day (their runs back
 // to back), avatar on the day's rail; each run is a game line with +N, then its badges, opening to the full rows ──
 const FriendRun = ({ run, user, unlockRow, runTitle }) => {
@@ -740,7 +747,7 @@ const FriendRun = ({ run, user, unlockRow, runTitle }) => {
 const FriendPost = ({ post, pic, unlockRow, runTitle }) => {
   const n = post.runs.reduce((t, r) => t + r.achievements.length, 0);
   return (
-    <div className="fpost anim-fade">
+    <div className="fpost anim-fade" style={{ '--fc': friendColor(post.username) }}>
       <a href={`../profile/?u=${post.username}`} className="fpost-av"><img src={pic} alt="" loading="lazy" /></a>
       <div className="fpost-main">
         <div className="fpost-h">
@@ -1048,7 +1055,8 @@ const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, games =
                 </button>
                 {party.map(f => (
                   <button type="button" key={f.username} onClick={() => setFriendSel(u => u === f.username ? null : f.username)}
-                    aria-pressed={friendSel === f.username} className={`fpal ${friendSel === f.username ? 'on' : ''}`} title={`${f.username} · ${f.n} unlocks`}>
+                    aria-pressed={friendSel === f.username} className={`fpal ${friendSel === f.username ? 'on' : ''}`} title={`${f.username} · ${f.n} unlocks`}
+                    style={{ '--fc': friendColor(f.username) }}>
                     <span className="fpal-av"><img src={userPic(f.username)} alt="" loading="lazy" /></span>
                     <span className="fpal-name">{f.username}</span>
                     <b>+{f.n}</b>

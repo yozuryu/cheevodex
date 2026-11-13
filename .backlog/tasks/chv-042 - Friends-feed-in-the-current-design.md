@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@claude'
 created_date: '2026-11-13 06:14'
-updated_date: '2026-11-13 09:01'
+updated_date: '2026-11-13 09:09'
 labels:
   - profile
   - design
@@ -34,4 +34,6 @@ Friends view rebuilt on Mine's DayHead + RunCard with the friend's avatar and na
 Reworked after review into a Party: one card per friend (avatar, last active, +N, points, game chips with +N linking to compare), runs behind a toggle, Recent / Most unlocks sort, two columns on desktop. Roster removed. Rings skipped on purpose: the friends endpoint has no per-game totals. Verified: expand (14 runs), sort, no sideways scroll at 400 / 1280.
 
 Third pass, per review (keep the timeline): Party cards replaced by a friend strip + day rail. Posts group a friend's back-to-back runs; runs are a game line and a badge strip opening to rows. Verified: expand (13 rows), strip filter, phone badge count (7 + '+1'), no sideways scroll at 400 / 1280.
+
+Colour pass: friend palette tokens --pal-1..6 (stable per username) on avatar ring, name and run edge; +N gold; hardcore badges underlined in gold instead of framed.
 <!-- SECTION:FINAL_SUMMARY:END -->

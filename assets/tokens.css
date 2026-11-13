@@ -52,6 +52,14 @@
   --c-install:       44 151 250;  /* #2c97fa Install banner button */
   --c-install-hi:    90 174 252;  /* #5aaefc Install button hover */
   --c-install-press: 31 127 214;  /* #1f7fd6 Install button active */
+  /* Friend palette: one stable colour per friend in the Friends timeline (avatar ring, name, run edge).
+     No gold (earned) or red (hardcore) here, so a friend's colour never reads as a status */
+  --c-pal-1:         108 184 255;  /* #6cb8ff Friend: blue */
+  --c-pal-2:         87 203 222;  /* #57cbde Friend: aqua */
+  --c-pal-3:         107 207 127;  /* #6bcf7f Friend: green */
+  --c-pal-4:         167 139 250;  /* #a78bfa Friend: violet */
+  --c-pal-5:         240 121 180;  /* #f079b4 Friend: pink */
+  --c-pal-6:         190 214 92;  /* #bed65c Friend: lime */
 
   --page:          rgb(var(--c-page));
   --bar:           rgb(var(--c-bar));
@@ -100,6 +108,12 @@
   --install:       rgb(var(--c-install));
   --install-hi:    rgb(var(--c-install-hi));
   --install-press: rgb(var(--c-install-press));
+  --pal-1:         rgb(var(--c-pal-1));
+  --pal-2:         rgb(var(--c-pal-2));
+  --pal-3:         rgb(var(--c-pal-3));
+  --pal-4:         rgb(var(--c-pal-4));
+  --pal-5:         rgb(var(--c-pal-5));
+  --pal-6:         rgb(var(--c-pal-6));
 
   /* type */
   --font: 'Geist', 'Segoe UI', system-ui, -apple-system, sans-serif;
