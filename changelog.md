@@ -4,7 +4,7 @@
 
 ### Auth
 
-- Login: field labels and "How to get your API key" in normal case, and Connect is a solid blue button in normal case, like the rest of the app (was tiny uppercase)
+- **Login in the app's style.** Field labels and "How to get your API key" in normal case, and Connect is a solid blue button in normal case (was tiny uppercase)
 
 ### Cache
 
