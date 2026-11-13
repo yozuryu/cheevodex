@@ -56,6 +56,10 @@
 - Tabs have icons, like the profile and game pages
 - Shows its place in the game's dex ("Dex No.16244 · 7 of 76") with Prev / Next to page through the set
 
+### Backlog
+
+- In-progress watchlist rows show the count beside a small completion ring, like the Dex, Recent and Progress rows, instead of Savepoint's thin bar; Mastered keeps its gold pill and not-started games their trophy count
+
 ### Navigation
 
 - **New tab bars.** Profile (desktop) and game page tabs are one row of uppercase labels with a 3px blue underline that slides to the active tab; the row scrolls sideways when it doesn't fit and keeps the active tab in view. Game page tabs were bordered buttons. Ported from Savepoint (`assets/tabs.js`)

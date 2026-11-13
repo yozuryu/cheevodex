@@ -311,7 +311,7 @@ The same sticky `TabBar` as desktop, pinned under the status bar (`top: env(safe
 
 ### Backlog
 
-Savepoint's watchlist rows (`.wlist` / `.wrow`, two columns from md): icon, title + subset / tilde tags, console · points, the status once on the right, status colour on the left edge. Subsets stack under their base game as one `.wstack` card (`stackSubsets()`): "Base set" first, then each subset. Filters: search + grouping select (none · console · status · subsets), status chips with counts, a meta line with the sync time and Refresh. Rows are render functions, not components (as components React would remount every row on each re-render).
+Savepoint's watchlist rows (`.wlist` / `.wrow`, two columns from md): icon, title + subset / tilde tags, console · points, the status once on the right (in progress: the count beside a small `.dring`; mastered: gold pill; not started: trophy and total), status colour on the left edge. Subsets stack under their base game as one `.wstack` card (`stackSubsets()`): "Base set" first, then each subset. Filters: search + grouping select (none · console · status · subsets), status chips with counts, a meta line with the sync time and Refresh. Rows are render functions, not components (as components React would remount every row on each re-render).
 
 ### Header layout
 

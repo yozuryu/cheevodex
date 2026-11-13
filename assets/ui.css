@@ -264,7 +264,7 @@ button.grow:hover { background: var(--box-hover); }
 .wrow-sub > * { flex-shrink: 0; }
 .wrow-sub > .shrink { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .wrow-sub i { font-style: normal; color: var(--ink-4); }
-.wrow-end { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; width: 64px; }
+.wrow-end { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; min-width: 64px; }
 .wstack { display: flex; flex-direction: column; min-width: 0; }
 /* A game with subsets is one card: its name · console on one line on top (.whead), then one row per
    set, "Base set" first, each with its own icon, points, status and status-coloured edge */
@@ -925,3 +925,5 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 /* Mine: your runs keep their full unlock rows under the strip */
 .frun.mine .frun-rows { border-top: 0; }
 .frun-rows > .trow + .trow { border-top: 1px solid var(--line-faint); }
+/* Watchlist: in-progress rows show the count beside a small ring, like the game rows */
+.wprog { display: flex; align-items: center; gap: 8px; }

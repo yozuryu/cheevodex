@@ -3269,8 +3269,10 @@ export default function App() {
               };
               const statusEnd = (game, status, pct) => <>
                 {status === 'inprogress' && <>
-                  <span className="gcount num">{game.numAwarded}<span>/{game.achievementsTotal}</span></span>
-                  <div className="gbar"><i style={{ width: `${pct}%`, background: 'var(--accent)' }} /></div>
+                  <span className="wprog">
+                    <span className="gcount num">{game.numAwarded}<span>/{game.achievementsTotal}</span></span>
+                    <span className="dring" title={`${Math.floor(pct)}% complete`} style={{ '--p': pct, '--c': 'var(--accent)', '--s': '26px', '--w': '4px' }} />
+                  </span>
                 </>}
                 {status === 'mastered' && <span className="text-[9px] font-bold uppercase tracking-[0.07em] px-1.5 py-[1px] rounded-[2px] bg-gold text-well flex items-center gap-1"><Trophy size={9} />Mastered</span>}
                 {status === 'notstarted' && <span className="text-[11px] text-ink-2 flex items-center gap-1 num" title={`${game.achievementsTotal} achievements`}><Trophy size={11} className="text-ink-3" />{game.achievementsTotal}</span>}
