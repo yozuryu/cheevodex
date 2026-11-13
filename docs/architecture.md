@@ -29,7 +29,7 @@ cheevodex/
 │   ├── tabs.js         # TabBar (sliding underline) + useSwipeTabs (phone swipe between tabs)
 │   ├── game-view.js    # useGameView — list / tiles choice, remembered per device; shortAgo
 │   ├── completions.js  # CompletionsPanel — Overview game awards (from Savepoint)
-│   ├── activity-ui.js  # Activity summary, sticky day headings, run cards (from Savepoint)
+│   ├── activity-ui.js  # Activity summary, sticky day headings, unlock rows (from Savepoint, reworked)
 │   ├── time.js         # Timezone-aware date helpers: dayKey, addDays, fmtClock… (from Savepoint)
 │   ├── mobile-nav.js   # Shared bottom nav IIFE (mobile only, < 768px)
 │   ├── pwa-install.js  # Install banner

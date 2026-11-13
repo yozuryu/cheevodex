@@ -17,6 +17,7 @@
 - Moved to **yozuryu.github.io/cheevodex/** with the repo rename. Old `/cheevo-tracker/…` links (any page, with query string) redirect to the same page at the new address via the root site's `404.html`; credentials survive because the origin is the same
 - **More of Savepoint's components.** Its game rows, stat tiles, filter chips, activity timeline, watchlist rows and game-sheet card are now shared styles in `assets/ui.css` (Savepoint's colours mapped onto the tokens), with `assets/completions.js` (game awards panel), `assets/activity-ui.js` (summary, day headings, run cards) and `assets/time.js` ported alongside. The sort / group select draws its icons as token-coloured masks instead of hex-coloured SVGs
 - `RunCard` (`assets/activity-ui.js`) takes a `fold` size; the old `FeedSession` / `FeedAchRow` components are gone, and Mine and Friends share one unlock-row builder
+- Shared `RunStrip` / `runMode` in `profile/app.js` draw both Mine and Friends runs; Savepoint's `RunCard`, `RunCount` and `StripArt` are removed from `assets/activity-ui.js`, and the profile no longer builds a per-game screenshot map for Activity
 
 ### Profile
 
@@ -34,6 +35,7 @@
 - Game rows show their dex number
 - **Rings and index lines.** Game rows show the count beside a small completion ring (blue in progress, silver beaten, gold mastered) and the dex number before the title, in place of Savepoint's thin bar. User stats (Overview and the desktop rail) and the Mastered / Beaten award counts are index lines with dotted leaders instead of boxed tiles
 - **Activity summary: the dexes that moved.** The top of Activity no longer counts days; it lists the games you progressed in the last 14 days, newest first, each with its icon inside a two-tone ring (what you had before the fortnight dim, what you gained in it bright, gold when mastered), its dex number and console, the unlocks gained (+9) and the count before → now. One line on top totals unlocks, points and dexes; three dexes show, the rest behind "N more dexes". "The year, streaks and heatmap" opens the past-year numbers and current / best streak as index lines, and the heatmap (tap a day to filter the timeline). Replaces Savepoint's numbers-plus-14-day-bars card
+- **Your runs match Friends.** Each run on Mine opens with the same game strip as the Friends timeline: icon, title with Subset / tilde tags, subset name, mode (gold flame hardcore, grey feather softcore), console and time, +N and points in gold, with the run's edge and a faint wash in its mode colour. Your full unlock rows stay underneath (runs over five fold after four). Savepoint's screenshot art band is gone, along with its "No Screenshot Found" placeholders
 
 ### Social
 

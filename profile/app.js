@@ -19,7 +19,7 @@ import { useSheet, ArtBg } from '../assets/sheet.js';
 import { TabBar, useSwipeTabs, scrollToTabs } from '../assets/tabs.js';
 import { useGameView, shortAgo } from '../assets/game-view.js';
 import { CompletionsPanel } from '../assets/completions.js';
-import { ActivitySummary, useSummaryOpen, computeStreak, yearOf, DayHead, RunCard, RunCount, UnlockRow, ActivitySkeleton, TimelineSkeleton } from '../assets/activity-ui.js';
+import { ActivitySummary, useSummaryOpen, computeStreak, yearOf, DayHead, UnlockRow, ActivitySkeleton, TimelineSkeleton } from '../assets/activity-ui.js';
 import { dayKey, addDays, fmtClock, fmtDayKey, TZ } from '../assets/time.js';
 
 const _visitedUser = new URLSearchParams(window.location.search).get('u');
@@ -719,39 +719,74 @@ const friendColor = (u) => {
 
 // ── FriendRun / FriendPost — the Friends timeline: one post per friend per stretch of the day (their runs back
 // to back), avatar on the day's rail; each run is a game line with +N, then its badges, opening to the full rows ──
-const FriendRun = ({ run, user, unlockRow, runTitle }) => {
-  const [open, setOpen] = useState(false);
-  const { p } = runTitle(run.gameTitle);
-  const achs = run.achievements;
+// A run's mode from its unlocks: all hardcore, all softcore, or both
+const runMode = achs => {
+  const hc = achs.filter(a => a.hardcoreMode).length;
+  return hc === achs.length ? 'hc' : hc === 0 ? 'sc' : 'mix';
+};
+
+// The game strip at the head of a run (Mine and Friends): icon, title with Subset / tilde tags, subset name, mode
+// icon, console and time range; +N and points in gold. `achs` newest first; `icon` already a media URL
+const RunStrip = ({ href, gameTitle, icon, consoleName, achs, mode, runTitle }) => {
+  const { p } = runTitle(gameTitle);
   const t0 = fmtClock(achs[achs.length - 1].date), t1 = fmtClock(achs[0].date);
   const pts = achs.reduce((t, a) => t + (a.points || 0), 0);
-  const hc = achs.filter(a => a.hardcoreMode).length;
-  const mode = hc === achs.length ? 'hc' : hc === 0 ? 'sc' : 'mix';
-  const icon = getMediaUrl(run.gameIcon);
+  return (
+    <a href={href} className="frun-h">
+      {icon ? <img src={icon} alt="" loading="lazy" className="frun-icon" /> : <span className="trow-ph frun-icon" />}
+      <span className="frun-main">
+        <span className="frun-t">
+          <span className="truncate">{p.baseTitle}</span>
+          {p.isSubset && <span className="subset-tag">Subset</span>}
+          {!p.isSubset && renderTildeTags(p.tags)}
+        </span>
+        {p.isSubset && <span className="frun-sub">{p.subsetName}</span>}
+        <span className="frun-m">
+          {mode === 'sc'
+            ? <Feather size={11} className="text-ink-2 shrink-0" aria-label="Softcore" />
+            : <Flame size={11} className={`shrink-0 ${mode === 'hc' ? 'text-gold' : 'text-ink-2'}`} aria-label={mode === 'hc' ? 'Hardcore' : 'Hardcore and softcore'} />}
+          {consoleName && <span className="truncate">{consoleName}</span>}
+          <span className="num shrink-0">{t0 === t1 ? t0 : `${t0}–${t1}`}</span>
+        </span>
+      </span>
+      <span className="frun-e">
+        <b>+{achs.length}</b>
+        <span>{pts} pts</span>
+      </span>
+    </a>
+  );
+};
+
+// Your own run (Mine): the strip, then the full unlock rows; runs over five fold after four
+const MyRun = ({ session, unlockRow, runTitle }) => {
+  const [open, setOpen] = useState(false);
+  const achs = useMemo(() => [...session.achievements].sort((a, b) => b.date.localeCompare(a.date)), [session]);
+  const mode = runMode(achs);
+  const folded = achs.length > 5 && !open;
+  const shown = folded ? achs.slice(0, 4) : achs;
+  return (
+    <div className={`frun mine ${mode}`}>
+      <RunStrip href={`../game/?id=${session.gameId}`} gameTitle={session.gameTitle} icon={session.gameIcon}
+        consoleName={session.consoleName} achs={achs} mode={mode} runTitle={runTitle} />
+      <div className="frun-rows">{shown.map(unlockRow)}</div>
+      {achs.length > 5 && (
+        <button type="button" className="tmore" onClick={() => setOpen(o => !o)}>
+          {open ? 'Show less' : `Show ${achs.length - 4} more`}
+          <ChevronDown size={12} className={open ? 'rotate-180' : ''} />
+        </button>
+      )}
+    </div>
+  );
+};
+
+const FriendRun = ({ run, user, unlockRow, runTitle }) => {
+  const [open, setOpen] = useState(false);
+  const achs = run.achievements;
+  const mode = runMode(achs);
   return (
     <div className={`frun ${mode} ${open ? 'open' : ''}`}>
-      <a href={`../game/?id=${run.gameId}&compare=${user}`} className="frun-h">
-        <img src={icon} alt="" loading="lazy" className="frun-icon" />
-        <span className="frun-main">
-          <span className="frun-t">
-            <span className="truncate">{p.baseTitle}</span>
-            {p.isSubset && <span className="subset-tag">Subset</span>}
-            {!p.isSubset && renderTildeTags(p.tags)}
-          </span>
-          {p.isSubset && <span className="frun-sub">{p.subsetName}</span>}
-          <span className="frun-m">
-            {mode === 'sc'
-              ? <Feather size={11} className="text-ink-2 shrink-0" aria-label="Softcore" />
-              : <Flame size={11} className={`shrink-0 ${mode === 'hc' ? 'text-gold' : 'text-ink-2'}`} aria-label={mode === 'hc' ? 'Hardcore' : 'Hardcore and softcore'} />}
-            {run.consoleName && <span className="truncate">{run.consoleName}</span>}
-            <span className="num shrink-0">{t0 === t1 ? t0 : `${t0}–${t1}`}</span>
-          </span>
-        </span>
-        <span className="frun-e">
-          <b>+{achs.length}</b>
-          <span>{pts} pts</span>
-        </span>
-      </a>
+      <RunStrip href={`../game/?id=${run.gameId}&compare=${user}`} gameTitle={run.gameTitle} icon={getMediaUrl(run.gameIcon)}
+        consoleName={run.consoleName} achs={achs} mode={mode} runTitle={runTitle} />
       <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="frun-b"
         aria-label={open ? 'Hide the unlocks' : `Show the ${achs.length} unlocks`}>
         {achs.slice(0, 10).map((a, i) => (
@@ -785,7 +820,7 @@ const FriendPost = ({ post, pic, unlockRow, runTitle }) => {
 
 // ── ActivityTab Component ──────────────────────────────────────────────────
 
-const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, games = [], loadingMore, allLoaded, socialView, setSocialView, friendsActivityStatus, setFriendsActivityStatus, friendsActivity, friendsFetchProgress, failedFriends, onRefreshFriends, onResetFriends, friendsActivityTs, ownUsername, socialProfileMap = new Map() }) => {
+const ActivityTab = ({ achievements, refTime, heatmapData, games = [], loadingMore, allLoaded, socialView, setSocialView, friendsActivityStatus, setFriendsActivityStatus, friendsActivity, friendsFetchProgress, failedFriends, onRefreshFriends, onResetFriends, friendsActivityTs, ownUsername, socialProfileMap = new Map() }) => {
   const [selectedDay, setSelectedDay] = useState(null);
   const [visibleSessionCount, setVisibleSessionCount] = useState(100);
 
@@ -953,7 +988,7 @@ const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, games =
           const slice = sorted.slice(start, i);
           sessions.push({
             username, isOwn, gameId, gameTitle, gameIcon, consoleName,
-            achievements: [...slice].reverse(), // newest first, as RunCard lists them
+            achievements: [...slice].reverse(), // newest first, as the runs list them
             latestDate: slice[slice.length - 1].date,
           });
           start = i;
@@ -1242,23 +1277,9 @@ const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, games =
                         <b className="num">{achCount}</b> unlock{achCount !== 1 ? 's' : ''} · <b className="text-gold num">+{dayPts}</b> pts
                       </DayHead>
                       <div className="flex flex-col gap-2">
-                        {sessions.map(session => {
-                          const p = parseTitle(session.gameTitle);
-                          const t0 = fmtClock(session.startTime), t1 = fmtClock(session.endTime);
-                          return (
-                            <RunCard key={`${session.gameId}-${session.startTime}`}
-                              accent="var(--gold)" href={`../game/?id=${session.gameId}`} icon={session.gameIcon}
-                              art={[gameArt[session.gameId]]}
-                              title={<><span className="truncate">{p.baseTitle}</span>{p.isSubset && <span className="subset-tag">Subset</span>}{!p.isSubset && renderTildeTags(p.tags)}</>}
-                              subset={p.isSubset ? p.subsetName : null}
-                              sub={<>
-                                {session.consoleName && <span className="shrink">{session.consoleName}</span>}
-                                <span className="num">{t0 === t1 ? t0 : `${t0}–${t1}`}</span>
-                                <RunCount n={session.achievements.length} />
-                              </>}
-                              rows={[...session.achievements].sort((a, b) => b.date.localeCompare(a.date)).map(unlockRow)} />
-                          );
-                        })}
+                        {sessions.map(session => (
+                          <MyRun key={`${session.gameId}-${session.startTime}`} session={session} unlockRow={unlockRow} runTitle={runTitle} />
+                        ))}
                       </div>
                     </section>
                   ))}
@@ -2792,9 +2813,6 @@ export default function App() {
 
   const { profile: PROFILE_DATA, games: ALL_GAMES, backlog: BACKLOG } = useMemo(() => transformData(rawData), [rawData]);
 
-  // Screenshot per game id, for the art band of the Activity run cards
-  const gameArt = useMemo(() => Object.fromEntries(ALL_GAMES.filter(g => g.background && g.background !== g.icon).map(g => [g.id, g.background])), [ALL_GAMES]);
-
   // Game awards for the Overview's CompletionsPanel (assets/completions.js): art from the game's screenshot
   const awardItems = useMemo(() => (PROFILE_DATA?.gameAwards ?? []).map(a => {
     const g = a.gameId ? ALL_GAMES.find(x => x.id === Number(a.gameId)) : null;
@@ -3149,7 +3167,6 @@ export default function App() {
                   achievements={allLoadedAchievements}
                   refTime={rawData?.metadata?.extractionTimestamp}
                   heatmapData={heatmapData}
-                  gameArt={gameArt}
                   games={ALL_GAMES}
                   loadingMore={achievementsLoadingMore}
                   allLoaded={achievements !== null && !achievementsLoadingMore}

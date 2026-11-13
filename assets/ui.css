@@ -922,3 +922,6 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 .frun.open .frun-c { transform: rotate(180deg); }
 .frun-b:hover .frun-c { color: var(--accent); }
 .frun-rows { border-top: 1px solid var(--line-soft); }
+/* Mine: your runs keep their full unlock rows under the strip */
+.frun.mine .frun-rows { border-top: 0; }
+.frun-rows > .trow + .trow { border-top: 1px solid var(--line-faint); }

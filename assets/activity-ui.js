@@ -7,7 +7,6 @@
 //   ActivitySummary                       the dexes that moved (page-built rows), opening to the year,
 //                                         streaks and heatmap
 //   DayHead                               sticky day heading
-//   RunCard                               one run of unlocks in one game: art band + rows, long runs fold
 //   UnlockRow                             one unlock
 //   SummarySkeleton / TimelineSkeleton / ActivitySkeleton   loading placeholders in the same shapes
 //                                         (the summary folded or open, as it will open)
@@ -150,41 +149,6 @@ export function DayHead({ day, children }) {
       rel && h('em', null, rel)),
     h('span', { className: 'tday-meta' }, children));
 }
-
-// Art behind a game strip: the first of `art` that loads, else the icon blurred
-function StripArt({ art, icon }) {
-  const [i, setI] = useState(0);
-  const src = (art ?? []).filter(Boolean)[i];
-  if (!src && !icon) return null;
-  return h('span', { className: 'tcard-art' },
-    src ? h('img', { key: src, src, alt: '', loading: 'lazy', onError: () => setI(n => n + 1) })
-        : h('img', { src: icon, alt: '', loading: 'lazy', className: 'art-icon' }));
-}
-
-const FOLD = 5;   // runs longer than this fold after FOLD - 1 rows
-
-// One run of consecutive unlocks in one game. `title` and `sub` are nodes (the page's own
-// title parsing, console, time range); `rows` the UnlockRows, newest first
-export function RunCard({ accent, href, icon, art, title, subset, sub, rows, fold = FOLD }) {
-  const [open, setOpen] = useState(false);
-  const folded = rows.length > fold && !open;
-  const shown = folded ? rows.slice(0, fold - 1) : rows;
-  return h('div', { className: 'tcard', style: { borderLeftColor: accent } },
-    h('a', { href, ...offsite(href), className: 'tcard-head' },
-      h(StripArt, { art, icon }),
-      icon ? h('img', { src: icon, alt: '', loading: 'lazy', className: 'tcard-icon' }) : h('span', { className: 'trow-ph tcard-icon' }),
-      h('div', { className: 'tcard-main' },
-        h('span', { className: 'tcard-title' }, title),
-        subset && h('span', { className: 'tcard-subset' }, subset),
-        h('span', { className: 'tcard-sub' }, sub))),
-    h('div', { className: `tlist ${open ? 'open' : ''}` }, shown),
-    rows.length > fold && h('button', { className: 'tmore', onClick: () => setOpen(o => !o) },
-      open ? 'Show less' : `Show ${rows.length - shown.length} more`,
-      h(Icon, { name: 'chevron', size: 12, style: open ? { transform: 'rotate(180deg)' } : undefined })));
-}
-
-// The run's unlock count, for the end of a RunCard sub-line
-export const RunCount = ({ n, extra }) => h('span', { className: 'tcard-n' }, h(Icon, { name: 'trophy', size: 11 }), ' ', n, extra);
 
 // One unlock: badge, name (+ marks), description, and time with its value (points, rarity…) under it
 export function UnlockRow({ href, icon, title, titleStyle, marks, desc, time, value }) {
