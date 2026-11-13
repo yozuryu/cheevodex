@@ -1,85 +1,54 @@
-<div align="center">
+<p align="center">
+  <img src="docs/images/hero.jpg" alt="Cheevodex: every RetroAchievements game you have played as a numbered dex entry, on desktop and phone" width="100%">
+</p>
 
-# Cheevodex
+<p align="center">
+  <b>A pocket companion for RetroAchievements.</b><br>
+  Every game you have played, numbered, ringed and ready on your phone. Free, open source, and it runs entirely in your browser.
+</p>
 
-**A pocket companion for [RetroAchievements](https://retroachievements.org) — no server, no build step, runs entirely in your browser.**
-
-[![License](https://img.shields.io/github/license/yozuryu/cheevodex?color=4a90d9)](LICENSE)
-[![PWA](https://img.shields.io/badge/PWA-ready-5A0FC8?logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
-[![No Build Step](https://img.shields.io/badge/build_step-none-brightgreen)](#tech-stack)
-[![Mobile Friendly](https://img.shields.io/badge/mobile-friendly-43a047?logo=android&logoColor=white)](#)
-[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-38BDF8?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
-
-**[→ Try it live](https://yozuryu.github.io/cheevodex/)**
-
-![Profile overview](docs/screenshots/hero.png)
-
-</div>
+<p align="center">
+  <a href="https://yozuryu.github.io/cheevodex/">Open Cheevodex</a> ·
+  <a href="https://yozuryu.github.io/cheevodex-site/">Website</a> ·
+  <a href="#get-started">Get started</a> ·
+  <a href="#run-your-own-copy">Run your own copy</a>
+</p>
 
 ---
 
-## What it is
+Cheevodex reads your [RetroAchievements](https://retroachievements.org) account and turns it into a dex: every game you have touched gets an entry and a number, its RetroAchievements game ID, and each one opens into a record of how far you are. There is nothing to install and no account to make. Sign in with your RA username and web API key, and it installs to your phone like an app.
 
-Cheevodex is a client-side web app that connects to the [RetroAchievements API](https://api-docs.retroachievements.org/) using your own credentials. It gives you a richer view of your profile, friends, and game library than the official site — with no account to create, no server to run, and no build pipeline to maintain.
+<img src="docs/images/phones.jpg" alt="Cheevodex on a phone: the Dex, a game's dex record, Activity and the Backlog" width="100%">
 
-<details>
-<summary><strong>Full feature list</strong></summary>
+## What you get
 
-### Profile & Progress
-- **Achievement heatmap** — full-year calendar showing daily unlock activity at a glance
-- **Completion progress** — per-game progress bars across your entire played library, filterable by status
-- **Series tracker** — groups games by franchise and shows combined completion across the series
-- **Awards & milestones** — mastery badges, beaten records, and points history in one view
+- **The Dex.** Every game you have played as a numbered entry with its progress ring. Search by name or dex number, filter to unbeaten, beaten or mastered, or read it console by console.
+- **Dex records.** Each game opens as a record: a completion ring (blue in progress, silver beaten, gold mastered), achievements, points and time played, and a progression path with one diamond per progression achievement. Then the achievements themselves, the leaderboards, the community and the supported hashes.
+- **Activity.** The games you moved in the last 14 days, every run of unlocks day by day, a year of streaks and a heatmap.
+- **Friends.** Everyone you follow on one timeline, each in a colour worked out from their name. Compare any shared game side by side.
+- **Backlog.** Your RetroAchievements want-to-play list as a watchlist, subsets stacked under their game.
+- **Stats.** Streaks, points across the year, masteries by month, consoles and how rare your unlocks are.
+- **Search and consoles.** Find any game across every system RetroAchievements supports, or browse a console's whole library.
+- **Anyone's dex.** Open any RetroAchievements username to read their dex and progress.
+- **An app on your phone.** Install it from your browser's menu; it opens full screen and works on phones and computers alike.
 
-### Activity & Social
-- **Timezone-aware activity feed** — Mine and Friends tabs grouped by local day and user; never shows wrong dates near midnight
-- **Friends feed** — sessions grouped by user within each day; sessions with many unlocks collapse to a scannable icon strip, expanding on tap
-- **Playing Now indicator** — subtle live dot on friends who earned achievements in the last 30 minutes
+<img src="docs/images/desktop.jpg" alt="Cheevodex on desktop: a game's dex record and the year in stats" width="100%">
 
-### Backlog
-- **Wishlist management** — tag any game to your backlog directly from the game page
-- **Filter, group, and search** — filter by status (Not Started / In Progress / Mastered), group by console or status, full-text search
-- **Paginated list** — handles large backlogs without performance degradation
+## Get started
 
-### Game Search
-- **Cross-console search** — fetches and indexes every console's full game list into a permanent local store
-- **Instant results** — live-filtered as you type across tens of thousands of games, paginated at 50 per page
-- **Persistent index** — data survives page reloads and is only refreshed when you explicitly ask
+1. Log in at [retroachievements.org](https://retroachievements.org).
+2. Open [Settings](https://retroachievements.org/settings), then **Keys**, and copy your **Web API Key**.
+3. Open [Cheevodex](https://yozuryu.github.io/cheevodex/) and enter your username and the key.
 
-### Game Pages
-- **Achievement list** — with friend comparison showing who in your friends list has earned each achievement
-- **Leaderboards** — ranked scores with your personal entry highlighted
-- **Community** — recent masters and forum comments without leaving the tracker
-- **ROM hashes** — supported hash list for each game
+To install it, choose **Install** or **Add to Home Screen** in your browser's menu.
 
-### App & Platform
-- **Mobile-friendly** — responsive layout throughout; bottom navigation bar, slide-up menu sheet, and touch-optimised interactions on every page
-- **PWA installable** — add to home screen on iOS and Android; works like a native app
-- **Offline support** — service worker caches all assets; previously loaded data available without a connection
-- **Privacy first** — your credentials live only in your browser's `localStorage`; nothing is sent anywhere other than the official RA API
+## Privacy
 
-</details>
+Cheevodex has no server and no account of its own. It asks the [RetroAchievements web API](https://api-docs.retroachievements.org/) directly from your browser with your key. Your credentials stay in your browser's local storage, and cached responses in its IndexedDB, on your own device. Nothing is sent anywhere else.
 
----
+## Run your own copy
 
-## Screenshots
-
-| Profile | Game Page |
-|:-------:|:---------:|
-| ![Profile](docs/screenshots/profile.png) | ![Game](docs/screenshots/game.png) |
-
-| Friends Feed | Search |
-|:-----------:|:------:|
-| ![Friends](docs/screenshots/friends.png) | ![Search](docs/screenshots/search.png) |
-
----
-
-## Getting Started
-
-You need a [RetroAchievements](https://retroachievements.org) account. Your API key is on the [Settings page](https://retroachievements.org/settings) under **Keys**.
-
-### Run locally
+The app is static files with no build step, so any static host works.
 
 ```bash
 git clone https://github.com/yozuryu/cheevodex.git
@@ -87,48 +56,28 @@ cd cheevodex
 npx serve .
 ```
 
-Open `http://localhost:3000`, enter your RA username and API key, and you're in.
+Open `http://localhost:3000` and sign in. To host it, point GitHub Pages, Netlify, Cloudflare Pages or any static host at the repo root; there is no build command.
 
-> `file://` also works in most browsers if you just want to open `index.html` directly without a server.
-
-### Deploy to the web
-
-The entire app is static files — deploy it anywhere:
-
-| Host | How |
-|------|-----|
-| **GitHub Pages** | Push to `main`, enable Pages in repo Settings → Pages |
-| **Netlify** | Drag the project folder onto [app.netlify.com](https://app.netlify.com/drop) |
-| **Vercel** | `npx vercel --prod` in the project directory |
-| **Cloudflare Pages** | Connect repo, build command: _none_, output directory: `/` |
-
-No build command needed — point the host at the repo root and you're done.
-
----
-
-## Tech Stack
-
-<a name="tech-stack"></a>
-
-| | Technology |
+| | |
 |---|---|
-| UI framework | React 18 via CDN — no bundler |
-| Styling | Tailwind CSS via CDN |
-| Icons | Lucide React |
-| JSX transform | Babel Standalone (in-browser) |
-| Offline | Service Worker + Cache API |
-| Data source | [RetroAchievements API](https://api-docs.retroachievements.org/) |
+| UI | React 18 and Lucide icons from a CDN, JSX compiled in the browser by Babel |
+| Styling | Tailwind CSS from a CDN, with the design tokens in `assets/tokens.css` |
+| Data | The RetroAchievements web API, cached in IndexedDB |
+| App | A web manifest and a service worker, so it installs and loads fast |
 
-No npm. No Node. No build pipeline. Every file is plain HTML and JavaScript you can open and read directly.
+The docs in [`docs/`](docs/) cover the architecture, each page and the design rules.
 
----
+### Updating the README images
 
-## Privacy
+The images above are posters built from screenshots of the app (`docs/images/shots/`). To rebuild them:
 
-All data is fetched from the [RetroAchievements public API](https://api-docs.retroachievements.org/) directly from your browser using your own API key. Nothing is ever sent to an external server — credentials, cached API responses, and the game search index all live exclusively in your browser's `localStorage` and `sessionStorage`.
-
----
+```bash
+cd scripts && npm install && cd ..
+node scripts/posters.js                       # posters from the stored screenshots
+npx serve . -l 3000                           # in another terminal, for fresh screenshots
+RA_USERNAME=you RA_API_KEY=yourkey node scripts/posters.js --capture
+```
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). Unofficial and not affiliated with RetroAchievements; game names, art and achievement badges belong to their owners and creators.

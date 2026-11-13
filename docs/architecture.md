@@ -189,6 +189,10 @@ Bust cache: `sessionStorage.clear()` for session data, `localStorage.removeItem(
 - Any API call returning `AUTH_ERROR` also triggers `handleAuthError()`.
 - `validateCredentials(u, k)` is the only function used before credentials are stored (login flow).
 
+## README images
+
+`scripts/posters.js` (dev only, Puppeteer in `scripts/`) composes the README posters in `docs/images/` from the screenshots in `docs/images/shots/`; `--capture` signs in to a running copy (`RA_USERNAME`, `RA_API_KEY`, `APP_URL`) and retakes them first.
+
 ## Search engines
 
 - The sign-in page (`index.html`) carries the title, description, canonical and Open Graph tags, using the website's share image; it links to the website (yozuryu.github.io/cheevodex-site), which holds the full SEO head and sitemap.
