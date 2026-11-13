@@ -75,7 +75,7 @@ Filters use Savepoint's shared filter styles (`.frow` / `.fchip` / `.fsep` / `.f
 
 ## Social Timeline (Activity Tab — Friends View)
 
-The Activity tab has a **Mine / Friends** toggle. Friends view shows a merged timeline of the authed user's own achievements + all followed users' achievements, grouped by day → session (user + game within 1-hour window) → individual achievements.
+The Activity tab has a **Mine / Friends** toggle. Friends view shows a merged timeline of the authed user's own achievements + all followed users' achievements, grouped by day → run (user + game within a 1-hour window) → individual achievements, under a roster of who unlocked most.
 
 ### State (main app)
 
@@ -97,17 +97,16 @@ The Activity tab has a **Mine / Friends** toggle. Friends view shows a merged ti
 
 ### Mine view (ActivityTab)
 
-Savepoint's timeline from `assets/activity-ui.js` (styles: the "Activity timelines" block in `assets/ui.css`): `ActivitySummary` (folded on phones by default, remembered as `cheevodex:activitySummary`: the last 14 days' unlocks and games with one bar per day; open: past-year numbers, the 14 days with streak tiles, the year heatmap), sticky `DayHead`s under the tab bar (`.tl-tabs`), and one `RunCard` per run of unlocks in one game (art band from the game's screenshot via the `gameArt` prop, icon, title, time range, trophy count; runs over 5 fold) with `UnlockRow`s. Picking a day in the bars or the heatmap filters the timeline. Dates and times use `assets/time.js` (viewer's timezone).
+Savepoint's timeline from `assets/activity-ui.js` (styles: the "Activity timelines" block in `assets/ui.css`): `ActivitySummary` (folded on phones by default, remembered as `cheevodex:activitySummary`: the last 14 days' unlocks and games as index lines beside the 14 days drawn as diamonds on a line, each sized by its unlocks, the current streak gold; open: past-year numbers and the current / best streak as index lines, the 14 days with counts, the year heatmap), sticky `DayHead`s under the tab bar (`.tl-tabs`), and one `RunCard` per run of unlocks in one game (art band from the game's screenshot via the `gameArt` prop, icon, title, time range, trophy count; runs over 5 fold) with `UnlockRow`s. Picking a day in the diamonds or the heatmap filters the timeline. Dates and times use `assets/time.js` (viewer's timezone).
 
 ### Feed rendering (ActivityTab, Friends view)
 
 - `mergedFeed`: own `achievements` + all `friendsActivity` values, sorted newest-first
 - `feedGroups`: consecutive same-user+game runs within 1-hour window → session objects
-- `feedByDay`: `feedGroups.slice(0, visibleSessionCount)` grouped by day; paginated at 100 sessions per page with a "Load more" button
-- `FeedSession`: session header (`[avatar] username unlocked in [game icon] Game · Console · time range`) + `FeedAchRow` list
-- Own username shown in cyan (`#57cbde`), friends in gold (`#e5b143`)
-- HC achievement rows: gold left-border; SC: gray
-- New sessions animate in with `feedIn` keyframe (opacity 0→1, translateY −6px→0)
+- `roster`: everyone in `feedGroups` with unlocks in the last 30 days (the friends' fetch window), ranked by unlocks then points; shown as index lines (avatar, name, dotted leader, unlocks, points), six at first then all. Tapping a name sets `rosterUser`, which narrows the feed to their runs and shows a Profile link and an Everyone chip
+- `feedDays`: the (filtered) runs, first `visibleSessionCount` (100 more per Show more days), grouped by day under `DayHead` (unlocks · players)
+- Each run is a `RunCard` (same as Mine) with the game's icon, the friend's avatar and name at the head of the sub-line (own runs gold-edged with your art, friends' blue-edged), console from `sm`, time range, unlock count and points; it folds after two unlocks (`fold={3}`). Rows come from the same `unlockRow` builder as Mine. Friends' cards link to the game page in compare mode
+- Sync time, Refresh and Reset (icon chips) sit beside the Mine / Friends chips; friends whose fetch failed are listed in one quiet line under the roster
 
 ## `rawData` Memo
 

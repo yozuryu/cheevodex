@@ -23,7 +23,16 @@ Fetches `/changelog.md` at runtime (network-first via service worker — always 
 }]
 ```
 
-Inline code (backtick-wrapped) is rendered as `<code>` and `**bold**` as `<strong>` via `renderText()`.
+Inline code (backtick-wrapped) is rendered as `<code className="clog-code">` and `**bold**` as `<strong>` via `renderText()`.
+
+## Layout
+
+The page reads as the codex's edition log (styles: the "Changelog" block in `assets/ui.css`):
+
+- **Header**: the title with the diamond mark, then index lines for releases, total changes, and the first release's date (versions are `vYY.MM.DD`, read as dates by `versionDate`)
+- **Jump list** (`.dindex`): the six newest versions as links to `#r-<version>`, with "all N" to show every release
+- **Release** = a volume (`.dvol`): a sticky heading button (`.dvol-h.clog-rh`) with the version in mono, the title (two lines max), the change count and a chevron; under it the date and summary. The newest release opens by default
+- **Section** = an index line (`.clog-sh`): a diamond in the section's colour, the name, a dotted leader and the change count; it opens to its entries. Sections of the newest release start open
 
 ## Section Order & Colors
 

@@ -6,6 +6,7 @@
 
 - Service worker cache renamed to `cheevodex-…` and bumped so installed apps pick up the new name, icons and styles; the new shared files (`tokens.css`, `tw-config.js`, `ui.css`, `motion.css`, `sheet.js`, `tabs.js`, `game-view.js`) are precached
 - IndexedDB renamed from `cheevo_tracker` to `cheevodex`; the old database is deleted on first open, so each browser re-downloads its cache once. Logins (`raCredentials`) and settings in localStorage are untouched
+- Service worker cache bumped so installed apps pick up the new activity summary, friends feed and changelog styles
 
 ### Structure
 
@@ -15,6 +16,7 @@
 - New `assets/sheet.js` (Savepoint's `useSheet`, `useArtSrc`, plus an `ArtBg` helper) and sheet / blurred-art styles in `assets/ui.css`. The profile's per-game achievement modal uses it too, with the game's art blurred behind its header
 - Moved to **yozuryu.github.io/cheevodex/** with the repo rename. Old `/cheevo-tracker/…` links (any page, with query string) redirect to the same page at the new address via the root site's `404.html`; credentials survive because the origin is the same
 - **More of Savepoint's components.** Its game rows, stat tiles, filter chips, activity timeline, watchlist rows and game-sheet card are now shared styles in `assets/ui.css` (Savepoint's colours mapped onto the tokens), with `assets/completions.js` (game awards panel), `assets/activity-ui.js` (summary, day headings, run cards) and `assets/time.js` ported alongside. The sort / group select draws its icons as token-coloured masks instead of hex-coloured SVGs
+- `RunCard` (`assets/activity-ui.js`) takes a `fold` size; the old `FeedSession` / `FeedAchRow` components are gone, and Mine and Friends share one unlock-row builder
 
 ### Profile
 
@@ -31,10 +33,12 @@
 - **Identity rail on desktop.** From 1024px the profile is two columns: a pinned card on the left with the player (avatar, rank, motto, points, achievements, rank), the dex counter, the stat tiles and member since; tabs and content on the right, in place of the wide header
 - Game rows show their dex number
 - Game rows show the count beside a small completion ring (blue in progress, silver beaten, gold mastered) and the dex number before the title, in place of Savepoint's thin bar. User stats (Overview and the desktop rail) and the Mastered / Beaten award counts are index lines with dotted leaders instead of boxed tiles
+- **Activity summary in Cheevodex's shapes.** The last 14 days are a row of diamonds on a line, each sized and lit by that day's unlocks, with the current streak running gold along the line; tap a day to filter the timeline as before. The folded numbers, the past-year numbers and the streaks are index lines (label, dotted leader, value) instead of Savepoint's big-number tiles, bars and streak tiles
 
 ### Social
 
 - **Compare opens as a sheet.** On phones the compare view slides up from the bottom over the nav bar and closes by dragging its header down, tapping outside, the close button or Escape; from tablet width it stays a centred dialog. Ported from Savepoint (`assets/sheet.js`), animations off under reduced motion
+- **Friends feed rebuilt.** The Friends view of Activity uses the same day headings and run cards as Mine, with the friend's avatar and name on each card and runs folded after two unlocks. A roster on top ranks everyone by unlocks over the last 30 days as index lines; tap a name to see only their runs (replaces the By Session / By User switch). Sync time, refresh and reset sit in one row beside Mine / Friends
 
 ### Game Page
 
@@ -59,6 +63,7 @@
 - **New icon: Lens boy** — a pixel handheld whose screen is one big gold achievement-coin lens, with a d-pad and a gold button. Replaces the pixel trophy in `favicon.svg`, `favicon.ico` (16/32/48), `icon-192.png`, `icon-512.png` and `appicon.png`/`appicon.svg`
 - Every page says it is **unofficial and not affiliated with RetroAchievements**: in the footer on desktop, at the bottom of the phone menu sheet (phones hide the footer), and on the login page
 - The phone bottom nav goes to pages (Profile, Search, Consoles, Changelog, Menu) instead of profile tabs, which now live in the profile's own tab bar; the menu sheet keeps the account and cache actions
+- **Changelog as volumes.** Each release is a volume with a sticky heading (version in mono, title, change count) and its date; sections are index lines with their change count that open to the entries. The header shows releases, changes and the first release date as index lines, with a jump list of releases under it. Replaces the Steam-era dot timeline
 
 ### Polish
 

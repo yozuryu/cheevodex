@@ -151,10 +151,11 @@ Use `TabBar` from `assets/tabs.js` for page tabs (an icon on every tab + upperca
 
 Cheevodex's own pieces, not Savepoint's (CHV-040; styles in `assets/ui.css`):
 - **Ring** (`.dring`, `--p` %, `--c` colour, `--s` size, `--w` width) for completion: the game page record and the game rows. Gold with a glow only when mastered.
-- **Index lines** (`.dledger` / `.dl-row`: `.dl-k` label, `.dl-dots` dotted leader, `.dl-v` value) for lists of numbers: the game record, user stats, award counts. Not boxed stat tiles.
-- **Diamond path** (`.dpath`) for progression: one diamond per progression achievement (grouped past 20), gold when done, on a line that fills up to the last done one.
+- **Index lines** (`.dledger` / `.dl-row`: `.dl-k` label, `.dl-dots` dotted leader, `.dl-v` value) for lists of numbers: the game record, user stats, award counts, the activity summary and streaks, the friends roster, changelog sections. Not boxed stat tiles.
+- **Diamond path** (`.dpath`) for progression: one diamond per progression achievement (grouped past 20), gold when done, on a line that fills up to the last done one. The activity summary's 14 days use the same mark (`.ddays` / `.dday`): one diamond per day sized by its unlocks, the streak gold along the line.
+- **Volumes** (`.dvol` / `.dvol-h`) for long grouped lists: the Dex by console, the changelog by release.
 
-Shared with Savepoint on purpose: the tab bar, filter chips, sheets, the activity timeline and watchlist rows.
+Shared with Savepoint on purpose: the tab bar, filter chips, sheets, the activity day headings and run cards (Mine and Friends), and watchlist rows.
 
 ### Dex numbers
 

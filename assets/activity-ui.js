@@ -74,7 +74,8 @@ export function useSummaryOpen() {
   return [open, toggle];
 }
 
-// Last 14 days as bars against the busiest of them: the current streak gold, other active days blue
+// Last 14 days as diamonds on a line (the progression path's mark): each sized and lit by its unlocks
+// against the busiest day, the current streak gold along the line
 function RecentDays({ streak, heatmapData, cellLabel, describe, selectedDay, onSelectDay, slim }) {
   const days = streak.last14;
   const vals = days.map(d => heatmapData[d.key]?.count ?? 0);
@@ -83,38 +84,41 @@ function RecentDays({ streak, heatmapData, cellLabel, describe, selectedDay, onS
   let k = days.length - 1;
   if (!days[k].active) k--;
   while (k >= 0 && days[k].active) inStreak.add(days[k--].key);
-  return h('div', { className: `rdays ${slim ? 'slim' : ''}` }, days.map((d, i) => {
+  return h('div', { className: `ddays ${slim ? 'slim' : ''}` }, days.map((d, i) => {
     const v = vals[i];
-    const cls = inStreak.has(d.key) ? 'streak' : d.active ? 'on' : v ? 'low' : '';
+    const s = inStreak.has(d.key);
+    const cls = [s ? 'streak' : d.active ? 'on' : v ? 'low' : '',
+      s && inStreak.has(days[i - 1]?.key) ? 'sl' : '', s && inStreak.has(days[i + 1]?.key) ? 'sr' : '',
+      selectedDay === d.key ? 'sel' : '', d.isToday ? 'today' : ''].filter(Boolean).join(' ');
+    const size = v ? Math.round((slim ? 7 : 8) + (slim ? 7 : 9) * v / max) : 6;
     return h('button', {
-      key: d.key, title: describe(d.key), disabled: !v,
+      key: d.key, title: describe(d.key), disabled: !v, className: `dday ${cls}`,
       onClick: () => onSelectDay(selectedDay === d.key ? null : d.key),
-      className: `rday ${cls} ${selectedDay === d.key ? 'sel' : ''} ${d.isToday ? 'today' : ''}`,
     },
-      !slim && h('span', { className: 'rday-v' }, v ? cellLabel(d.key) : ''),
-      h('span', { className: 'rday-bar' }, h('i', { style: { height: v ? `${Math.max(10, v / max * 100)}%` : 0 } })),
-      !slim && h('span', { className: 'rday-l' }, d.label.slice(0, 2)));
+      !slim && h('span', { className: 'dday-v' }, v ? cellLabel(d.key) : ''),
+      h('span', { className: 'dday-g' }, h('i', { style: { width: size, height: size } })),
+      !slim && h('span', { className: 'dday-l' }, d.label.slice(0, 2)));
   }));
 }
 
-function StreakTiles({ streak }) {
+// Index lines: label, dotted leader, value (+ a quiet note)
+const Ledger = ({ rows, cls = '' }) => h('div', { className: `dledger ${cls}` }, rows.map(r =>
+  h('div', { key: r.l, className: `dl-row ${r.cls ?? ''}` },
+    h('span', { className: 'dl-k' }, r.icon, r.l),
+    h('span', { className: 'dl-dots' }),
+    h('span', { className: 'dl-v', style: { color: r.color ?? 'var(--ink)' } }, r.v, r.sub && h('small', null, r.sub)))));
+
+function StreakLines({ streak }) {
   const on = streak.current > 0;
   const days = n => `${n} day${n !== 1 ? 's' : ''}`;
-  return h('div', { className: 'sktiles' },
-    h('div', { className: `sktile ${on ? 'on' : ''}` },
-      h('span', { className: 'sktile-ic' }, h(Icon, { name: 'flame', size: 16, style: on ? { animation: 'flameFlicker 1.8s ease-in-out infinite' } : undefined })),
-      h('span', { className: 'sktile-txt' }, h('b', null, on ? days(streak.current) : 'None'), h('span', null, 'Current streak'))),
-    streak.longestStart && h('div', { className: 'sktile best' },
-      h('span', { className: 'sktile-ic' }, h(Icon, { name: 'trophy', size: 15 })),
-      h('span', { className: 'sktile-txt' },
-        h('b', null, days(streak.longest)),
-        h('span', null, `Best · ${fmtDayKey(streak.longestStart, { day: 'numeric', month: 'short' })} – ${fmtDayKey(streak.longestEnd, { day: 'numeric', month: 'short' })}`))));
+  return h(Ledger, { cls: 'astreak', rows: [
+    { l: 'Current streak', icon: h(Icon, { name: 'flame', size: 12, style: { color: on ? 'var(--gold)' : 'var(--ink-4)', ...(on ? { animation: 'flameFlicker 1.8s ease-in-out infinite' } : {}) } }),
+      v: on ? days(streak.current) : 'None', color: on ? 'var(--gold)' : 'var(--ink-3)' },
+    streak.longestStart && { l: 'Best streak', icon: h(Icon, { name: 'trophy', size: 12, style: { color: 'var(--silver)' } }),
+      v: days(streak.longest),
+      sub: `${fmtDayKey(streak.longestStart, { day: 'numeric', month: 'short' })} – ${fmtDayKey(streak.longestEnd, { day: 'numeric', month: 'short' })}` },
+  ].filter(Boolean) });
 }
-
-const Stat = ({ s, cls = '' }) => h('span', { className: `astat ${cls}` },
-  h('b', { className: 'num', style: { color: s.color ?? 'var(--ink)' } }, s.v),
-  h('span', null, s.l),
-  s.sub && h('em', null, s.sub));
 
 // fold: up to 3 stats for the folded row (the last one only from sm, behind a divider);
 // stats: the open card's three past-year numbers
@@ -124,7 +128,7 @@ export function ActivitySummary({ open, onToggle, fold, stats, streak, heatmapDa
     return h('section', { className: 'asum closed' },
       h('div', { className: 'asum-fold anim-fade' },
         h('button', { className: 'afold-stats', onClick: onToggle, 'aria-expanded': false },
-          fold.map((s, i) => h(Stat, { key: s.l, s, cls: i === 2 ? 'afold-year hidden sm:flex' : '' }))),
+          h(Ledger, { rows: fold.map((s, i) => ({ ...s, cls: i === 2 ? 'hidden sm:flex' : '' })) })),
         h('div', { className: 'afold-days' }, recent(true), h('span', null, 'Last 14 days')),
         h('button', { className: 'afold-btn', onClick: onToggle, 'aria-label': 'Show the year' }, h(Icon, { name: 'chevron', size: 16 }))));
   }
@@ -133,15 +137,15 @@ export function ActivitySummary({ open, onToggle, fold, stats, streak, heatmapDa
       h('button', { className: 'asum-less', onClick: onToggle, 'aria-expanded': true }, 'Less', h(Icon, { name: 'chevron', size: 13, style: { transform: 'rotate(180deg)' } })),
       h('div', { className: 'asum-top' },
         h('div', { className: 'asum-sec' },
-          h('div', { className: 'asum-h' }, h('span', null, 'Past year')),
-          h('div', { className: 'astats' }, stats.map(s => h('div', { key: s.l, className: 'astat' },
-            h('b', { className: 'num', style: { color: s.color ?? 'var(--ink)' } }, s.v), h('span', null, s.l), s.sub && h('em', null, s.sub))))),
+          h('div', { className: 'asum-h' }, h('span', { className: 'sec-mark sm' }), h('span', null, 'Past year')),
+          h(Ledger, { cls: 'astats-l', rows: stats })),
         h('div', { className: 'asum-sec' },
-          h('div', { className: 'asum-h' }, h('span', null, 'Last 14 days')),
+          h('div', { className: 'asum-h' }, h('span', { className: 'sec-mark sm' }), h('span', null, 'Last 14 days')),
           recent(false),
-          h(StreakTiles, { streak }))),
+          h(StreakLines, { streak }))),
       h('div', { className: 'asum-sec' },
         h('div', { className: 'asum-h' },
+          h('span', { className: 'sec-mark sm' }),
           h('span', null, 'Heatmap'),
           h('em', { title: 'Days and times are shown in your timezone' }, TZ),
           selectedDay && h('button', { onClick: () => onSelectDay(null), className: 'fchip on anim-fade', style: { height: 22 } },
@@ -190,10 +194,10 @@ const FOLD = 5;   // runs longer than this fold after FOLD - 1 rows
 
 // One run of consecutive unlocks in one game. `title` and `sub` are nodes (the page's own
 // title parsing, console, time range); `rows` the UnlockRows, newest first
-export function RunCard({ accent, href, icon, art, title, subset, sub, rows }) {
+export function RunCard({ accent, href, icon, art, title, subset, sub, rows, fold = FOLD }) {
   const [open, setOpen] = useState(false);
-  const folded = rows.length > FOLD && !open;
-  const shown = folded ? rows.slice(0, FOLD - 1) : rows;
+  const folded = rows.length > fold && !open;
+  const shown = folded ? rows.slice(0, fold - 1) : rows;
   return h('div', { className: 'tcard', style: { borderLeftColor: accent } },
     h('a', { href, ...offsite(href), className: 'tcard-head' },
       h(StripArt, { art, icon }),
@@ -203,7 +207,7 @@ export function RunCard({ accent, href, icon, art, title, subset, sub, rows }) {
         subset && h('span', { className: 'tcard-subset' }, subset),
         h('span', { className: 'tcard-sub' }, sub))),
     h('div', { className: `tlist ${open ? 'open' : ''}` }, shown),
-    rows.length > FOLD && h('button', { className: 'tmore', onClick: () => setOpen(o => !o) },
+    rows.length > fold && h('button', { className: 'tmore', onClick: () => setOpen(o => !o) },
       open ? 'Show less' : `Show ${rows.length - shown.length} more`,
       h(Icon, { name: 'chevron', size: 12, style: open ? { transform: 'rotate(180deg)' } : undefined })));
 }
@@ -228,25 +232,23 @@ export { Fragment };
 // Same boxes as the real summary (folded on phones unless opened before) and run cards, so nothing
 // jumps when the data lands
 
-const sk = (style, cls = '') => h('div', { className: `shimmer ${cls}`, style: { borderRadius: 2, ...style } });
+const sk = (style, cls = '', key) => h('div', { key, className: `shimmer ${cls}`, style: { borderRadius: 2, ...style } });
 
 export function SummarySkeleton() {
   if (!initialOpen()) {
     return h('section', { className: 'asum closed', 'aria-busy': true },
       h('div', { className: 'asum-fold' },
-        h('div', { className: 'afold-stats' },
-          [0, 1, 2].map(i => h('div', { key: i, className: `astat ${i === 2 ? 'afold-year hidden sm:flex' : ''}` },
-            sk({ width: 34, height: 21 }), sk({ width: 44, height: 10, marginTop: 4 })))),
-        h('div', { className: 'afold-days' }, sk({ width: '100%', maxWidth: 336, height: 28 }), h('span', null, 'Last 14 days')),
+        h('div', { className: 'afold-stats flex flex-col gap-[7px]' },
+          [0, 1, 2].map(i => h('div', { key: i, className: i === 2 ? 'hidden sm:block' : '' }, sk({ width: '100%', height: 12 })))),
+        h('div', { className: 'afold-days' }, sk({ width: '100%', maxWidth: 336, height: 26 }), h('span', null, 'Last 14 days')),
         h('span', { className: 'afold-btn' })));
   }
   return h('section', { className: 'asum', 'aria-busy': true },
     h('div', { className: 'asum-top' },
       h('div', { className: 'asum-sec flex flex-col gap-3' },
-        h('div', { className: 'grid grid-cols-3 gap-3' },
-          [0, 1, 2].map(i => h('div', { key: i, className: 'flex flex-col gap-1.5' }, sk({ height: 20, width: 56 }), sk({ height: 10, width: 64 })))),
-        sk({ height: 6, width: '100%' })),
-      h('div', { className: 'asum-sec' }, sk({ height: 86, width: '100%' }))),
+        sk({ height: 12, width: 90 }),
+        [0, 1, 2].map(i => sk({ height: 13, width: '100%' }, '', i))),
+      h('div', { className: 'asum-sec flex flex-col gap-3' }, sk({ height: 12, width: 90 }), sk({ height: 50, width: '100%' }), sk({ height: 34, width: '100%' }))),
     h('div', { className: 'asum-sec' }, sk({ height: 104, width: '100%' })));
 }
 

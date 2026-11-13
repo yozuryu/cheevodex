@@ -19,7 +19,7 @@ import { useSheet, ArtBg } from '../assets/sheet.js';
 import { TabBar, useSwipeTabs, scrollToTabs } from '../assets/tabs.js';
 import { useGameView, shortAgo } from '../assets/game-view.js';
 import { CompletionsPanel } from '../assets/completions.js';
-import { ActivitySummary, useSummaryOpen, computeStreak, yearOf, DayHead, RunCard, RunCount, UnlockRow, ActivitySkeleton } from '../assets/activity-ui.js';
+import { ActivitySummary, useSummaryOpen, computeStreak, yearOf, DayHead, RunCard, RunCount, UnlockRow, ActivitySkeleton, TimelineSkeleton } from '../assets/activity-ui.js';
 import { dayKey, addDays, fmtClock, fmtDayKey, TZ } from '../assets/time.js';
 
 const _visitedUser = new URLSearchParams(window.location.search).get('u');
@@ -705,185 +705,6 @@ const RAchievementModal = ({ game, onClose, loadingDetails }) => {
   );
 };
 
-// ── FeedAchRow Component — individual achievement row inside a FeedSession ─
-
-const FeedAchRow = ({ ach }) => {
-  const ratio = ach.trueRatio && ach.points ? ach.trueRatio / ach.points : null;
-  return (
-    <div className={`feed-item flex items-center gap-2 p-2 rounded-[2px] border border-line border-l-[2px] ${ach.hardcoreMode ? 'border-l-gold bg-box-hi' : 'border-l-ink-3 bg-box'} hover:bg-line transition-colors`}>
-      <a href={`../achievement/?id=${ach.achievementId}`} className="shrink-0 w-8 h-8 rounded-[2px] overflow-hidden border border-well bg-black block hover:scale-105 transition-transform">
-        <img src={`${MEDIA_URL}/Badge/${ach.badgeName}.png`} alt={ach.title} className="w-full h-full object-cover" />
-      </a>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-          <a href={`../achievement/?id=${ach.achievementId}`} className={`text-[11px] font-medium transition-colors truncate ${ach.hardcoreMode ? 'text-gold hover:text-gold-hi' : 'text-ink hover:text-accent'}`}>
-            {ach.title}
-          </a>
-          <span className="text-[9px] font-bold text-gold num bg-well border border-line-2 px-1.5 py-[1px] rounded-sm shrink-0">{ach.points} pts</span>
-          {ratio > 0 && <span className="text-[9px] shrink-0" style={{ color: ratio >= 30 ? 'var(--hc)' : ratio >= 20 ? 'var(--gold)' : ratio >= 10 ? 'var(--accent)' : 'var(--ink-2)' }}>×{ratio.toFixed(1)}</span>}
-          {ach.type === 'progression' && (
-            <span className="pop-wrap">
-              <Trophy size={11} className="text-gold" />
-              <span className="pop-box">
-                <div className="pop-name" style={{color:'var(--gold)'}}>Progression</div>
-                <div className="pop-sub">Required to complete the game</div>
-              </span>
-            </span>
-          )}
-          {ach.type === 'win_condition' && (
-            <span className="pop-wrap">
-              <Crown size={11} className="text-hc" />
-              <span className="pop-box">
-                <div className="pop-name" style={{color:'var(--hc)'}}>Win Condition</div>
-                <div className="pop-sub">Triggers game completion</div>
-              </span>
-            </span>
-          )}
-          {ach.type === 'missable' && (
-            <span className="pop-wrap">
-              <AlertTriangle size={11} className="text-warn" />
-              <span className="pop-box">
-                <div className="pop-name" style={{color:'var(--warn)'}}>Missable</div>
-                <div className="pop-sub">Can be permanently missed</div>
-              </span>
-            </span>
-          )}
-        </div>
-        {ach.description && <p className="text-[9px] text-ink-3 truncate">{ach.description}</p>}
-      </div>
-      <span className="text-[8px] text-ink-3 shrink-0 ml-auto">{toLocalTime(ach.date)}</span>
-    </div>
-  );
-};
-
-// ── FeedSession Component — session header + achievement list ─────────────
-
-const FeedSession = ({ session, hideUser = false, socialProfileMap = new Map() }) => {
-  const { username, isOwn, gameId, gameTitle, gameIcon, consoleName, achievements } = session;
-  const sessionPts   = achievements.reduce((s, a) => s + (a.points    || 0), 0);
-  const sessionRetro = achievements.reduce((s, a) => s + (a.trueRatio || 0), 0);
-  const startTime = achievements[achievements.length - 1]?.date || '';
-  const endTime   = achievements[0]?.date || '';
-  const fmtT = toLocalTime;
-  const { baseTitle, subsetName, isSubset, tags } = parseTitle(gameTitle);
-  const gameHref = isOwn ? `../game/?id=${gameId}` : `../game/?id=${gameId}&compare=${username}`;
-  const [collapsed, setCollapsed] = React.useState(achievements.length > 3);
-
-  return (
-    <div className={`feed-item ${hideUser ? '' : 'mb-3'}`}>
-      <div className={hideUser ? '' : 'mb-1.5'}>
-        {hideUser ? (<>
-          {/* compact: game header row — links navigate, no toggle */}
-          <div className="flex items-center gap-2">
-            <a href={gameHref} className="w-4 h-4 rounded-[1px] overflow-hidden border border-well bg-black block hover:scale-110 transition-transform shrink-0">
-              <img src={getMediaUrl(gameIcon)} alt="" className="w-full h-full object-cover" />
-            </a>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <a href={gameHref} className="text-[9px] text-ink hover:text-accent transition-colors uppercase tracking-wider font-medium truncate">
-                  {baseTitle}
-                </a>
-                {isSubset && <><span className="text-[7px] font-bold uppercase tracking-[0.07em] px-1 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">Subset</span><span className="text-[8px] text-gold-dim shrink-0 truncate">{subsetName}</span></>}
-                {!isSubset && renderTildeTags(tags)}
-                {consoleName && <span className="hidden md:inline text-[8px] text-ink-3 shrink-0">· {consoleName}</span>}
-              </div>
-              {consoleName && <span className="md:hidden text-[8px] text-ink-3 truncate block leading-tight mt-[1px]">{consoleName}</span>}
-            </div>
-            <span className="text-[8px] text-ink-3 shrink-0 ml-auto">{fmtT(startTime)}{startTime !== endTime ? `–${fmtT(endTime)}` : ''}</span>
-          </div>
-          {collapsed && achievements.length > 0 && (
-            <button onClick={() => setCollapsed(false)} className="w-full mt-1.5 flex items-center gap-1.5 bg-box border border-line rounded-[2px] px-2 py-2 hover:bg-box-hi transition-colors outline-none">
-              {achievements.slice(0, 8).map((ach, i) => (
-                <img key={i} src={`${MEDIA_URL}/Badge/${ach.badgeName}.png`} alt={ach.title} title={ach.title}
-                  className={`w-8 h-8 rounded-[2px] border shrink-0 ${i >= 5 ? 'hidden md:block' : ''} ${ach.hardcoreMode ? 'border-gold' : 'border-line'}`} />
-              ))}
-              {achievements.length > 5 && (
-                <span className="text-[10px] text-ink-3 ml-1 shrink-0 md:hidden">+{achievements.length - 5}</span>
-              )}
-              {achievements.length > 8 && (
-                <span className="text-[10px] text-ink-3 ml-1 shrink-0 hidden md:inline">+{achievements.length - 8}</span>
-              )}
-            </button>
-          )}
-        </>) : (<>
-          {/* Row 1: always visible — user + earned in + [desktop: game info] + time */}
-          <div className="flex items-center gap-2 mb-1 md:mb-0">
-            <a href={`../profile/?u=${username}`} className="shrink-0">
-              <img src={socialProfileMap.get(username)?.userPic ? getMediaUrl(socialProfileMap.get(username).userPic) : `${MEDIA_URL}/UserPic/${username}.png`} alt={username} className="w-5 h-5 rounded-[2px] object-cover" />
-            </a>
-            <a href={`../profile/?u=${username}`} className="text-[11px] font-medium min-w-0 truncate hover:underline" style={{ color: isOwn ? 'var(--aqua)' : 'var(--gold)' }}>
-              {username}
-            </a>
-            <span className="text-[9px] text-ink-3 shrink-0">earned in</span>
-            <div className="hidden md:flex items-center gap-1.5 flex-1 min-w-0">
-              <a href={gameHref} className="w-4 h-4 rounded-[1px] overflow-hidden border border-well bg-black block hover:scale-110 transition-transform shrink-0">
-                <img src={getMediaUrl(gameIcon)} alt="" className="w-full h-full object-cover" />
-              </a>
-              <a href={gameHref} className="text-[9px] text-ink hover:text-accent transition-colors uppercase tracking-wider font-medium truncate">
-                {baseTitle}
-              </a>
-              {isSubset && <><span className="text-[7px] font-bold uppercase tracking-[0.07em] px-1 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">Subset</span><span className="text-[8px] text-gold-dim shrink-0 truncate">{subsetName}</span></>}
-              {!isSubset && renderTildeTags(tags)}
-              {consoleName && <span className="text-[8px] text-ink-3 shrink-0">· {consoleName}</span>}
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-              <span className="hidden md:inline text-[9px] text-ink-3">{achievements.length} achievement{achievements.length !== 1 ? 's' : ''}</span>
-              <span className="hidden md:inline text-[9px] text-line">·</span>
-              <span className="text-[9px] text-ink-3">{sessionPts} pts</span>
-              {sessionRetro > sessionPts && <><span className="text-[9px] text-line">·</span><span className="text-[9px] text-ink-3">{sessionRetro} RP</span></>}
-              <span className="text-[9px] text-line">·</span>
-              <span className="text-[8px] text-ink-3">{fmtT(startTime)}{startTime !== endTime ? `–${fmtT(endTime)}` : ''}</span>
-            </div>
-          </div>
-          {/* Row 2: mobile only — game icon + title + console stacked */}
-          <div className="md:hidden flex items-center gap-1.5 pl-7">
-            <a href={gameHref} className="w-4 h-4 rounded-[1px] overflow-hidden border border-well bg-black block hover:scale-110 transition-transform shrink-0">
-              <img src={getMediaUrl(gameIcon)} alt="" className="w-full h-full object-cover" />
-            </a>
-            <div className="flex flex-col min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <a href={gameHref} className="text-[9px] text-ink hover:text-accent transition-colors uppercase tracking-wider font-medium truncate">
-                  {baseTitle}
-                </a>
-                {isSubset && <><span className="text-[7px] font-bold uppercase tracking-[0.07em] px-1 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">Subset</span><span className="text-[8px] text-gold-dim shrink-0 truncate">{subsetName}</span></>}
-                {!isSubset && renderTildeTags(tags)}
-              </div>
-              {consoleName && <span className="text-[8px] text-ink-3 truncate">{consoleName}</span>}
-            </div>
-          </div>
-        </>)}
-      </div>
-      {!hideUser && collapsed && achievements.length > 0 && (
-        <button onClick={() => setCollapsed(false)} className="w-full mt-1.5 flex items-center gap-1.5 bg-box border border-line rounded-[2px] px-2 py-2 hover:bg-box-hi transition-colors outline-none">
-          {achievements.slice(0, 8).map((ach, i) => (
-            <img key={i} src={`${MEDIA_URL}/Badge/${ach.badgeName}.png`} alt={ach.title} title={ach.title}
-              className={`w-8 h-8 rounded-[2px] border shrink-0 ${i >= 5 ? 'hidden md:block' : ''} ${ach.hardcoreMode ? 'border-gold' : 'border-line'}`} />
-          ))}
-          {achievements.length > 5 && (
-            <span className="text-[10px] text-ink-3 ml-1 shrink-0 md:hidden">+{achievements.length - 5}</span>
-          )}
-          {achievements.length > 8 && (
-            <span className="text-[10px] text-ink-3 ml-1 shrink-0 hidden md:inline">+{achievements.length - 8}</span>
-          )}
-        </button>
-      )}
-      {!collapsed && (
-        <div className={`flex flex-col gap-1 ${hideUser ? 'mt-1.5' : ''}`}>
-          {achievements.map((ach, i) => (
-            <FeedAchRow key={`${ach.achievementId}-${i}`} ach={ach} />
-          ))}
-          {achievements.length > 3 && (
-            <button onClick={() => setCollapsed(true)} className="w-full flex items-center justify-center gap-1 py-1 text-[9px] text-ink-3 hover:text-ink-2 transition-colors outline-none">
-              <ChevronUp size={10} />
-              collapse
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
 // ── ActivityTab Component ──────────────────────────────────────────────────
 
 const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, loadingMore, allLoaded, socialView, setSocialView, friendsActivityStatus, setFriendsActivityStatus, friendsActivity, friendsFetchProgress, failedFriends, onRefreshFriends, onResetFriends, friendsActivityTs, ownUsername, socialProfileMap = new Map() }) => {
@@ -1036,7 +857,7 @@ const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, loading
           const slice = sorted.slice(start, i);
           sessions.push({
             username, isOwn, gameId, gameTitle, gameIcon, consoleName,
-            achievements: [...slice].reverse(), // newest first for FeedSession
+            achievements: [...slice].reverse(), // newest first, as RunCard lists them
             latestDate: slice[slice.length - 1].date,
           });
           start = i;
@@ -1047,288 +868,200 @@ const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, loading
     return sessions.sort((a, b) => b.latestDate.localeCompare(a.latestDate));
   }, [mergedFeed]);
 
-  // Group feed sessions by day only (flat, for "by sessions" mode)
-  const feedBySession = useMemo(() => {
+  // Friends roster: everyone in the feed ranked by unlocks over the last 30 days (the friends' fetch window);
+  // tapping a name narrows the feed to their runs
+  const [rosterUser, setRosterUser] = useState(null);
+  const [rosterAll, setRosterAll] = useState(false);
+  const roster = useMemo(() => {
+    const from = addDays(dayKey(new Date()), -29);
+    const m = new Map();
+    feedGroups.forEach(sess => {
+      if (toLocalDay(sess.latestDate) < from) return;
+      const r = m.get(sess.username) ?? { username: sess.username, isOwn: sess.isOwn, n: 0, pts: 0 };
+      r.n += sess.achievements.length;
+      r.pts += sess.achievements.reduce((t, a) => t + (a.points || 0), 0);
+      m.set(sess.username, r);
+    });
+    return [...m.values()].sort((a, b) => b.n - a.n || b.pts - a.pts);
+  }, [feedGroups]);
+  const shownFeed = useMemo(() => rosterUser ? feedGroups.filter(g => g.username === rosterUser) : feedGroups, [feedGroups, rosterUser]);
+  const feedDays = useMemo(() => {
     const byDay = {};
-    feedGroups.slice(0, visibleSessionCount).forEach(item => {
+    shownFeed.slice(0, visibleSessionCount).forEach(item => {
       const day = toLocalDay(item.latestDate);
-      if (!byDay[day]) byDay[day] = [];
-      byDay[day].push(item);
+      (byDay[day] ??= []).push(item);
     });
     return Object.entries(byDay).sort(([a], [b]) => b.localeCompare(a));
-  }, [feedGroups, visibleSessionCount]);
+  }, [shownFeed, visibleSessionCount]);
+  const userPic = u => socialProfileMap.get(u)?.userPic ? getMediaUrl(socialProfileMap.get(u).userPic) : `${MEDIA_URL}/UserPic/${u}.png`;
 
-  // Group feed sessions by day → by user for day-header layout (paginated)
-  const feedByDay = useMemo(() => {
-    const byDay = {};
-    feedGroups.slice(0, visibleSessionCount).forEach(item => {
-      const day = toLocalDay(item.latestDate);
-      if (!byDay[day]) byDay[day] = {};
-      if (!byDay[day][item.username]) byDay[day][item.username] = { username: item.username, isOwn: item.isOwn, sessions: [] };
-      byDay[day][item.username].sessions.push(item);
-    });
-    return Object.entries(byDay)
-      .sort(([a], [b]) => b.localeCompare(a))
-      .map(([day, userMap]) => [
-        day,
-        Object.values(userMap).sort((a, b) => b.sessions[0].latestDate.localeCompare(a.sessions[0].latestDate))
-      ]);
-  }, [feedGroups, visibleSessionCount]);
 
-  const [collapsedFeedDays, setCollapsedFeedDays] = useState(new Set());
-  const toggleFeedDay = (day) => setCollapsedFeedDays(prev => {
-    const next = new Set(prev);
-    next.has(day) ? next.delete(day) : next.add(day);
-    return next;
-  });
-
-  const [groupMode, setGroupMode] = useState('sessions');
-
-  const fmtTime = toLocalTime;
-  const fmtDay  = (str) => new Date(str + 'T00:00:00').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-  const tzName  = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // One unlock row (Mine and Friends): badge, name in gold when hardcore, type mark, time, points and RetroRatio
+  const unlockRow = ach => {
+    const ratio = ach.trueRatio && ach.points ? ach.trueRatio / ach.points : null;
+    const typeIcon = ach.type === 'progression' ? <Trophy size={11} className="text-gold shrink-0"><title>Progression: required to complete the game</title></Trophy>
+      : ach.type === 'win_condition' ? <Crown size={11} className="text-hc shrink-0"><title>Win condition: triggers game completion</title></Crown>
+      : ach.type === 'missable' ? <AlertTriangle size={11} className="text-warn shrink-0"><title>Missable</title></AlertTriangle> : null;
+    return (
+      <UnlockRow key={`${ach.achievementId}-${ach.date}`}
+        href={`../achievement/?id=${ach.achievementId}`}
+        icon={`${MEDIA_URL}/Badge/${ach.badgeName}.png`}
+        title={ach.title} titleStyle={{ color: ach.hardcoreMode ? 'var(--gold)' : 'var(--ink)' }}
+        marks={typeIcon}
+        desc={ach.description}
+        time={<span className="num">{fmtClock(ach.date)}</span>}
+        value={<em className="num">
+          <span className="text-gold">{ach.points} pts</span>
+          {ratio > 0 && <span style={{ color: ratio >= 30 ? 'var(--hc)' : ratio >= 20 ? 'var(--gold)' : ratio >= 10 ? 'var(--accent)' : 'var(--ink-2)' }}> ×{ratio.toFixed(1)}</span>}
+        </em>} />
+    );
+  };
+  const runTitle = gameTitle => {
+    const p = parseTitle(gameTitle);
+    return { p, node: <><span className="truncate">{p.baseTitle}</span>{p.isSubset && <span className="subset-tag">Subset</span>}{!p.isSubset && renderTildeTags(p.tags)}</> };
+  };
 
   return (
     <div className="flex flex-col gap-6">
 
-      {/* ── Mine / Friends toggle ── */}
-      <div className="flex flex-col gap-1">
-        <div className="flex items-center gap-1.5">
-          {[['mine', 'Mine'], ['friends', 'Friends']].map(([v, label]) => (
-            <button type="button" key={v} onClick={() => setSocialView(v)} aria-pressed={socialView === v}
-              className={`fchip ${socialView === v ? 'on' : ''}`}>
-              {label}
-            </button>
-          ))}
-          {socialView === 'friends' && (
-            <div className="ml-auto flex items-center gap-3">
-              {(friendsActivityStatus === 'loading' || friendsActivityStatus === 'updating') && (
-                <div className="flex items-center gap-1.5">
-                  <Loader2 size={11} className="text-accent animate-spin" />
-                  {friendsFetchProgress && (
-                    <span className="text-[11px] text-accent font-medium tabular-nums">{friendsFetchProgress.done}/{friendsFetchProgress.total}</span>
-                  )}
-                </div>
-              )}
-              {friendsActivityStatus === 'done' && (<>
-                {friendsActivityTs && (
-                  <span className="text-[9px] text-ink-3">Synced {timeAgo(friendsActivityTs)}</span>
-                )}
-                <button onClick={onRefreshFriends}
-                  className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider text-ink-3 hover:text-accent transition-colors">
-                  <RefreshCw size={11} />
-                  Refresh
-                </button>
-                <button onClick={onResetFriends}
-                  className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider text-ink-3 hover:text-danger-hi transition-colors"
-                  title="Clear all cached data and re-fetch from scratch">
-                  <RotateCcw size={11} />
-                  Reset
-                </button>
-              </>)}
-            </div>
-          )}
-        </div>
-        {socialView === 'friends' && <div className="flex items-center justify-between">
-          <span className="text-[9px] text-ink-3 opacity-60">{tzName}</span>
-          {(
-            <div className="flex items-center gap-1">
-              {[['sessions', 'By Session'], ['users', 'By User']].map(([mode, label]) => (
-                <button key={mode} onClick={() => setGroupMode(mode)}
-                  className={`text-[9px] px-2 py-0.5 rounded-[2px] border font-medium transition-colors uppercase tracking-wider ${groupMode === mode ? 'bg-box text-ink border-line' : 'bg-well text-ink-3 border-line-2 hover:text-ink'}`}>
-                  {label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>}
+      {/* ── Mine / Friends, and the friends' sync controls ── */}
+      <div className="flex items-center gap-1.5 min-h-[30px]">
+        {[['mine', 'Mine'], ['friends', 'Friends']].map(([v, label]) => (
+          <button type="button" key={v} onClick={() => setSocialView(v)} aria-pressed={socialView === v}
+            className={`fchip ${socialView === v ? 'on' : ''}`}>
+            {label}
+          </button>
+        ))}
+        {socialView === 'friends' && (
+          <div className="ml-auto flex items-center gap-1.5 text-[11px] text-ink-3 min-w-0">
+            {(friendsActivityStatus === 'loading' || friendsActivityStatus === 'updating') && (
+              <span className="flex items-center gap-1.5 text-accent">
+                <Loader2 size={12} className="animate-spin" />
+                {friendsFetchProgress ? <span className="num">{friendsFetchProgress.done}/{friendsFetchProgress.total}</span> : 'Loading'}
+              </span>
+            )}
+            {friendsActivityStatus === 'done' && (<>
+              {friendsActivityTs && <span className="truncate mr-1">Synced {timeAgo(friendsActivityTs)}</span>}
+              <button type="button" onClick={onRefreshFriends} className="fchip" title="Fetch new unlocks" aria-label="Refresh friends activity"><RefreshCw size={12} /></button>
+              <button type="button" onClick={onResetFriends} className="fchip" title="Clear the saved friends activity and fetch it all again" aria-label="Reset friends activity"><RotateCcw size={12} /></button>
+            </>)}
+          </div>
+        )}
       </div>
 
       {socialView === 'friends' ? (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4 anim-fade tl-tabs">
 
-          {/* ── Loading: shimmer until first data arrives, then inline progress ── */}
-          {friendsActivityStatus === 'loading' && Object.keys(friendsActivity).length === 0 && (
-            <div className="flex flex-col gap-0">
-              {[2, 1].map((userCount, di) => (
-                <div key={di} className="mb-4">
-                  {/* day header */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 rounded-full bg-line border border-line shrink-0" />
-                    <div className="shimmer h-2.5 w-20 rounded" />
-                    <div className="flex-1 h-px bg-line opacity-40" />
-                    <div className="shimmer h-2 w-16 rounded" />
-                  </div>
-                  {/* user groups */}
-                  <div className="ml-4 border-l border-line pl-3 flex flex-col gap-3">
-                    {[...Array(userCount)].map((_, ui) => (
-                      <div key={ui}>
-                        {/* user row */}
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <div className="shimmer w-5 h-5 rounded-[2px] shrink-0" />
-                          <div className="shimmer h-2.5 rounded shrink-0" style={{ width: `${56 + (di * 17 + ui * 23) % 32}px` }} />
-                          <div className="shimmer h-2 w-24 rounded shrink-0" />
-                        </div>
-                        {/* sessions */}
-                        <div className="ml-7 border-l border-line pl-3 flex flex-col gap-2">
-                          {[...Array(ui === 0 && di === 0 ? 2 : 1)].map((_, si) => (
-                            <div key={si}>
-                              {/* session game row */}
-                              <div className="flex items-center gap-2 mb-1.5">
-                                <div className="shimmer w-4 h-4 rounded-[1px] shrink-0" />
-                                <div className="shimmer h-2 rounded flex-1" style={{ maxWidth: `${90 + (ui * 19 + si * 31) % 60}px` }} />
-                                <div className="shimmer h-2 w-10 rounded ml-auto shrink-0" />
-                              </div>
-                              {/* badge strip */}
-                              <div className="flex items-center gap-1.5 bg-box border border-line rounded-[2px] px-2 py-2">
-                                {[...Array(5)].map((_, bi) => (
-                                  <div key={bi} className="shimmer w-8 h-8 rounded-[2px] shrink-0" />
-                                ))}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* ── Error state ── */}
           {friendsActivityStatus === 'error' && (
-            <div className="flex items-center justify-between gap-3 bg-box border border-line rounded-[2px] p-4">
-              <div className="flex items-center gap-2 text-[11px] text-hc">
-                <AlertCircle size={14} />
-                Failed to load friends activity.
-              </div>
-              <button
-                onClick={() => setFriendsActivityStatus('idle')}
-                className="text-[10px] font-semibold uppercase tracking-wider px-3 py-1 rounded-[2px] border border-line-2 text-ink-2 hover:text-ink hover:border-ink-3 transition-colors"
-              >Retry</button>
+            <div className="flex items-center justify-between gap-3 bg-box border border-line rounded-[3px] px-3 py-2.5">
+              <span className="flex items-center gap-2 text-[12px] text-ink-2"><AlertCircle size={14} className="text-hc" /> Friends activity didn't load.</span>
+              <button type="button" onClick={() => setFriendsActivityStatus('idle')} className="fchip">Try again</button>
             </div>
           )}
 
-          {/* ── Warning: some users failed to load ── */}
-          {failedFriends.length > 0 && (
-            <div className="flex items-start gap-2 bg-box border border-line rounded-[2px] px-3 py-2">
-              <AlertCircle size={13} className="text-gold shrink-0 mt-[1px]" />
-              <span className="text-[11px] text-ink-2">
-                Could not load activity for: <span className="text-ink">{failedFriends.join(', ')}</span>. They may have earned no achievements recently, or the API returned an error.
-              </span>
-            </div>
-          )}
-
-          {/* ── Empty: not following anyone ── */}
           {friendsActivityStatus === 'done' && Object.keys(friendsActivity).length === 0 && (
-            <div className="flex flex-col items-center justify-center py-12 gap-2 border border-line rounded-[2px] bg-box">
-              <Users size={24} className="text-ink-3" />
-              <div className="text-[11px] text-ink-3">You're not following anyone</div>
+            <div className="flex flex-col items-center justify-center py-12 gap-2 border border-line rounded-[3px] bg-box">
+              <Users size={22} className="text-ink-3" />
+              <div className="text-[12px] text-ink-3">You're not following anyone yet</div>
             </div>
           )}
 
-          {/* ── Merged feed (streaming in or done) ── */}
-          {Object.keys(friendsActivity).length > 0 && (
-            <>
-              {feedByDay.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 gap-2 border border-line rounded-[2px] bg-box">
-                  <Users size={24} className="text-ink-3" />
-                  <div className="text-[11px] text-ink-3">No activity in the last 30 days</div>
+          {friendsActivityStatus === 'loading' && Object.keys(friendsActivity).length === 0 && <TimelineSkeleton />}
+
+          {Object.keys(friendsActivity).length > 0 && (<>
+            {/* ── Roster: index lines, busiest first ── */}
+            {roster.length > 0 && (
+              <section className="sledger roster">
+                <div className="asum-h">
+                  <span className="sec-mark sm" />
+                  <span>Roster</span>
+                  <em>Last 30 days</em>
                 </div>
-              ) : groupMode === 'sessions' ? (
-                <div key="sessions" className="feed-group-container flex flex-col gap-0">
-                  {feedBySession.map(([day, sessions]) => {
-                    const isFeedDayCollapsed = collapsedFeedDays.has(day);
-                    const achCount   = sessions.reduce((s, sess) => s + sess.achievements.length, 0);
-                    const dayPts     = sessions.reduce((s, sess) => s + sess.achievements.reduce((ss, a) => ss + (a.points    || 0), 0), 0);
-                    const dayRetro   = sessions.reduce((s, sess) => s + sess.achievements.reduce((ss, a) => ss + (a.trueRatio || 0), 0), 0);
-                    return (
-                      <div key={day} className="mb-4">
-                        <button onClick={() => toggleFeedDay(day)} className="w-full flex items-center gap-2 mb-2 group outline-none">
-                          <div className="w-2 h-2 rounded-full bg-line border border-accent shrink-0"></div>
-                          <span className="text-[10px] text-accent font-semibold group-hover:text-ink transition-colors">{fmtDay(day)}</span>
-                          <div className="flex-1 h-px bg-line opacity-40"></div>
-                          <span className="text-[9px] text-ink-3">{achCount} achievement{achCount !== 1 ? 's' : ''}</span>
-                          <span className="text-[9px] text-line">·</span>
-                          <span className="text-[9px] text-ink-3">{dayPts} pts</span>
-                          {dayRetro > dayPts && <><span className="text-[9px] text-line">·</span><span className="text-[9px] text-ink-3">{dayRetro} RP</span></>}
-                          <ChevronDown size={11} className={`text-ink-3 transition-transform duration-200 shrink-0 ${isFeedDayCollapsed ? '' : 'rotate-180'}`} />
-                        </button>
-                        {!isFeedDayCollapsed && (
-                          <div className="ml-4 border-l border-line pl-3 flex flex-col gap-2">
-                            {sessions.map(session => (
-                              <FeedSession key={`${session.username}-${session.gameId}-${session.latestDate}`} session={session} hideUser={false} socialProfileMap={socialProfileMap} />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                <div className="dledger">
+                  {(rosterAll ? roster : roster.slice(0, 6)).map(r => (
+                    <button type="button" key={r.username} onClick={() => setRosterUser(u => u === r.username ? null : r.username)}
+                      aria-pressed={rosterUser === r.username} className={`dl-row rost ${rosterUser === r.username ? 'on' : ''}`}>
+                      <span className="dl-k">
+                        <img src={userPic(r.username)} alt="" loading="lazy" />
+                        <span className="truncate" style={{ color: r.isOwn ? 'var(--gold)' : undefined }}>{r.username}</span>
+                        {r.isOwn && <small>you</small>}
+                      </span>
+                      <span className="dl-dots" />
+                      <span className="dl-v">{r.n}<small>{r.pts} pts</small></span>
+                    </button>
+                  ))}
                 </div>
+                {roster.length > 6 && (
+                  <button type="button" onClick={() => setRosterAll(o => !o)} className="roster-more">
+                    {rosterAll ? 'Show fewer' : `All ${roster.length} players`}
+                    <ChevronDown size={12} className={rosterAll ? 'rotate-180' : ''} />
+                  </button>
+                )}
+              </section>
+            )}
+
+            {failedFriends.length > 0 && (
+              <p className="flex items-start gap-2 text-[11.5px] text-ink-3 -mt-1">
+                <AlertCircle size={13} className="text-gold shrink-0 mt-[2px]" />
+                <span>No activity came back for <span className="text-ink-2">{failedFriends.join(', ')}</span>.</span>
+              </p>
+            )}
+
+            <div>
+              <div className="flex items-center gap-2 border-b border-line pb-1.5 mb-1">
+                <span className="sec-mark" />
+                <span className="sec-t flex items-center gap-2 min-w-0"><Users size={15} className="text-accent shrink-0" /> <span className="truncate">{rosterUser ? `${rosterUser}'s unlocks` : 'Friends unlocks'}</span></span>
+                {rosterUser && (<>
+                  <a href={`../profile/?u=${rosterUser}`} className="ml-auto text-[11.5px] text-accent hover:text-ink shrink-0">Profile ›</a>
+                  <button type="button" onClick={() => setRosterUser(null)} className="fchip on shrink-0" style={{ height: 22 }}>Everyone ✕</button>
+                </>)}
+              </div>
+
+              {feedDays.length === 0 ? (
+                <div className="text-ink-2 text-[11px] py-4 italic text-center">No unlocks in the last 30 days.</div>
               ) : (
-                <div key="users" className="feed-group-container flex flex-col gap-0">
-                  {feedByDay.map(([day, userGroups]) => {
-                    const isFeedDayCollapsed = collapsedFeedDays.has(day);
-                    const achCount = userGroups.reduce((s, ug) => s + ug.sessions.reduce((ss, sess) => ss + sess.achievements.length, 0), 0);
+                <div key={rosterUser ?? 'all'} className="flex flex-col gap-4">
+                  {feedDays.map(([day, runs]) => {
+                    const n = runs.reduce((t, r) => t + r.achievements.length, 0);
+                    const people = new Set(runs.map(r => r.username)).size;
                     return (
-                      <div key={day} className="mb-4">
-                        <button onClick={() => toggleFeedDay(day)} className="w-full flex items-center gap-2 mb-2 group outline-none">
-                          <div className="w-2 h-2 rounded-full bg-line border border-accent shrink-0"></div>
-                          <span className="text-[10px] text-accent font-semibold group-hover:text-ink transition-colors">{fmtDay(day)}</span>
-                          <div className="flex-1 h-px bg-line opacity-40"></div>
-                          <span className="text-[9px] text-ink-3">{achCount} achievement{achCount !== 1 ? 's' : ''}</span>
-                          <ChevronDown size={11} className={`text-ink-3 transition-transform duration-200 shrink-0 ${isFeedDayCollapsed ? '' : 'rotate-180'}`} />
-                        </button>
-                        {!isFeedDayCollapsed && (
-                          <div className="ml-4 border-l border-line pl-3 flex flex-col gap-3">
-                            {userGroups.map(({ username, isOwn, sessions }) => {
-                              const userAchCount = sessions.reduce((s, sess) => s + sess.achievements.length, 0);
-                              const userPts      = sessions.reduce((s, sess) => s + sess.achievements.reduce((ss, a) => ss + (a.points    || 0), 0), 0);
-                              const userRetro    = sessions.reduce((s, sess) => s + sess.achievements.reduce((ss, a) => ss + (a.trueRatio || 0), 0), 0);
-                              return (
-                                <div key={username}>
-                                  <div className="flex items-center gap-2 mb-1.5">
-                                    <a href={`../profile/?u=${username}`} className="shrink-0">
-                                      <img src={socialProfileMap.get(username)?.userPic ? getMediaUrl(socialProfileMap.get(username).userPic) : `${MEDIA_URL}/UserPic/${username}.png`} alt={username} className="w-5 h-5 rounded-[2px] object-cover" />
-                                    </a>
-                                    <a href={`../profile/?u=${username}`} className="text-[11px] font-medium hover:underline truncate" style={{ color: isOwn ? 'var(--aqua)' : 'var(--gold)' }}>
-                                      {username}
-                                    </a>
-                                    <span className="hidden md:inline text-[9px] text-ink-3 shrink-0">
-                                      {sessions.length > 1 ? `${sessions.length} sessions · ` : ''}{userAchCount} achievement{userAchCount !== 1 ? 's' : ''}
-                                    </span>
-                                    <span className="hidden md:inline text-[9px] text-line shrink-0">·</span>
-                                    <span className="text-[9px] text-ink-3 shrink-0">{userPts} pts</span>
-                                    {userRetro > userPts && <><span className="text-[9px] text-line shrink-0">·</span><span className="text-[9px] text-ink-3 shrink-0">{userRetro} RP</span></>}
-                                  </div>
-                                  <div className="ml-7 border-l border-line pl-3 flex flex-col gap-2">
-                                    {sessions.map(session => (
-                                      <FeedSession key={`${session.gameId}-${session.latestDate}`} session={session} hideUser={true} />
-                                    ))}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
+                      <section key={day} className="anim-fade">
+                        <DayHead day={day}>
+                          <b className="num">{n}</b> unlock{n !== 1 ? 's' : ''}{!rosterUser && <> · <b className="num">{people}</b> player{people !== 1 ? 's' : ''}</>}
+                        </DayHead>
+                        <div className="flex flex-col gap-2">
+                          {runs.map(run => {
+                            const { p, node } = runTitle(run.gameTitle);
+                            const t0 = fmtClock(run.achievements[run.achievements.length - 1].date), t1 = fmtClock(run.achievements[0].date);
+                            const pts = run.achievements.reduce((t, a) => t + (a.points || 0), 0);
+                            return (
+                              <RunCard key={`${run.username}-${run.gameId}-${run.latestDate}`}
+                                accent={run.isOwn ? 'var(--gold)' : 'var(--accent)'}
+                                href={run.isOwn ? `../game/?id=${run.gameId}` : `../game/?id=${run.gameId}&compare=${run.username}`}
+                                icon={getMediaUrl(run.gameIcon)}
+                                art={[run.isOwn ? gameArt[run.gameId] : null]}
+                                title={node}
+                                subset={p.isSubset ? p.subsetName : null}
+                                sub={<>
+                                  <span className="run-who"><img src={userPic(run.username)} alt="" loading="lazy" /><b style={{ color: run.isOwn ? 'var(--gold)' : 'var(--accent-hi)' }}>{run.username}</b></span>
+                                  {run.consoleName && <span className="shrink hidden sm:inline">{run.consoleName}</span>}
+                                  <span className="num">{t0 === t1 ? t0 : `${t0}–${t1}`}</span>
+                                  <RunCount n={run.achievements.length} extra={<span className="text-ink-3 font-normal"> · {pts} pts</span>} />
+                                </>}
+                                rows={run.achievements.map(unlockRow)} fold={3} />
+                            );
+                          })}
+                        </div>
+                      </section>
                     );
                   })}
+                  {shownFeed.length > visibleSessionCount && (
+                    <button type="button" onClick={() => setVisibleSessionCount(c => c + 100)} className="smore">Show more days</button>
+                  )}
                 </div>
               )}
-              {feedGroups.length > visibleSessionCount && (
-                <button
-                  onClick={() => setVisibleSessionCount(c => c + 100)}
-                  className="w-full mt-2 py-2 text-[11px] text-accent hover:text-ink border border-line hover:border-ink-3 rounded-[2px] transition-colors"
-                >
-                  Load more · {feedGroups.length - visibleSessionCount} sessions remaining
-                </button>
-              )}
-            </>
-          )}
-
-
+            </div>
+          </>)}
         </div>
       ) : (() => {
         // ── Mine: Savepoint's timeline (assets/activity-ui.js): summary card, sticky day headings, one card per run ──
@@ -1425,25 +1158,7 @@ const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, loading
                                 <span className="num">{t0 === t1 ? t0 : `${t0}–${t1}`}</span>
                                 <RunCount n={session.achievements.length} />
                               </>}
-                              rows={[...session.achievements].sort((a, b) => b.date.localeCompare(a.date)).map(ach => {
-                                const ratio = ach.trueRatio && ach.points ? ach.trueRatio / ach.points : null;
-                                const typeIcon = ach.type === 'progression' ? <Trophy size={11} className="text-gold shrink-0"><title>Progression: required to complete the game</title></Trophy>
-                                  : ach.type === 'win_condition' ? <Crown size={11} className="text-hc shrink-0"><title>Win condition: triggers game completion</title></Crown>
-                                  : ach.type === 'missable' ? <AlertTriangle size={11} className="text-warn shrink-0"><title>Missable</title></AlertTriangle> : null;
-                                return (
-                                  <UnlockRow key={`${ach.achievementId}-${ach.date}`}
-                                    href={`../achievement/?id=${ach.achievementId}`}
-                                    icon={`${MEDIA_URL}/Badge/${ach.badgeName}.png`}
-                                    title={ach.title} titleStyle={{ color: ach.hardcoreMode ? 'var(--gold)' : 'var(--ink)' }}
-                                    marks={typeIcon}
-                                    desc={ach.description}
-                                    time={<span className="num">{fmtClock(ach.date)}</span>}
-                                    value={<em className="num">
-                                      <span className="text-gold">{ach.points} pts</span>
-                                      {ratio > 0 && <span style={{ color: ratio >= 30 ? 'var(--hc)' : ratio >= 20 ? 'var(--gold)' : ratio >= 10 ? 'var(--accent)' : 'var(--ink-2)' }}> ×{ratio.toFixed(1)}</span>}
-                                    </em>} />
-                                );
-                              })} />
+                              rows={[...session.achievements].sort((a, b) => b.date.localeCompare(a.date)).map(unlockRow)} />
                           );
                         })}
                       </div>
