@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@claude'
 created_date: '2026-11-13 06:14'
-updated_date: '2026-11-13 09:22'
+updated_date: '2026-11-13 09:26'
 labels:
   - profile
   - design
@@ -40,4 +40,6 @@ Colour pass: friend palette tokens --pal-1..6 (stable per username) on avatar ri
 Run strip pass: game icon blurred behind the strip, Subset/tilde tags, subset name, console, mode icon; run edge shows mode (red HC, grey SC, split mixed); friend colour kept to avatar ring and name.
 
 Per review: mode colours follow RA (gold hardcore, grey softcore) on the run edge, a faint wash on the strip, and the flame; the blurred icon background is gone.
+
+Friend colours computed from the username (FNV-1a + finaliser → hue 70°–330°, tokens --pal-s/--pal-l) instead of a 6-colour palette; the --pal-1..6 tokens are removed.
 <!-- SECTION:FINAL_SUMMARY:END -->

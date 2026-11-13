@@ -705,11 +705,13 @@ const RAchievementModal = ({ game, onClose, loadingDetails }) => {
   );
 };
 
-// A friend's stable colour from the friend palette (tokens --pal-1..6), by their username
+// A friend's colour, computed from their username (FNV-1a hash, scrambled → a hue in 70°–330°, skipping red, orange and gold,
+// which mean errors, hardcore and earned); saturation and lightness come from tokens. Same name, same colour, everywhere
 const friendColor = (u) => {
-  let h = 0;
-  for (const ch of String(u).toLowerCase()) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return `var(--pal-${(h % 6) + 1})`;
+  let h = 0x811c9dc5;
+  for (const ch of String(u).toLowerCase()) h = Math.imul(h ^ ch.charCodeAt(0), 0x01000193) >>> 0;
+  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;  // spread short names
+  return `hsl(${70 + ((h >>> 0) % 261)} var(--pal-s) var(--pal-l))`;
 };
 
 // ── FriendRun / FriendPost — the Friends timeline: one post per friend per stretch of the day (their runs back

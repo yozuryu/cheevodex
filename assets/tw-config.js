@@ -52,12 +52,6 @@ tailwind.config = {
     'install': 'rgb(var(--c-install) / <alpha-value>)',
     'install-hi': 'rgb(var(--c-install-hi) / <alpha-value>)',
     'install-press': 'rgb(var(--c-install-press) / <alpha-value>)',
-    'pal-1': 'rgb(var(--c-pal-1) / <alpha-value>)',
-    'pal-2': 'rgb(var(--c-pal-2) / <alpha-value>)',
-    'pal-3': 'rgb(var(--c-pal-3) / <alpha-value>)',
-    'pal-4': 'rgb(var(--c-pal-4) / <alpha-value>)',
-    'pal-5': 'rgb(var(--c-pal-5) / <alpha-value>)',
-    'pal-6': 'rgb(var(--c-pal-6) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['Geist', 'Segoe UI', 'system-ui', '-apple-system', 'sans-serif'],
