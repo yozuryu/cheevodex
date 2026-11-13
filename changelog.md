@@ -77,6 +77,7 @@
 - Login tagline is now "Register every unlock"; the app's install description and the README now call it "A pocket companion for RetroAchievements"
 - **New logo**: a closed pixel book in RA blue with a gold trophy on the cover and a ribbon bookmark, replacing the Lens boy handheld, which read as a Pokédex crossed with a Game Boy. Favicon and app icons regenerated. The pixel face is now used only for dex numbers
 - **Installed icon no longer cut on Android.** The manifest marked the full-size icon as maskable, so Android's circle crop cut the book's corners. New `icon-maskable-192/512.png` keep the mark inside the safe circle (56% of the width) for Android; the full-size icons stay for desktop, iOS and tabs. Service worker cache bumped to pick them up
+- Friends timeline: the avatar rings on the rail and in the friend strip were shaved on the left, where the content column clips anything past its edge; both now sit 6px or more inside it (the rail moves with them), and the rail avatar's glow is tighter
 
 ## v26.09.27 — Not-found page + silver Beaten + POC fixes, FireRed & LeafGreen + new icon
 

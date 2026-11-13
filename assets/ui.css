@@ -869,7 +869,7 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 
 /* Friends timeline. Strip: active friends, newest first, tap to narrow. Rail: each day's posts hang on a thin
    line with the friend's avatar as the node; a post is their runs back to back, each a game line, then badges */
-.fstrip { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; margin: 0 -4px; padding: 2px 4px 4px; }
+.fstrip { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding: 4px 2px 6px; }
 .fstrip::-webkit-scrollbar { display: none; }
 .fpal { flex-shrink: 0; width: 64px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px 5px;
   background: none; border: 0; border-radius: 3px; }
@@ -884,10 +884,10 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 .fpal b { font-family: var(--mono); font-size: 10.5px; font-weight: 600; color: var(--gold); line-height: 1; }
 .fpal.all b { color: var(--ink-2); }
 
-.fposts { position: relative; display: flex; flex-direction: column; gap: 4px; }
-.fposts::before { content: ''; position: absolute; left: 17px; top: 6px; bottom: 6px; width: 1px; background: linear-gradient(var(--line-2), var(--line-soft)); }
+.fposts { position: relative; display: flex; flex-direction: column; gap: 4px; padding-left: 6px; }
+.fposts::before { content: ''; position: absolute; left: 23px; top: 6px; bottom: 6px; width: 1px; background: linear-gradient(var(--line-2), var(--line-soft)); }
 .fpost { position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 11px; padding: 4px 0; }
-.fpost-av { position: relative; z-index: 1; width: 36px; height: 36px; padding: 2px; border-radius: 50%; background: var(--page); box-shadow: 0 0 0 1.5px var(--fc, var(--line-2)), 0 0 10px color-mix(in srgb, var(--fc, transparent) 25%, transparent); }
+.fpost-av { position: relative; z-index: 1; width: 36px; height: 36px; padding: 2px; border-radius: 50%; background: var(--page); box-shadow: 0 0 0 1.5px var(--fc, var(--line-2)), 0 0 6px color-mix(in srgb, var(--fc, transparent) 30%, transparent); }
 .fpost-av img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: var(--well); }
 .fpost-main { min-width: 0; display: flex; flex-direction: column; gap: 6px; padding-top: 2px; }
 .fpost-h { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
