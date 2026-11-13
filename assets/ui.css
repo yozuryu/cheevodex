@@ -895,19 +895,29 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 .fpost-name:hover { filter: brightness(1.2); }
 .fpost-time { font-size: 11px; color: var(--ink-3); font-family: var(--mono); }
 .fpost-sum { margin-left: auto; font-size: 11px; color: var(--ink-3); white-space: nowrap; }
-.frun { background: var(--box); border: 1px solid var(--line); border-left: 2px solid var(--fc, var(--line)); border-radius: 3px; overflow: hidden; }
-.frun-h { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 7px 10px 6px 7px; }
-.frun-g { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; color: var(--ink); }
-.frun-g:hover .frun-t { color: var(--accent-hi); }
-.frun-g img { width: 24px; height: 24px; border-radius: 2px; flex-shrink: 0; }
-.frun-t { min-width: 0; font-size: 12.5px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.frun-t em { font-style: normal; color: var(--gold-hi); }
-.frun-n { flex-shrink: 0; font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--gold); }
-.frun-m { flex-shrink: 0; font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); white-space: nowrap; }
-@media (max-width: 480px) { .frun-m { display: none; } }
-.frun-b { display: flex; align-items: center; gap: 4px; width: 100%; padding: 0 10px 8px 7px; background: none; border: 0; text-align: left; }
+.frun { background: var(--box); border: 1px solid var(--line); border-left: 3px solid var(--ink-4); border-radius: 3px; overflow: hidden; }
+.frun.hc { border-left-color: rgb(var(--c-hc) / 0.8); }
+.frun.mix { border-left-color: var(--ink-3); border-image: linear-gradient(rgb(var(--c-hc) / 0.8) 50%, var(--ink-3) 50%) 1; }
+.frun-h { position: relative; display: flex; align-items: center; gap: 10px; min-width: 0; padding: 9px 11px 9px 9px; background: var(--box-hi);
+  border-bottom: 1px solid var(--line-soft); color: var(--ink); overflow: hidden; }
+.frun-h > * { position: relative; }
+.frun-h > .frun-art { position: absolute; top: 0; right: 0; bottom: 0; width: min(70%, 420px); pointer-events: none;
+  -webkit-mask: linear-gradient(90deg, transparent, black 45%); mask: linear-gradient(90deg, transparent, black 45%); }
+.frun-art img { width: 100%; height: 100%; object-fit: cover; filter: blur(12px) saturate(1.5); transform: scale(1.4); opacity: 0.5; }
+.frun-icon { width: 30px; height: 30px; border-radius: 2px; flex-shrink: 0; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); }
+.frun-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.frun-t { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 13px; font-weight: 600; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
+.frun-h:hover .frun-t > .truncate { color: var(--accent-hi); }
+.frun-sub { font-size: 11.5px; color: var(--gold-hi); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
+.frun-m { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 11px; color: var(--ink-2); white-space: nowrap; }
+.frun-m .num { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); }
+.frun-e { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-family: var(--mono); }
+.frun-e b { font-size: 14px; font-weight: 600; line-height: 1; color: var(--gold); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
+.frun-e span { font-size: 10.5px; color: var(--ink-2); }
+.frun-b { display: flex; align-items: center; gap: 4px; width: 100%; padding: 8px 10px 8px 9px; background: none; border: 0; text-align: left; }
+.frun-b:hover { background: var(--box-hi); }
 .frun-b img { width: 28px; height: 28px; border-radius: 2px; flex-shrink: 0; border-bottom: 2px solid transparent; box-shadow: 0 0 0 1px var(--line); }
-.frun-b img.hc { border-bottom: 2px solid var(--gold); box-shadow: 0 0 0 1px var(--line); }
+.frun.mix .frun-b img.hc { border-bottom-color: var(--hc); }
 @media (max-width: 639px) { .frun-b img:nth-of-type(n+8) { display: none; } }
 .frun-more { margin-left: 3px; font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
 .frun-c { margin-left: auto; flex-shrink: 0; color: var(--ink-3); transition: transform 200ms; }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cheevodex-1794600000';
+const CACHE_NAME = 'cheevodex-1794610000';
 
 // Static assets — cache-first
 const PRECACHE = [
@@ -38,6 +38,8 @@ const PRECACHE = [
   './assets/favicon.svg',
   './assets/icon-192.png',
   './assets/icon-512.png',
+  './assets/icon-maskable-192.png',
+  './assets/icon-maskable-512.png',
 ];
 
 // Install — precache static assets

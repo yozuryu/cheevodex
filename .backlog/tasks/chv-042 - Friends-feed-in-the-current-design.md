@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@claude'
 created_date: '2026-11-13 06:14'
-updated_date: '2026-11-13 09:09'
+updated_date: '2026-11-13 09:16'
 labels:
   - profile
   - design
@@ -36,4 +36,6 @@ Reworked after review into a Party: one card per friend (avatar, last active, +N
 Third pass, per review (keep the timeline): Party cards replaced by a friend strip + day rail. Posts group a friend's back-to-back runs; runs are a game line and a badge strip opening to rows. Verified: expand (13 rows), strip filter, phone badge count (7 + '+1'), no sideways scroll at 400 / 1280.
 
 Colour pass: friend palette tokens --pal-1..6 (stable per username) on avatar ring, name and run edge; +N gold; hardcore badges underlined in gold instead of framed.
+
+Run strip pass: game icon blurred behind the strip, Subset/tilde tags, subset name, console, mode icon; run edge shows mode (red HC, grey SC, split mixed); friend colour kept to avatar ring and name.
 <!-- SECTION:FINAL_SUMMARY:END -->

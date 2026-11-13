@@ -194,6 +194,7 @@ Bust cache: `sessionStorage.clear()` for session data, `localStorage.removeItem(
 - Cache-first for same-origin static assets.
 - Network-first for `changelog.md` (always fresh).
 - Cross-origin RA API requests pass through untouched.
+- Icons: `icon-192/512.png` (`purpose: any`, the mark at full size) and `icon-maskable-192/512.png` (`purpose: maskable`, the mark at 56% of the width so Android's circle crop, 80% wide, never cuts it). Never mark a full-bleed icon `maskable`.
 
 ## Mobile Nav
 
