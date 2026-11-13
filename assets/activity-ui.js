@@ -8,7 +8,7 @@
 //                                         streaks and heatmap
 //   DayHead                               sticky day heading
 //   UnlockRow                             one unlock
-//   SummarySkeleton / TimelineSkeleton / ActivitySkeleton   loading placeholders in the same shapes
+//   SummarySkeleton / TimelineSkeleton / FriendsSkeleton / ActivitySkeleton   loading placeholders in the same shapes
 //                                         (the summary folded or open, as it will open)
 import { createElement as h, Fragment, useState } from 'react';
 import { todayKey, addDays, keyToDate, fmtDayKey, TZ } from './time.js';
@@ -179,16 +179,33 @@ export function SummarySkeleton() {
     h('span', { className: 'mdex-open' }, 'The year, streaks and heatmap'));
 }
 
+// A run's game strip while loading (the .frun shape Mine and Friends share)
+const runStripSk = i => h('div', { className: 'frun-h' }, sk({ width: 30, height: 30, flexShrink: 0 }),
+  h('div', { className: 'flex-1 flex flex-col gap-1.5' }, sk({ height: 12, width: `${50 + i * 12}%` }), sk({ height: 10, width: 120 })),
+  sk({ width: 32, height: 22 }));
+
+// Your runs (Mine): strip, then two unlock rows
 export function TimelineSkeleton() {
   return h('div', { className: 'flex flex-col gap-4' },
     [0, 1, 2].map(i => h('div', { key: i, className: 'flex flex-col gap-2' },
       h('div', { className: 'flex justify-between py-1' }, sk({ height: 12, width: 96 }), sk({ height: 10, width: 80 })),
-      h('div', { className: 'tcard' },
-        h('div', { className: 'tcard-head' }, sk({ width: 28, height: 28, flexShrink: 0 }),
-          h('div', { className: 'flex-1 flex flex-col gap-1.5' }, sk({ height: 12, width: `${50 + i * 12}%` }), sk({ height: 10, width: 96 }))),
-        h('div', { className: 'tlist' },
+      h('div', { className: 'frun mine' }, runStripSk(i),
+        h('div', { className: 'frun-rows' },
           [0, 1].map(j => h('div', { key: j, className: 'trow' }, sk({ width: 36, height: 36, flexShrink: 0 }),
             h('div', { className: 'flex-1 flex flex-col gap-1.5' }, sk({ height: 10, width: `${40 + j * 20}%` }), sk({ height: 8, width: '50%' })))))))));
+}
+
+// Friends: a day heading, then posts on the rail (avatar node, name, a run strip and its badges)
+export function FriendsSkeleton() {
+  return h('div', { className: 'flex flex-col gap-3', 'aria-busy': true },
+    h('div', { className: 'flex gap-1' }, [0, 1, 2, 3, 4, 5].map(i => h('div', { key: i, className: 'fpal' },
+      sk({ width: 42, height: 42, borderRadius: '50%' }), sk({ width: 44, height: 9 })))),
+    h('div', { className: 'flex justify-between py-1' }, sk({ height: 12, width: 96 }), sk({ height: 10, width: 80 })),
+    h('div', { className: 'fposts' }, [0, 1, 2].map(i => h('div', { key: i, className: 'fpost' },
+      sk({ width: 36, height: 36, borderRadius: '50%', position: 'relative', zIndex: 1 }),
+      h('div', { className: 'fpost-main' }, sk({ height: 12, width: 110 }),
+        h('div', { className: 'frun' }, runStripSk(i),
+          h('div', { className: 'frun-b' }, [0, 1, 2, 3, 4].map(j => sk({ width: 28, height: 28, flexShrink: 0 }, '', j)))))))));
 }
 
 // A profile Activity tab while its chunks load: summary, the section heading, run cards

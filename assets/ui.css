@@ -31,7 +31,7 @@ body { -webkit-font-smoothing: antialiased; font-feature-settings: 'tnum' 1; }
   position: relative; z-index: 1; width: 100%;
   height: calc(100dvh - 48px - env(safe-area-inset-top, 0px));
   display: flex; flex-direction: column; overflow: hidden;
-  background: var(--box); border-top: 1px solid var(--line); border-radius: 12px 12px 0 0;
+  background: var(--box); border-top: 1px solid var(--line); border-radius: 3px 3px 0 0;
   box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.5);
   animation: sheet-up 280ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
 }
@@ -41,7 +41,7 @@ body { -webkit-font-smoothing: antialiased; font-feature-settings: 'tnum' 1; }
   .sheet-root { align-items: center; padding: 16px; }
   .sheet-panel {
     max-width: 36rem; height: auto; max-height: 90vh;
-    border: 1px solid var(--line); border-radius: 4px;
+    border: 1px solid var(--line); border-radius: 3px;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
     animation: motion-pop 180ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
   }
@@ -52,7 +52,7 @@ body { -webkit-font-smoothing: antialiased; font-feature-settings: 'tnum' 1; }
 .sheet-grab { position: relative; z-index: 1; display: block; width: 40px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.45); margin: 8px auto 0; }
 .sheet-close {
   position: absolute; z-index: 3; top: 12px; right: 12px; width: 30px; height: 30px; border-radius: 3px;
-  display: grid; place-items: center; color: #fff;
+  display: grid; place-items: center; color: var(--ink);
   background: rgb(var(--c-well) / 0.72); border: 1px solid rgba(255, 255, 255, 0.12);
   transition: background-color 150ms;
 }
@@ -122,10 +122,6 @@ body { -webkit-font-smoothing: antialiased; font-feature-settings: 'tnum' 1; }
 .vtoggle button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 /* Segmented progress: up to 20 segments, each filling in turn */
-.segbar { display: flex; gap: 2px; height: 5px; width: 100%; }
-.segbar > i { flex: 1; min-width: 0; background: var(--well); border-radius: 1px; overflow: hidden; }
-.segbar > i > b { display: block; height: 100%; }
-.segbar.glow > i > b { box-shadow: 0 0 6px rgb(var(--c-gold) / 0.6); }
 
 .gtiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .gtile {
@@ -140,13 +136,13 @@ body { -webkit-font-smoothing: antialiased; font-feature-settings: 'tnum' 1; }
 .gtile-art .icon { position: absolute; left: 50%; top: 50%; height: 72%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 3px; border: 2px solid rgba(255, 255, 255, 0.2); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.55); object-fit: cover; background: var(--well); }
 .gtile.mastered .gtile-art .icon { border-color: var(--gold); box-shadow: 0 0 12px rgb(var(--c-gold) / 0.45), 0 6px 16px rgba(0, 0, 0, 0.55); }
 .gtile.beaten .gtile-art .icon { border-color: var(--silver); }
-.gtile-ago { position: absolute; top: 6px; left: 6px; font-size: 10px; font-weight: 600; color: #fff; background: rgb(var(--c-well) / 0.85); padding: 1px 6px; border-radius: 2px; }
+.gtile-ago { position: absolute; top: 6px; left: 6px; font-size: 10px; font-weight: 600; color: var(--ink); background: rgb(var(--c-well) / 0.85); padding: 1px 6px; border-radius: 2px; }
 .gtile-mode { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 2px; background: rgb(var(--c-well) / 0.85); border: 1px solid; }
 .gtile-body { display: flex; flex-direction: column; gap: 6px; padding: 9px 10px 10px; flex: 1; }
 .gtile-title { font-size: 12.5px; font-weight: 500; color: var(--ink); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .gtile-sub { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--accent); min-width: 0; }
 .gtile-sub > .shrink { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.gtile-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: 11px; color: var(--ink-2); margin-top: auto; }
+.gtile-meta { display: flex; justify-content: space-between; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-2); margin-top: auto; }
 .gtile-meta b { color: var(--ink); font-weight: 600; }
 @media (min-width: 768px) { .gtiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; } }
 @media (min-width: 1024px) { .gtiles { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; } }
@@ -177,7 +173,7 @@ body { -webkit-font-smoothing: antialiased; font-feature-settings: 'tnum' 1; }
 .phead-av.game.beaten { background: var(--silver); }
 .phead-id { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .phead-name { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.phead-name h1 { font-size: 22px; font-weight: 600; color: #fff; line-height: 1.15; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; }
+.phead-name h1 { font-size: 22px; font-weight: 600; color: var(--ink); line-height: 1.15; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; }
 .phead-link { flex-shrink: 0; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 2px; border: 1px solid var(--line-2); background: rgb(var(--c-well) / 0.7); transition: border-color 150ms; }
 .phead-link:hover { border-color: var(--accent); }
 .phead-link img { width: 14px; height: 14px; object-fit: contain; }
@@ -212,7 +208,7 @@ body { -webkit-font-smoothing: antialiased; font-feature-settings: 'tnum' 1; }
 .wm-mark { width: 18px; height: 18px; image-rendering: pixelated; flex-shrink: 0; }
 .wm { font-family: var(--font); font-weight: 650; font-size: 14px; letter-spacing: -0.02em; color: var(--ink); line-height: 1; white-space: nowrap; }
 .wm em { font-style: normal; color: var(--accent); }
-a.brand:hover .wm { color: #fff; }
+a.brand:hover .wm { color: var(--ink); }
 
 /* ══ Ported from Savepoint assets/ui.css (CHV-027–030): game rows, watchlist rows, Overview stat tiles,
    filters, activity timelines, completions panel. Savepoint colours mapped onto tokens. ══ */
@@ -457,37 +453,11 @@ button.grow:hover { background: var(--box-hover); }
 .tday-name em { font-style: normal; font-weight: 500; color: var(--accent); margin-left: 7px; }
 .tday-meta { margin-left: auto; font-size: 11px; color: var(--ink-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .tday-meta b { color: var(--ink-2); font-weight: 600; }
-.tcard { background: var(--box); border: 1px solid var(--line); border-left: 3px solid var(--line); border-radius: 3px; overflow: hidden; }
-/* Unlock card header: a band with the game's art, a small icon and a bold title, so it
-   reads as the heading of the achievements under it (they carry the bigger badges) */
-.tcard-head { position: relative; display: flex; align-items: center; gap: 9px; padding: 9px 12px 9px 9px; background: var(--box-hi); border-bottom: 1px solid var(--well);
-              text-decoration: none; overflow: hidden; transition: background-color 150ms; }
-a.tcard-head:hover { background: var(--box-hover); }
-.tcard-head > * { position: relative; }
-.tcard-head > .tcard-art { position: absolute; top: 0; right: 0; bottom: 0; width: min(65%, 380px); overflow: hidden; pointer-events: none;
-                           -webkit-mask-image: linear-gradient(90deg, transparent, black 75%); mask-image: linear-gradient(90deg, transparent, black 75%); }
-.tcard-art img { width: 100%; height: 100%; max-width: none; object-fit: cover; opacity: 0.35; border: 0; border-radius: 0; }
-.tcard-art img.art-icon { filter: blur(10px) saturate(1.3); transform: scale(1.5); opacity: 0.45; }
-.tcard-head > .tcard-icon { width: 28px; height: 28px; }
-.tcard-head .tcard-title { font-size: 13.5px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
-.tcard-head .tcard-sub { color: var(--ink-2); }
-.tcard-subset { font-size: 11.5px; color: var(--gold-hi); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,0.6); margin-top: -1px; }
-.tcard-head .tcard-n { font-size: 11px; }
-.tcard-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.tcard-title { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 13px; font-weight: 500; color: var(--ink); }
-.tcard-sub { display: flex; align-items: center; gap: 7px; min-width: 0; font-size: 11px; color: var(--ink-2); white-space: nowrap; }
-.tcard-sub > * { flex-shrink: 0; }
-.tcard-sub > .shrink { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.tcard-n { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; font-size: 11.5px; font-weight: 600; color: var(--gold); font-variant-numeric: tabular-nums; }
 .ptag { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; }
 .subset-tag { flex-shrink: 0; font-size: 7px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; padding: 1px 4px; border-radius: 2px;
               border: 1px solid rgb(var(--c-gold) / 0.3); background: rgb(var(--c-gold) / 0.1); color: var(--gold-dim); }
 .trow-ph { flex-shrink: 0; width: 32px; height: 32px; border-radius: 2px; background: var(--line); }
-img + .trow-ph, .tcard img, .trow > img { flex-shrink: 0; border-radius: 2px; border: 1px solid var(--well); background: var(--well); object-fit: cover; }
-.tlist > .trow + .trow { border-top: 1px solid var(--line-faint); }
-/* rows revealed by "Show N more" (runs fold after 4) fade in */
-.tlist.open > .trow:nth-child(n+5) { animation: motion-fade 180ms ease-out backwards; }
-@media (prefers-reduced-motion: reduce) { .tlist.open > .trow { animation: none; } }
+img + .trow-ph, .trow > img { flex-shrink: 0; border-radius: 2px; border: 1px solid var(--well); background: var(--well); object-fit: cover; }
 .trow { display: flex; align-items: center; gap: 10px; padding: 7px 12px 7px 9px; }
 .trow > img, .trow > .trow-ph { width: 36px; height: 36px; }
 .trow-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
@@ -639,7 +609,8 @@ img + .trow-ph, .tcard img, .trow > img { flex-shrink: 0; border-radius: 2px; bo
 /* ══ Cheevodex's own frame (CHV-033–035, doc-012): the dex, the identity rail, dex numbers ══ */
 
 /* Dex number: the RA game ID, the one place the pixel face is used (doc-012) */
-.dex-no { font-family: var(--pixel); font-size: 9px; line-height: 1; letter-spacing: 0.02em; color: var(--ink-3); white-space: nowrap; }
+/* Silkscreen is drawn on an 8px grid: at exactly 8px it's crisp, at 9px it smears */
+.dex-no { font-family: var(--pixel); font-size: 8px; line-height: 1; letter-spacing: 0.02em; color: var(--ink-2); white-space: nowrap; }
 .dex-no b { font-weight: 400; color: var(--ink-2); }
 .dex-no.lg { font-size: 11px; color: var(--ink-2); }
 .dex-no.lg b { color: var(--ink); }
@@ -865,7 +836,6 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 .mdex-open:hover { color: var(--ink); background: var(--box-hi); }
 .mdex > .anim-fade { border-top: 1px solid var(--line-soft); }
 .mdex .astreak { margin-top: 0; }
-.mrow-s .dex-no { font-size: 8px; color: var(--ink-2); }
 
 /* Friends timeline. Strip: active friends, newest first, tap to narrow. Rail: each day's posts hang on a thin
    line with the friend's avatar as the node; a post is their runs back to back, each a game line, then badges */
@@ -927,3 +897,24 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 .frun-rows > .trow + .trow { border-top: 1px solid var(--line-faint); }
 /* Watchlist: in-progress rows show the count beside a small ring, like the game rows */
 .wprog { display: flex; align-items: center; gap: 8px; }
+
+/* Compare sheet rows: game, then your ring and theirs (blue you, aqua them, gold when mastered); the leader lit */
+.cmpr { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; background: var(--box-hi); border-radius: 2px; }
+.cmpr:hover { background: var(--box-hover); }
+@media (min-width: 640px) { .cmpr { flex-direction: row; align-items: center; gap: 12px; } }
+.cmpr-g { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; color: var(--ink); }
+.cmpr-g img { width: 32px; height: 32px; border-radius: 2px; flex-shrink: 0; }
+.cmpr-t { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 12.5px; font-weight: 500; }
+.cmpr-g:hover .cmpr-t > .truncate { color: var(--accent-hi); }
+.cmpr-s { display: flex; align-items: baseline; gap: 7px; min-width: 0; font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+.cmpr-p { display: flex; gap: 6px; flex-shrink: 0; }
+.cmpx { flex: 1; display: flex; align-items: center; gap: 7px; padding: 4px 8px; border-radius: 2px; min-width: 100px; }
+.cmpx.lead { background: color-mix(in srgb, var(--lc) 14%, transparent); }
+.cmpx-v { display: flex; align-items: center; gap: 4px; }
+.cmpx-v b { font-family: var(--mono); font-size: 12.5px; font-weight: 600; }
+
+/* Tiles: the count beside a small ring (the ring motif), in place of the old segmented bar */
+.gtile-n { display: inline-flex; align-items: center; gap: 6px; }
+/* Stats tab: streaks and pace as index lines, two columns from md */
+.stat-lines { gap: 7px; }
+@media (min-width: 768px) { .stat-lines { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; } }

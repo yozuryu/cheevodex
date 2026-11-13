@@ -160,12 +160,11 @@ function SearchApp() {
           {hasSomeData && fetchStatus !== 'fetching' && (
             <div className="ml-auto flex items-center gap-3">
               {store.lastFullFetch && (
-                <span className="text-[9px] text-ink-3">Synced {relativeTime(store.lastFullFetch)}</span>
+                <span className="text-[11px] text-ink-3">Synced {relativeTime(store.lastFullFetch)}</span>
               )}
-              <button type="button" onClick={() => startFetch(true)}
-                className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider text-ink-3 hover:text-accent transition-colors">
-                <RefreshCw size={11} />
-                Refresh All
+              <button type="button" onClick={() => startFetch(true)} className="fchip">
+                <RefreshCw size={12} />
+                Refresh all
               </button>
             </div>
           )}
@@ -196,31 +195,23 @@ function SearchApp() {
           <div className="flex flex-wrap items-center gap-2 mb-3">
             {/* Achievement filter */}
             <div className="flex items-center gap-1.5">
-              <span className="text-[9px] text-ink-3 uppercase tracking-wider shrink-0">Cheevos</span>
+              <span className="text-[11px] text-ink-3 shrink-0">Achievements</span>
               {[
                 { value: 'all',     label: 'All'     },
                 { value: 'with',    label: 'With'    },
                 { value: 'without', label: 'Without' },
               ].map(opt => (
-                <button key={opt.value} type="button" onClick={() => setAchFilter(opt.value)}
-                  className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-[2px] border transition-colors ${
-                    achFilter === opt.value
-                      ? 'bg-box text-ink border-line'
-                      : 'bg-well text-ink-3 border-line-2 hover:text-ink hover:border-ink-3'
-                  }`}>{opt.label}</button>
+                <button key={opt.value} type="button" onClick={() => setAchFilter(opt.value)} aria-pressed={achFilter === opt.value}
+                  className={`fchip ${achFilter === opt.value ? 'on' : ''}`}>{opt.label}</button>
               ))}
             </div>
 
             {/* Console multi-select */}
             <div className="relative" ref={consolePanelRef}>
               <button type="button" onClick={() => setShowConsolePanel(v => !v)}
-                className={`flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-[2px] border transition-colors ${
-                  consoleFilter.size > 0
-                    ? 'bg-box text-accent border-accent'
-                    : 'bg-well text-ink-3 border-line-2 hover:text-ink hover:border-ink-3'
-                }`}>
-                Console{consoleFilter.size > 0 ? ` (${consoleFilter.size})` : ''}
-                <ChevronDown size={10} className={`transition-transform duration-150 ${showConsolePanel ? 'rotate-180' : ''}`} />
+                aria-expanded={showConsolePanel} className={`fchip ${consoleFilter.size > 0 ? 'on' : ''}`}>
+                Console{consoleFilter.size > 0 && <span className="n num">{consoleFilter.size}</span>}
+                <ChevronDown size={12} className={`transition-transform duration-150 ${showConsolePanel ? 'rotate-180' : ''}`} />
               </button>
               {showConsolePanel && (
                 <div className="absolute top-full left-0 mt-1 w-56 bg-box border border-line rounded-[3px] z-20 shadow-xl overflow-hidden">
@@ -232,25 +223,25 @@ function SearchApp() {
                       value={consoleSearch}
                       onChange={e => setConsoleSearch(e.target.value)}
                       placeholder="Filter consoles…"
-                      className="flex-1 bg-transparent outline-none text-[10px] text-ink placeholder-ink-3 min-w-0"
+                      className="flex-1 bg-transparent outline-none text-[12px] text-ink placeholder-ink-3 min-w-0"
                     />
                     {consoleFilter.size > 0 && (
                       <button type="button" onClick={() => setConsoleFilter(new Set())}
-                        className="text-[9px] text-accent hover:text-white transition-colors uppercase tracking-wider shrink-0">
+                        className="text-[11px] text-accent hover:text-ink transition-colors shrink-0">
                         Clear
                       </button>
                     )}
                   </div>
                   <div className="max-h-56 overflow-y-auto">
                     {filteredConsoles.length === 0 && (
-                      <div className="px-3 py-3 text-[9px] text-ink-3 text-center">No match</div>
+                      <div className="px-3 py-3 text-[11px] text-ink-3 text-center">No match</div>
                     )}
                     {filteredConsoles.map(c => (
                       <label key={c.id} className="flex items-center gap-2 px-3 py-[5px] hover:bg-box-hi cursor-pointer">
                         <input type="checkbox" checked={consoleFilter.has(c.id)}
                           onChange={() => toggleConsole(c.id)}
                           className="accent-accent w-3 h-3 shrink-0" />
-                        <span className="text-[10px] text-ink truncate">{c.name}</span>
+                        <span className="text-[12px] text-ink truncate">{c.name}</span>
                       </label>
                     ))}
                   </div>
@@ -260,8 +251,8 @@ function SearchApp() {
 
             {hasActiveFilters && (
               <button type="button" onClick={() => { setAchFilter('all'); setConsoleFilter(new Set()); }}
-                className="text-[9px] text-ink-3 hover:text-accent uppercase tracking-wider transition-colors">
-                Clear filters ×
+                className="fchip on">
+                Clear filters ✕
               </button>
             )}
           </div>
@@ -280,7 +271,7 @@ function SearchApp() {
                   <span className="text-[10px] text-ink-3">{progress.done}/{progress.total}</span>
                 )}
                 <button type="button" onClick={() => { cancelRef.current = true; }}
-                  className="text-[9px] font-semibold uppercase tracking-wider text-ink-3 hover:text-danger transition-colors">
+                  className="fchip" style={{ height: 26 }}>
                   Cancel
                 </button>
               </div>
@@ -313,7 +304,7 @@ function SearchApp() {
               <>
                 <span className="text-line">·</span>
                 <button type="button" onClick={() => startFetch(false)}
-                  className="text-[10px] text-accent hover:text-white transition-colors">
+                  className="text-[11px] text-accent hover:text-ink transition-colors">
                   fetch remaining consoles
                 </button>
               </>
@@ -330,9 +321,9 @@ function SearchApp() {
               </p>
             </div>
             <button type="button" onClick={() => startFetch(false)}
-              className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider px-4 py-2 rounded-[3px] border border-accent text-accent hover:bg-accent hover:text-well transition-colors">
+              className="fchip on">
               <Database size={12} />
-              Fetch All Consoles
+              Fetch all consoles
             </button>
           </div>
         )}
@@ -364,7 +355,7 @@ function SearchApp() {
                           </span>}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[12px] font-medium text-ink group-hover:text-white transition-colors leading-snug">{baseTitle}</span>
+                          <span className="text-[12px] font-medium text-ink group-hover:text-accent-hi transition-colors leading-snug">{baseTitle}</span>
                           {isSubset && (
                             <span className="text-[7px] font-bold uppercase tracking-[0.07em] px-1 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">Subset</span>
                           )}
@@ -380,23 +371,24 @@ function SearchApp() {
                           })}
                         </div>
                         {isSubset && subsetName && (
-                          <span className="text-[9px] text-gold-dim block truncate">{subsetName}</span>
+                          <span className="text-[11px] text-gold-dim block truncate">{subsetName}</span>
                         )}
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[10px] text-accent">{g.consoleName}</span>
+                        <div className="flex items-center gap-1.5 mt-0.5 text-[11px]">
+                          <span className="dex-no">No.{g.id}</span>
+                          <span className="text-accent">{g.consoleName}</span>
                           {g.numAchievements > 0 ? (
                             <>
-                              <span className="text-line text-[9px]">·</span>
-                              <span className="text-[9px] text-ink-3">
-                                <span className="text-ink-2">{g.numAchievements}</span> cheevos
+                              <span className="text-line">·</span>
+                              <span className="text-ink-3">
+                                <span className="text-ink-2">{g.numAchievements}</span> achievements
                                 <span className="text-line mx-1">·</span>
                                 <span className="text-gold">{(g.points || 0).toLocaleString()}</span> pts
                               </span>
                             </>
                           ) : (
                             <>
-                              <span className="text-line text-[9px]">·</span>
-                              <span className="text-[9px] text-line-2">No achievements</span>
+                              <span className="text-line">·</span>
+                              <span className="text-ink-3">No achievements</span>
                             </>
                           )}
                         </div>
@@ -413,16 +405,16 @@ function SearchApp() {
                   <button type="button"
                     onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo(0, 0); }}
                     disabled={page <= 1}
-                    className="text-[9px] font-semibold uppercase tracking-wider px-2.5 py-[4px] rounded-[2px] border border-line-2 bg-well text-ink-2 hover:text-ink hover:border-ink-3 transition-colors disabled:opacity-30 disabled:pointer-events-none">
+                    className="fchip disabled:opacity-30 disabled:pointer-events-none">
                     ← Prev
                   </button>
-                  <span className="text-[9px] text-ink-3">
+                  <span className="text-[11px] text-ink-3">
                     Page <span className="text-ink">{Math.min(page, totalPages)}</span> of <span className="text-ink">{totalPages}</span>
                   </span>
                   <button type="button"
                     onClick={() => { setPage(p => Math.min(totalPages, p + 1)); window.scrollTo(0, 0); }}
                     disabled={page >= totalPages}
-                    className="text-[9px] font-semibold uppercase tracking-wider px-2.5 py-[4px] rounded-[2px] border border-line-2 bg-well text-ink-2 hover:text-ink hover:border-ink-3 transition-colors disabled:opacity-30 disabled:pointer-events-none">
+                    className="fchip disabled:opacity-30 disabled:pointer-events-none">
                     Next →
                   </button>
                 </div>

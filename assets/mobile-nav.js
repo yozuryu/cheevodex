@@ -119,7 +119,7 @@
 
     .mnav-label {
       font-family: var(--font);
-      font-size: 8px;
+      font-size: 10px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.07em;
@@ -156,7 +156,7 @@
       bottom: 0; left: 0; right: 0;
       background: var(--box);
       border-top: 1px solid var(--line);
-      border-radius: 12px 12px 0 0;
+      border-radius: 3px 3px 0 0;
       padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
       max-height: 85vh;
       overflow-y: auto;
@@ -196,7 +196,7 @@
 
     .msheet-row-icon {
       width: 32px; height: 32px;
-      border-radius: 6px;
+      border-radius: 3px;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
     }

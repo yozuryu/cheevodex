@@ -2,6 +2,7 @@ import { MEDIA_URL } from './constants.js';
 
 const toUtc = (s) => typeof s === 'string' && !s.includes('T') && !s.endsWith('Z') ? s.replace(' ', 'T') + 'Z' : s;
 
+// One time-ago style across the app: "5m ago", "18h ago", "3d ago", then the date
 export const formatTimeAgo = (dateStr, refDateStr) => {
   if (!dateStr) return "Never";
   const date = new Date(toUtc(dateStr));
@@ -11,14 +12,11 @@ export const formatTimeAgo = (dateStr, refDateStr) => {
   const diffDays = diffHrs / 24;
 
   if (diffHrs < 1) {
-    const mins = Math.max(1, Math.floor(diffMs / (1000 * 60)));
-    return `${mins} min${mins !== 1 ? 's' : ''} ago`;
+    return `${Math.max(1, Math.floor(diffMs / (1000 * 60)))}m ago`;
   } else if (diffHrs < 24) {
-    const hrs = Math.floor(diffHrs);
-    return `${hrs} hr${hrs !== 1 ? 's' : ''} ago`;
+    return `${Math.floor(diffHrs)}h ago`;
   } else if (diffDays < 7) {
-    const days = Math.floor(diffDays);
-    return `${days} day${days !== 1 ? 's' : ''} ago`;
+    return `${Math.floor(diffDays)}d ago`;
   } else {
     return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   }

@@ -297,7 +297,7 @@ function AchievementApp() {
                 className={`w-full h-full object-cover ${!userAch?.dateEarned ? 'grayscale brightness-40' : ''}`}
               />
               {!userAch?.dateEarned && (
-                <Lock size={20} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/40" />
+                <Lock size={20} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-ink/40" />
               )}
             </div>
 
@@ -307,7 +307,7 @@ function AchievementApp() {
                   {ach?.title}
                 </h1>
                 {typeConf && (
-                  <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.07em] px-1.5 py-[2px] rounded-[2px] shrink-0 mt-[3px]"
+                  <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.07em] px-1.5 py-[2px] rounded-[2px] shrink-0 mt-[3px]"
                     style={{ color: typeConf.color, background: `color-mix(in srgb, ${typeConf.color} 9.4%, transparent)`, border: `1px solid color-mix(in srgb, ${typeConf.color} 26.7%, transparent)` }}>
                     <typeConf.Icon size={9} /> {typeConf.label}
                   </span>
@@ -355,7 +355,7 @@ function AchievementApp() {
           <div className="relative border-t border-well bg-bar/50">
             <div className="max-w-3xl mx-auto px-2 md:px-8 py-2.5 grid grid-flow-col auto-cols-fr">
               {[
-                { label: 'Hardcore',      value: achData.unlocksHardcoreCount, pct: hcPct,  color: 'var(--hc)', Icon: Flame   },
+                { label: 'Hardcore',      value: achData.unlocksHardcoreCount, pct: hcPct,  color: 'var(--gold)', Icon: Flame   },
                 { label: 'Softcore',      value: achData.unlocksCount,         pct: anyPct, color: 'var(--ink-2)', Icon: Feather },
                 { label: 'Total Players', value: achData.totalPlayers,         pct: null,   color: 'var(--ink-3)', Icon: null    },
               ].map((s, i) => (
@@ -365,10 +365,10 @@ function AchievementApp() {
                       {s.value.toLocaleString()}
                     </span>
                     {s.pct !== null && (
-                      <span className="text-[9px] md:text-[10px] text-ink-3">{s.pct}%</span>
+                      <span className="text-[10px] md:text-[10px] text-ink-3">{s.pct}%</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 text-[8px] md:text-[9px] text-ink-3 uppercase tracking-[0.07em]">
+                  <div className="flex items-center gap-1 text-[10px] md:text-[10px] text-ink-3 uppercase tracking-[0.07em]">
                     {s.Icon && <s.Icon size={8} />}
                     {s.label}
                   </div>
@@ -405,12 +405,12 @@ function AchievementApp() {
               <img src={badgeSrc} alt={ach?.title}
                 className="w-8 h-8 rounded-[2px] border border-well object-cover shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="text-[9px] text-ink-3 uppercase tracking-[0.07em] mb-0.5">Unlocked at</div>
+                <div className="text-[10px] text-ink-3 uppercase tracking-[0.07em] mb-0.5">Unlocked at</div>
                 <div className="text-[11px] text-accent font-medium">{formatDate(userAch.dateEarned)}</div>
               </div>
               {userAch.dateEarnedHardcore && (
-                <span className="flex items-center gap-1 text-[9px] font-bold px-1.5 py-[2px] rounded-sm shrink-0"
-                  style={{ color: 'var(--hc)', background: 'rgb(var(--c-hc) / 0.12)', border: '1px solid rgb(var(--c-hc) / 0.3)' }}>
+                <span className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-[2px] rounded-sm shrink-0"
+                  style={{ color: 'var(--gold)', background: 'rgb(var(--c-gold) / 0.12)', border: '1px solid rgb(var(--c-gold) / 0.3)' }}>
                   <Flame size={8} /> Hardcore
                 </span>
               )}
@@ -447,12 +447,12 @@ function AchievementApp() {
                     {u.user}
                   </a>
                   {u.hardcoreMode && (
-                    <span className="flex items-center gap-0.5 text-[8px] font-bold px-1 py-[1px] rounded-sm shrink-0"
-                      style={{ color: 'var(--hc)', background: 'rgb(var(--c-hc) / 0.12)', border: '1px solid rgb(var(--c-hc) / 0.3)' }}>
+                    <span className="flex items-center gap-0.5 text-[10px] font-bold px-1 py-[1px] rounded-sm shrink-0"
+                      style={{ color: 'var(--gold)', background: 'rgb(var(--c-gold) / 0.12)', border: '1px solid rgb(var(--c-gold) / 0.3)' }}>
                       <Flame size={7} /> Hardcore
                     </span>
                   )}
-                  <span className="text-[9px] text-ink-3 shrink-0">{formatTimeAgo(u.dateAwarded, new Date().toISOString())}</span>
+                  <span className="text-[10px] text-ink-3 shrink-0">{formatTimeAgo(u.dateAwarded, new Date().toISOString())}</span>
                 </div>
               ))}
             </div>
@@ -502,7 +502,7 @@ function AchievementApp() {
                       <div className="flex items-baseline gap-2 mb-1">
                         <a href={`../profile/?u=${c.user}`}
                           className="text-[11px] font-medium text-gold hover:text-gold-hi transition-colors shrink-0">{c.user}</a>
-                        <span className="text-[9px] text-ink-3">{formatTimeAgo(c.submitted)}</span>
+                        <span className="text-[10px] text-ink-3">{formatTimeAgo(c.submitted)}</span>
                       </div>
                       <p className="text-[11px] text-ink leading-snug break-words">{c.commentText}</p>
                     </div>
@@ -555,7 +555,7 @@ function AchievementApp() {
                         return <><span className="text-gold">{c.commentText.slice(0, spaceIdx)}</span>{c.commentText.slice(spaceIdx)}</>;
                       })()}
                     </p>
-                    <span className="text-[9px] text-accent">{formatTimeAgo(c.submitted)}</span>
+                    <span className="text-[10px] text-accent">{formatTimeAgo(c.submitted)}</span>
                   </div>
                 ))}
               </div>

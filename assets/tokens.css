@@ -39,7 +39,7 @@
   --c-silver:        196 202 209;  /* #c4cad1 Beaten */
   --c-bronze:        205 127 50;  /* #cd7f32 Third place */
   --c-aqua:          87 203 222;  /* #57cbde Info / auth / changelog */
-  --c-hc:            255 93 74;  /* #ff5d4a Hardcore, errors, log out */
+  --c-hc:            255 93 74;  /* #ff5d4a Errors, win conditions, log out (hardcore mode is gold) */
   --c-danger:        240 86 74;  /* #f0564a Destructive / fetch failure text */
   --c-danger-hi:     255 122 107;  /* #ff7a6b Destructive hover */
   --c-danger-edge:   110 43 37;  /* #6e2b25 Error box border */

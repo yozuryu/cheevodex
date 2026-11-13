@@ -23,7 +23,7 @@
 
 ## Coverage Strip
 
-Sits above the search box on `GameListView`. Renders only once both `games` and `completion` have resolved.
+A two-tone `.dring` (gold mastered, blue played, % in the middle) beside index lines for Sets played (of the total) and Mastered, above the search box on `GameListView`. Renders only once both `games` and `completion` have resolved.
 
 Computed in a `useMemo` over games with `numAchievements > 0` (the denominator — achievement *sets*, not the raw game count in the header):
 

@@ -19,7 +19,7 @@ import { useSheet, ArtBg } from '../assets/sheet.js';
 import { TabBar, useSwipeTabs, scrollToTabs } from '../assets/tabs.js';
 import { useGameView, shortAgo } from '../assets/game-view.js';
 import { CompletionsPanel } from '../assets/completions.js';
-import { ActivitySummary, useSummaryOpen, computeStreak, yearOf, DayHead, UnlockRow, ActivitySkeleton, TimelineSkeleton } from '../assets/activity-ui.js';
+import { ActivitySummary, useSummaryOpen, computeStreak, yearOf, DayHead, UnlockRow, ActivitySkeleton, FriendsSkeleton } from '../assets/activity-ui.js';
 import { dayKey, addDays, fmtClock, fmtDayKey, TZ } from '../assets/time.js';
 
 const _visitedUser = new URLSearchParams(window.location.search).get('u');
@@ -78,20 +78,6 @@ const gameStatus = (game) =>
   : game.achievementsTotal > 0 ? { key: 'none', color: 'var(--line-2)', label: 'Not started' }
   : { key: 'noach', color: 'var(--line-faint)', label: 'No achievements' };
 
-// Segmented progress (doc-012): up to 20 segments filling in turn; only mastered glows
-const SegBar = ({ pct, total, color, glow = false }) => {
-  const n = Math.max(1, Math.min(total || 20, 20));
-  const filled = Math.max(0, Math.min(100, pct || 0)) / 100 * n;
-  return (
-    <div className={`segbar${glow ? ' glow' : ''}`} role="img" aria-label={`${Math.round(pct || 0)}% complete`}>
-      {Array.from({ length: n }, (_, i) => {
-        const f = Math.max(0, Math.min(1, filled - i));
-        return <i key={i}>{f > 0 && <b style={{ width: `${f * 100}%`, background: color }} />}</i>;
-      })}
-    </div>
-  );
-};
-
 // List / tiles switch for the profile game lists (assets/game-view.js remembers the choice)
 const ViewToggle = ({ view, onChange }) => (
   <div className="vtoggle" role="group" aria-label="Game list view">
@@ -110,7 +96,7 @@ const GameTile = ({ game }) => {
         <img className="icon" src={game.icon} alt="" loading="lazy" onError={e => { e.currentTarget.style.visibility = 'hidden'; }} />
         {game.lastPlayed && <span className="gtile-ago">{game.lastPlayed}</span>}
         {hasAch && game.achievementsUnlocked > 0 && (
-          <span className="gtile-mode" style={{ borderColor: game.hardcore ? 'rgb(var(--c-hc) / 0.5)' : 'var(--line-2)', color: game.hardcore ? 'var(--hc)' : 'var(--ink-2)' }}
+          <span className="gtile-mode" style={{ borderColor: game.hardcore ? 'rgb(var(--c-gold) / 0.5)' : 'var(--line-2)', color: game.hardcore ? 'var(--gold)' : 'var(--ink-2)' }}
             title={game.hardcore ? 'Hardcore' : 'Softcore'}>
             {game.hardcore ? <Flame size={11} /> : <Feather size={11} />}
           </span>
@@ -122,11 +108,14 @@ const GameTile = ({ game }) => {
         <div className="gtile-sub"><Gamepad2 size={11} className="shrink-0" /><span className="shrink">{game.console}</span></div>
         <div className="gtile-meta">
           {hasAch
-            ? <span className="num"><b>{game.achievementsUnlocked}</b>/{game.achievementsTotal}</span>
+            ? <span className="gtile-n">
+                <span className={`dring ${st.key === 'mastered' ? 'full' : ''}`} title={`${Math.floor(game.rawProgress)}% complete`}
+                  style={{ '--p': game.rawProgress, '--c': st.key === 'none' ? 'var(--line-2)' : st.color, '--s': '18px', '--w': '3px' }} />
+                <span className="num"><b>{game.achievementsUnlocked}</b>/{game.achievementsTotal}</span>
+              </span>
             : <span>No achievements</span>}
           <span style={{ color: st.key === 'none' || st.key === 'noach' ? 'var(--ink-3)' : st.color }}>{hasAch ? st.label : ''}</span>
         </div>
-        {hasAch && <SegBar pct={game.rawProgress} total={game.achievementsTotal} color={st.color} glow={st.key === 'mastered'} />}
       </div>
     </a>
   );
@@ -145,7 +134,7 @@ const fold = str => (str ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 const ModeIcon = ({ game, size = 11 }) => {
   if (!game.achievementsUnlocked) return null;
   return game.hardcore
-    ? <Flame size={size} className="text-hc shrink-0" aria-label="Hardcore" />
+    ? <Flame size={size} className="text-gold shrink-0" aria-label="Hardcore" />
     : <Feather size={size} className="text-ink-2 shrink-0" aria-label="Softcore" />;
 };
 
@@ -176,7 +165,7 @@ const GameListRow = ({ game, extra = null }) => {
           {game.isSubset && game.subsetName && <span className="text-gold-dim shrink">{game.subsetName}</span>}
           {renderTildeTags(game.tags)}
           <ModeIcon game={game} />
-          <span className="shrink">{[game.playtime !== 'Unknown' ? game.playtime : null, ago].filter(Boolean).join(' · ')}</span>
+          <span className="shrink">{[game.playtime !== 'Unknown' ? game.playtime : null, ago && `${ago} ago`].filter(Boolean).join(' · ')}</span>
         </div>
         {extra}
       </div>
@@ -526,11 +515,11 @@ const RAchievementModal = ({ game, onClose, loadingDetails }) => {
             <div className="flex flex-col mb-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <a href={`../game/?id=${game.id}${compareParam}`}
-                  className="text-[15px] font-medium text-white hover:text-accent transition-colors leading-tight truncate">
+                  className="text-[15px] font-medium text-ink hover:text-accent transition-colors leading-tight truncate">
                   {game.baseTitle || game.title}
                 </a>
                 {game.isSubset && (
-                  <span className="text-[8px] font-bold uppercase tracking-[0.07em] px-1.5 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">Subset</span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.07em] px-1.5 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">Subset</span>
                 )}
                 {renderTildeTags(game.tags)}
               </div>
@@ -542,34 +531,34 @@ const RAchievementModal = ({ game, onClose, loadingDetails }) => {
               <span className="text-accent flex items-center gap-1"><Gamepad2 size={10} />{game.console}</span>
               <span className="text-ink-3">·</span>
               {!game.achievementsUnlocked ? null : game.hardcore ? (
-                <span className="shrink-0 text-[9px] text-hc border border-hc/30 bg-well/60 px-1.5 py-[1px] rounded-sm font-semibold uppercase tracking-wider flex items-center gap-1"><Flame size={10} /> Hardcore</span>
+                <span className="shrink-0 text-[10px] text-gold border border-gold/30 bg-well/60 px-1.5 py-[1px] rounded-sm font-semibold uppercase tracking-wider flex items-center gap-1"><Flame size={10} /> Hardcore</span>
               ) : (
-                <span className="shrink-0 text-[9px] text-ink-2 border border-line-2 bg-well/60 px-1.5 py-[1px] rounded-sm font-semibold uppercase tracking-wider flex items-center gap-1"><Feather size={10} /> Softcore</span>
+                <span className="shrink-0 text-[10px] text-ink-2 border border-line-2 bg-well/60 px-1.5 py-[1px] rounded-sm font-semibold uppercase tracking-wider flex items-center gap-1"><Feather size={10} /> Softcore</span>
               )}
               {game.isMastered && (
-                <span className="shrink-0 text-[9px] text-well bg-gold px-1.5 py-[1px] rounded-sm font-bold uppercase tracking-wider flex items-center gap-1"><Trophy size={10} /> Mastered</span>
+                <span className="shrink-0 text-[10px] text-well bg-gold px-1.5 py-[1px] rounded-sm font-bold uppercase tracking-wider flex items-center gap-1"><Trophy size={10} /> Mastered</span>
               )}
               {game.isBeaten && !game.isMastered && (
-                <span className="shrink-0 text-[9px] text-ink bg-chip px-1.5 py-[1px] rounded-sm font-bold uppercase tracking-wider border border-silver/40 flex items-center gap-1"><Medal size={10} /> Beaten</span>
+                <span className="shrink-0 text-[10px] text-ink bg-chip px-1.5 py-[1px] rounded-sm font-bold uppercase tracking-wider border border-silver/40 flex items-center gap-1"><Medal size={10} /> Beaten</span>
               )}
             </div>
             {/* Progress bars */}
             <div className="flex flex-col gap-1">
               {progPct !== null && (
                 <div className="flex items-center gap-2">
-                  <span className="w-[64px] shrink-0 text-[8px] text-ink-3 uppercase tracking-wider text-right">Progression</span>
+                  <span className="w-[64px] shrink-0 text-[10px] text-ink-3 uppercase tracking-wider text-right">Progression</span>
                   <div className="flex-1 bg-well h-[3px] rounded-sm overflow-hidden">
                     <div className="h-full rounded-sm bg-gold" style={{ width: `${progPct}%` }} />
                   </div>
-                  <span className="text-[9px] text-gold shrink-0">{progUnlocked}/{progAchs.length}</span>
+                  <span className="text-[10px] text-gold shrink-0">{progUnlocked}/{progAchs.length}</span>
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <span className="w-[64px] shrink-0 text-[8px] text-ink-3 uppercase tracking-wider text-right">Overall</span>
+                <span className="w-[64px] shrink-0 text-[10px] text-ink-3 uppercase tracking-wider text-right">Overall</span>
                 <div className="flex-1 bg-well h-[3px] rounded-sm overflow-hidden">
                   <div className={`h-full rounded-sm ${game.isMastered ? 'bg-gold' : 'bg-accent'}`} style={{ width: `${game.rawProgress}%` }} />
                 </div>
-                <span className="text-[9px] text-ink-2 shrink-0">
+                <span className="text-[10px] text-ink-2 shrink-0">
                   <span className="text-ink">{game.achievementsUnlocked}</span>/{game.achievementsTotal}
                 </span>
               </div>
@@ -581,25 +570,25 @@ const RAchievementModal = ({ game, onClose, loadingDetails }) => {
         {/* Game meta row */}
         {(game.genre || game.developer || game.released) && (
           <div className="flex items-center gap-2 px-4 py-1.5 border-b border-well flex-wrap shrink-0">
-            {game.genre    && <span className="text-[9px] text-ink-2 flex items-center gap-1"><Gamepad2 size={9} className="text-ink-3" />{game.genre}</span>}
-            {game.genre    && (game.developer || game.released) && <span className="text-line-2 text-[9px]">·</span>}
-            {game.developer && <span className="text-[9px] text-ink-2 flex items-center gap-1"><BarChart2 size={9} className="text-ink-3" />{game.developer}</span>}
-            {game.developer && game.released && <span className="text-line-2 text-[9px]">·</span>}
-            {game.released  && <span className="text-[9px] text-ink-2">{game.released}</span>}
+            {game.genre    && <span className="text-[10px] text-ink-2 flex items-center gap-1"><Gamepad2 size={9} className="text-ink-3" />{game.genre}</span>}
+            {game.genre    && (game.developer || game.released) && <span className="text-line-2 text-[10px]">·</span>}
+            {game.developer && <span className="text-[10px] text-ink-2 flex items-center gap-1"><BarChart2 size={9} className="text-ink-3" />{game.developer}</span>}
+            {game.developer && game.released && <span className="text-line-2 text-[10px]">·</span>}
+            {game.released  && <span className="text-[10px] text-ink-2">{game.released}</span>}
           </div>
         )}
 
         {/* Filter bar — two rows */}
         <div className="flex flex-col px-4 py-2 border-b border-well gap-1.5 shrink-0">
           <div className="flex items-center gap-1.5">
-            <span className="text-[8px] uppercase tracking-wider text-ink-3 w-[44px] shrink-0">Status</span>
+            <span className="text-[10px] uppercase tracking-wider text-ink-3 w-[44px] shrink-0">Status</span>
             {[
               { value: 'all',      label: 'All',      icon: null },
               { value: 'unlocked', label: 'Unlocked', icon: <Unlock size={9} /> },
               { value: 'locked',   label: 'Locked',   icon: <Lock size={9} /> },
             ].map(opt => (
               <button key={opt.value} onClick={() => setLockFilter(opt.value)}
-                className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border transition-colors flex items-center gap-1 ${
+                className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border transition-colors flex items-center gap-1 ${
                   lockFilter === opt.value
                     ? 'bg-accent text-well border-accent'
                     : 'bg-well text-ink-2 border-line-2 hover:text-ink hover:border-ink-3'
@@ -607,20 +596,20 @@ const RAchievementModal = ({ game, onClose, loadingDetails }) => {
             ))}
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-[8px] uppercase tracking-wider text-ink-3 w-[44px] shrink-0">Type</span>
+            <span className="text-[10px] uppercase tracking-wider text-ink-3 w-[44px] shrink-0">Type</span>
             {[
               { value: 'all',         label: 'All',         icon: null },
               { value: 'progression', label: 'Progression', icon: <Trophy size={9} /> },
               { value: 'missable',    label: 'Missable',    icon: <AlertTriangle size={9} /> },
             ].map(opt => (
               <button key={opt.value} onClick={() => setTypeFilter(opt.value)}
-                className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border transition-colors flex items-center gap-1 ${
+                className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border transition-colors flex items-center gap-1 ${
                   typeFilter === opt.value
                     ? 'bg-gold text-well border-gold'
                     : 'bg-well text-ink-2 border-line-2 hover:text-ink hover:border-ink-3'
                 }`}>{opt.icon}{opt.label}</button>
             ))}
-            <span className="ml-auto text-[9px] text-ink-3">{filteredAchs.length} / {game.achievements?.length ?? 0}</span>
+            <span className="ml-auto text-[10px] text-ink-3">{filteredAchs.length} / {game.achievements?.length ?? 0}</span>
           </div>
         </div>
 
@@ -647,7 +636,7 @@ const RAchievementModal = ({ game, onClose, loadingDetails }) => {
                   className="relative shrink-0 w-10 h-10 rounded-[2px] border border-well overflow-hidden bg-black hover:scale-105 transition-transform block">
                   <img src={`${MEDIA_URL}/Badge/${ach.badgeName || '00001'}.png`} alt={ach.title}
                     className={`w-full h-full object-cover ${!ach.isUnlocked ? 'grayscale brightness-40' : ''}`} />
-                  {!ach.isUnlocked && <Lock size={14} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/50" />}
+                  {!ach.isUnlocked && <Lock size={14} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-ink/50" />}
                 </a>
 
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
@@ -656,9 +645,9 @@ const RAchievementModal = ({ game, onClose, loadingDetails }) => {
                       className={`text-[12px] font-medium tracking-wide leading-tight transition-colors ${ach.isUnlocked ? 'text-gold hover:text-gold-hi' : 'text-ink-2 hover:text-ink'}`}>
                       {ach.title}
                     </a>
-                    <span className="text-[9px] font-bold text-gold num bg-well border border-line-2 px-1.5 py-[1px] rounded-sm shrink-0">{ach.points} pts</span>
+                    <span className="text-[10px] font-bold text-gold num bg-well border border-line-2 px-1.5 py-[1px] rounded-sm shrink-0">{ach.points} pts</span>
                     {ach.trueRatio > 0 && ach.points > 0 && (
-                      <span className={`text-[9px] shrink-0 ${!ach.isUnlocked ? 'opacity-40' : ''}`} style={{ color: (() => { const r = ach.trueRatio / ach.points; return r >= 30 ? 'var(--hc)' : r >= 20 ? 'var(--gold)' : r >= 10 ? 'var(--accent)' : 'var(--ink-2)'; })() }}>×{(ach.trueRatio / ach.points).toFixed(1)}</span>
+                      <span className={`text-[10px] shrink-0 ${!ach.isUnlocked ? 'opacity-40' : ''}`} style={{ color: (() => { const r = ach.trueRatio / ach.points; return r >= 30 ? 'var(--hc)' : r >= 20 ? 'var(--gold)' : r >= 10 ? 'var(--accent)' : 'var(--ink-2)'; })() }}>×{(ach.trueRatio / ach.points).toFixed(1)}</span>
                     )}
                     {ach.type === 'progression' && <span className="shrink-0 cursor-help inline-flex items-center" onMouseEnter={e => showTip(e, <><div className="pop-name" style={{color:'var(--gold)'}}>Progression</div><div className="pop-sub">Required to complete the game</div></>)} onMouseLeave={hideTip}><Trophy size={11} className="text-gold" /></span>}
                     {ach.type === 'win_condition' && <span className="shrink-0 cursor-help inline-flex items-center" onMouseEnter={e => showTip(e, <><div className="pop-name" style={{color:'var(--hc)'}}>Win Condition</div><div className="pop-sub">Triggers game completion</div></>)} onMouseLeave={hideTip}><Crown size={11} className="text-hc" /></span>}
@@ -671,15 +660,15 @@ const RAchievementModal = ({ game, onClose, loadingDetails }) => {
                     <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                       <div className="relative h-1.5 bg-well rounded-full overflow-hidden w-full max-w-[180px]">
                         {casualPct !== null && <div className="absolute top-0 left-0 h-full bg-ink-3" style={{ width: `${casualPct}%` }} />}
-                        {hardcorePct !== null && <div className="absolute top-0 left-0 h-full bg-hc" style={{ width: `${hardcorePct}%` }} />}
+                        {hardcorePct !== null && <div className="absolute top-0 left-0 h-full bg-gold" style={{ width: `${hardcorePct}%` }} />}
                       </div>
-                      <div className="flex justify-between text-[8px] font-medium w-full max-w-[180px]">
-                        {hardcorePct !== null && <span className="flex items-center gap-0.5 text-hc"><Flame size={8} />{hardcorePct}%</span>}
+                      <div className="flex justify-between text-[10px] font-medium w-full max-w-[180px]">
+                        {hardcorePct !== null && <span className="flex items-center gap-0.5 text-gold"><Flame size={8} />{hardcorePct}%</span>}
                         {casualPct !== null && <span className="flex items-center gap-0.5 text-ink-3"><Feather size={8} />{casualPct}%</span>}
                       </div>
                     </div>
                     {ach.isUnlocked && (
-                      <p className="text-[9px] text-accent shrink-0">Unlocked: {new Date(ach.unlockDate).toLocaleDateString()}</p>
+                      <p className="text-[10px] text-accent shrink-0">Unlocked: {new Date(ach.unlockDate).toLocaleDateString()}</p>
                     )}
                   </div>
                 </div>
@@ -727,7 +716,7 @@ const runMode = achs => {
 
 // The game strip at the head of a run (Mine and Friends): icon, title with Subset / tilde tags, subset name, mode
 // icon, console and time range; +N and points in gold. `achs` newest first; `icon` already a media URL
-const RunStrip = ({ href, gameTitle, icon, consoleName, achs, mode, runTitle }) => {
+const RunStrip = ({ href, gameId, gameTitle, icon, consoleName, achs, mode, runTitle }) => {
   const { p } = runTitle(gameTitle);
   const t0 = fmtClock(achs[achs.length - 1].date), t1 = fmtClock(achs[0].date);
   const pts = achs.reduce((t, a) => t + (a.points || 0), 0);
@@ -745,6 +734,7 @@ const RunStrip = ({ href, gameTitle, icon, consoleName, achs, mode, runTitle }) 
           {mode === 'sc'
             ? <Feather size={11} className="text-ink-2 shrink-0" aria-label="Softcore" />
             : <Flame size={11} className={`shrink-0 ${mode === 'hc' ? 'text-gold' : 'text-ink-2'}`} aria-label={mode === 'hc' ? 'Hardcore' : 'Hardcore and softcore'} />}
+          {gameId && <span className="dex-no shrink-0">No.{gameId}</span>}
           {consoleName && <span className="truncate">{consoleName}</span>}
           <span className="num shrink-0">{t0 === t1 ? t0 : `${t0}–${t1}`}</span>
         </span>
@@ -766,7 +756,7 @@ const MyRun = ({ session, unlockRow, runTitle }) => {
   const shown = folded ? achs.slice(0, 4) : achs;
   return (
     <div className={`frun mine ${mode}`}>
-      <RunStrip href={`../game/?id=${session.gameId}`} gameTitle={session.gameTitle} icon={session.gameIcon}
+      <RunStrip href={`../game/?id=${session.gameId}`} gameId={session.gameId} gameTitle={session.gameTitle} icon={session.gameIcon}
         consoleName={session.consoleName} achs={achs} mode={mode} runTitle={runTitle} />
       <div className="frun-rows">{shown.map(unlockRow)}</div>
       {achs.length > 5 && (
@@ -785,7 +775,7 @@ const FriendRun = ({ run, user, unlockRow, runTitle }) => {
   const mode = runMode(achs);
   return (
     <div className={`frun ${mode} ${open ? 'open' : ''}`}>
-      <RunStrip href={`../game/?id=${run.gameId}&compare=${user}`} gameTitle={run.gameTitle} icon={getMediaUrl(run.gameIcon)}
+      <RunStrip href={`../game/?id=${run.gameId}&compare=${user}`} gameId={run.gameId} gameTitle={run.gameTitle} icon={getMediaUrl(run.gameIcon)}
         consoleName={run.consoleName} achs={achs} mode={mode} runTitle={runTitle} />
       <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="frun-b"
         aria-label={open ? 'Hide the unlocks' : `Show the ${achs.length} unlocks`}>
@@ -1099,7 +1089,7 @@ const ActivityTab = ({ achievements, refTime, heatmapData, games = [], loadingMo
             </div>
           )}
 
-          {friendsActivityStatus === 'loading' && Object.keys(friendsActivity).length === 0 && <TimelineSkeleton />}
+          {friendsActivityStatus === 'loading' && Object.keys(friendsActivity).length === 0 && <FriendsSkeleton />}
 
           {Object.keys(friendsActivity).length > 0 && (<>
             {/* ── Friend strip: who's been active, tap to narrow the timeline ── */}
@@ -1194,11 +1184,11 @@ const ActivityTab = ({ achievements, refTime, heatmapData, games = [], loadingMo
                 </div>
               </div>
               <div className="flex items-center justify-end gap-1 mt-2" style={{ paddingLeft: '28px' }}>
-                <span className="text-[8px] text-ink-3">Less</span>
+                <span className="text-[10px] text-ink-3">Less</span>
                 {['var(--well)', 'var(--heat-1)', 'var(--heat-2)', 'var(--accent)', 'var(--gold)'].map(c => (
                   <div key={c} style={{ width: '10px', height: '10px', borderRadius: '1px', background: c, flexShrink: 0 }} />
                 ))}
-                <span className="text-[8px] text-ink-3">More</span>
+                <span className="text-[10px] text-ink-3">More</span>
               </div>
             </div>
           </div>
@@ -1404,14 +1394,12 @@ const RARITY_BANDS = [
   { key: 'ultrarare', label: 'Ultra rare', max: Infinity, color: 'var(--ultra-rare)' },
 ];
 
-const StatTile = ({ label, value, sub, color = 'var(--accent)', Icon }) => (
-  <div className="flex flex-col gap-1.5 bg-box border border-line rounded-[3px] px-3 py-2.5">
-    <div className="flex items-center gap-1.5">
-      {Icon && <Icon size={11} className="shrink-0" style={{ color }} />}
-      <span className="text-[8px] uppercase tracking-[0.09em] text-ink-3 leading-none">{label}</span>
-    </div>
-    <span className="text-[18px] font-bold leading-none tabular-nums" style={{ color }}>{value}</span>
-    {sub && <span className="text-[9px] text-ink-3 leading-none truncate">{sub}</span>}
+// One stats index line: icon, label, dotted leader, value (+ a quiet note)
+const StatLine = ({ label, value, sub, color = 'var(--ink)', Icon }) => (
+  <div className="dl-row">
+    <span className="dl-k inline-flex items-center gap-1.5">{Icon && <Icon size={12} className="shrink-0" style={{ color }} />}{label}</span>
+    <span className="dl-dots" />
+    <span className="dl-v" style={{ color }}>{value}{sub && <small>{sub}</small>}</span>
   </div>
 );
 
@@ -1420,7 +1408,7 @@ const StatCard = ({ title, hint, children }) => (
     <div className="flex items-center gap-2 px-3 py-2 border-b border-line">
       <span className="sec-mark sm" />
       <span className="card-t">{title}</span>
-      {hint && <span className="text-[9px] text-ink-3 ml-auto text-right shrink-0">{hint}</span>}
+      {hint && <span className="text-[10px] text-ink-3 ml-auto text-right shrink-0">{hint}</span>}
     </div>
     <div className="p-3">{children}</div>
   </div>
@@ -1477,7 +1465,7 @@ const PointAcquisitionChart = ({ data }) => {
           <div key={f} className="absolute left-0 right-0 flex items-center pointer-events-none"
             style={{ bottom: `${f * 100}%`, height: '1px' }}>
             <span className="w-full" style={{ height: '1px', background: f === 0 ? 'var(--line)' : 'var(--line-soft)' }} />
-            <span className="absolute right-0 -top-[9px] text-[8px] text-ink-3 tabular-nums bg-box pl-1">
+            <span className="absolute right-0 -top-[9px] text-[10px] text-ink-3 tabular-nums bg-box pl-1">
               {f === 0 ? '' : Math.round(axisMax * f).toLocaleString()}
             </span>
           </div>
@@ -1526,7 +1514,7 @@ const PointAcquisitionChart = ({ data }) => {
 
         {/* Selective direct label — the peak week only, never a number on every bar */}
         {weeks[peakIdx].points > 0 && hover === null && (
-          <div className="absolute text-[8px] text-ink-2 tabular-nums pointer-events-none whitespace-nowrap"
+          <div className="absolute text-[10px] text-ink-2 tabular-nums pointer-events-none whitespace-nowrap"
             style={{
               left: `${((peakIdx + 0.5) / weeks.length) * 100}%`,
               bottom: `calc(${(weeks[peakIdx].points / axisMax) * 100}% + 3px)`,
@@ -1566,10 +1554,10 @@ const PointAcquisitionChart = ({ data }) => {
           </span>
         ) : (
           <>
-            <span className="flex items-center gap-1.5 text-[9px] text-ink-3">
+            <span className="flex items-center gap-1.5 text-[10px] text-ink-3">
               <span className="w-2 h-2 rounded-[1px] bg-accent" /> Points earned
             </span>
-            <span className="flex items-center gap-1.5 text-[9px] text-ink-3">
+            <span className="flex items-center gap-1.5 text-[10px] text-ink-3">
               <span className="w-3 h-[2px] rounded-full bg-gold" /> 4-week average
             </span>
           </>
@@ -1843,14 +1831,14 @@ const StatsTab = ({ achievements, achLoading, games, gameAwards, heatmapData }) 
         <span className="sec-t">Stats</span>
       </div>
 
-      {/* ── Tiles: 2×2 on mobile, one row on desktop ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <StatTile label="Current streak" value={`${streaks.current}d`} Icon={Flame}
+      {/* ── Streaks and pace as index lines ── */}
+      <div className="sledger dledger stat-lines">
+        <StatLine label="Current streak" value={`${streaks.current} day${streaks.current !== 1 ? 's' : ''}`} Icon={Flame}
           color={streaks.current > 0 ? 'var(--gold)' : 'var(--ink-3)'}
-          sub={streaks.current === 0 ? 'no unlocks yesterday' : 'consecutive days'} />
-        <StatTile label="Longest streak" value={`${streaks.longest}d`} Icon={Trophy} color="var(--accent)" sub={chunkHint} />
-        <StatTile label="Active days" value={streaks.active90} Icon={Activity} color="var(--aqua)" sub="of the last 90" />
-        <StatTile label="Points this month" value={pace.currentPts.toLocaleString()} Icon={TrendingUp} color={paceColor}
+          sub={streaks.current === 0 ? 'no unlocks yesterday' : null} />
+        <StatLine label="Longest streak" value={`${streaks.longest} day${streaks.longest !== 1 ? 's' : ''}`} Icon={Trophy} color="var(--accent)" sub={chunkHint} />
+        <StatLine label="Active days" value={streaks.active90} Icon={Activity} color="var(--aqua)" sub="of the last 90" />
+        <StatLine label="Points this month" value={pace.currentPts.toLocaleString()} Icon={TrendingUp} color={paceColor}
           sub={pace.median > 0
             ? `${pace.delta >= 0 ? '+' : ''}${pace.delta}% vs ${pace.median.toLocaleString()} median`
             : 'no baseline yet'} />
@@ -1907,10 +1895,10 @@ const StatsTab = ({ achievements, achLoading, games, gameAwards, heatmapData }) 
                 const hovered = tlHover === null ? null : timeline.months.find(x => x.key === tlHover);
                 if (!hovered) return (
                   <>
-                    <span className="flex items-center gap-1.5 text-[9px] text-ink-3">
+                    <span className="flex items-center gap-1.5 text-[10px] text-ink-3">
                       <span className="w-2 h-2 rounded-[1px] bg-gold" /> Mastered
                     </span>
-                    <span className="flex items-center gap-1.5 text-[9px] text-ink-3">
+                    <span className="flex items-center gap-1.5 text-[10px] text-ink-3">
                       <span className="w-2 h-2 rounded-[1px] bg-silver" /> Beaten
                     </span>
                   </>
@@ -1951,22 +1939,22 @@ const StatsTab = ({ achievements, achLoading, games, gameAwards, heatmapData }) 
               ))}
             </div>
             <div className="flex items-center gap-3 mt-2.5 pt-2 border-t border-line flex-wrap">
-              <span className="flex items-center gap-1.5 text-[9px] text-ink-3">
+              <span className="flex items-center gap-1.5 text-[10px] text-ink-3">
                 <span className="w-2 h-2 rounded-[1px]" style={{ background: AWARD_SEGMENTS.other }} /> In progress
               </span>
               {consoles.anyBeaten && (
-                <span className="flex items-center gap-1.5 text-[9px] text-ink-3">
+                <span className="flex items-center gap-1.5 text-[10px] text-ink-3">
                   <span className="w-2 h-2 rounded-[1px]" style={{ background: AWARD_SEGMENTS.beaten }} />
                   <Medal size={9} style={{ color: AWARD_SEGMENTS.beaten }} /> Beaten
                 </span>
               )}
               {consoles.anyMastered && (
-                <span className="flex items-center gap-1.5 text-[9px] text-ink-3">
+                <span className="flex items-center gap-1.5 text-[10px] text-ink-3">
                   <span className="w-2 h-2 rounded-[1px]" style={{ background: AWARD_SEGMENTS.mastered }} />
                   <Trophy size={9} style={{ color: AWARD_SEGMENTS.mastered }} /> Mastered
                 </span>
               )}
-              <span className="text-[9px] text-ink-3 ml-auto">bar length = games played</span>
+              <span className="text-[10px] text-ink-3 ml-auto">bar length = games played</span>
             </div>
           </>
         )}
@@ -1989,7 +1977,7 @@ const StatsTab = ({ achievements, achLoading, games, gameAwards, heatmapData }) 
                   pct={(b.count / rarity.max) * 100} color={b.color} />
               ))}
             </div>
-            <p className="text-[9px] text-ink-3 mt-2.5 pt-2 border-t border-line leading-relaxed">
+            <p className="text-[10px] text-ink-3 mt-2.5 pt-2 border-t border-line leading-relaxed">
               Banded by RetroPoints ÷ points — RA's own weighting for how few players hold an achievement.
             </p>
           </>
@@ -2024,7 +2012,7 @@ const CompareModal = ({ otherUser, myGames, compareData, loading, error, onClose
     if (sortBy === 'diff')   s.sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
     else if (sortBy === 'mine')   s.sort((a, b) => b.myPct - a.myPct);
     else if (sortBy === 'theirs') s.sort((a, b) => b.theirPct - a.theirPct);
-    else s.sort((a, b) => a.title.localeCompare(b.title));
+    else s.sort((a, b) => parseTitle(a.title).baseTitle.localeCompare(parseTitle(b.title).baseTitle));  // by the shown title, not RA's ~tags~
     return s;
   }, [sharedGames, sortBy]);
 
@@ -2032,24 +2020,9 @@ const CompareModal = ({ otherUser, myGames, compareData, loading, error, onClose
   const tied    = sharedGames.filter(g => g.myPct === g.theirPct).length;
   const behind  = sharedGames.filter(g => g.myPct < g.theirPct).length;
 
-  const myIsHC    = sharedGames.some(g => g.myHC);
-  const theirIsHC = sharedGames.some(g => g.theirHC);
-
   const ModeIcon = ({ hc, size = 8 }) => hc
-    ? <Flame size={size} className="shrink-0" style={{ color: 'var(--hc)' }} />
+    ? <Flame size={size} className="shrink-0" style={{ color: 'var(--gold)' }} />
     : <Feather size={size} className="shrink-0" style={{ color: 'var(--ink-2)' }} />;
-
-  const awardBadge = (kind) => {
-    if (!kind) return null;
-    if (kind === 'mastered' || kind === 'completed')
-      return <span className="text-[7px] font-bold uppercase tracking-[0.05em] px-1 py-[1px] rounded-[2px] bg-gold/15 text-gold border border-gold/30 shrink-0">M</span>;
-    if (kind === 'beaten-hardcore' || kind === 'beaten-softcore')
-      return <span className="text-[7px] font-bold uppercase tracking-[0.05em] px-1 py-[1px] rounded-[2px] bg-ink-2/10 text-ink-2 border border-ink-2/20 shrink-0">B</span>;
-    return null;
-  };
-
-  const barColor = (kind, fallback) =>
-    (kind === 'mastered' || kind === 'completed') ? 'var(--gold)' : fallback;
 
   return (
     <div ref={rootRef} className="sheet-root" role="dialog" aria-modal="true" aria-label={`Comparing with ${otherUser}`}>
@@ -2068,7 +2041,7 @@ const CompareModal = ({ otherUser, myGames, compareData, loading, error, onClose
             onError={e => { e.currentTarget.style.visibility = 'hidden'; }}
           />
           <div>
-            <div className="text-[9px] text-ink-3 uppercase tracking-[0.07em] font-semibold">Comparing with</div>
+            <div className="text-[11px] text-ink-3">Comparing with</div>
             <a href={`../profile/?u=${otherUser}`} className="text-[13px] font-semibold text-gold hover:text-gold-hi transition-colors">{otherUser}</a>
           </div>
         </div>
@@ -2098,52 +2071,18 @@ const CompareModal = ({ otherUser, myGames, compareData, loading, error, onClose
 
           {!loading && !error && compareData && (
             <>
-              <div className="flex items-center gap-4 mb-4 px-1">
-                <div className="text-center">
-                  <div className="text-[18px] font-bold text-ink">{sharedGames.length}</div>
-                  <div className="text-[8px] text-ink-3 uppercase tracking-[0.07em]">Shared</div>
-                </div>
-                <div className="w-px h-8 bg-line" />
-                <div className="text-center">
-                  <div className="text-[18px] font-bold text-accent">{meAhead}</div>
-                  <div className="text-[8px] text-ink-3 uppercase tracking-[0.07em]">Ahead</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-[18px] font-bold text-ink-2">{tied}</div>
-                  <div className="text-[8px] text-ink-3 uppercase tracking-[0.07em]">Tied</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-[18px] font-bold text-aqua">{behind}</div>
-                  <div className="text-[8px] text-ink-3 uppercase tracking-[0.07em]">Behind</div>
-                </div>
+              <div className="sledger dledger mb-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', columnGap: 20 }}>
+                {[['Shared', sharedGames.length, 'var(--ink)'], ['You ahead', meAhead, 'var(--accent)'], ['Tied', tied, 'var(--ink-2)'], [`${otherUser} ahead`, behind, 'var(--aqua)']].map(([k, v, c]) => (
+                  <div key={k} className="dl-row"><span className="dl-k truncate" style={{ minWidth: 0 }}>{k}</span><span className="dl-dots" /><span className="dl-v" style={{ color: c }}>{v}</span></div>
+                ))}
               </div>
 
               {sharedGames.length > 0 && (
-                <div className="flex items-center gap-1.5 mb-3">
-                  <span className="text-[8px] uppercase tracking-wider text-ink-3 shrink-0">Sort</span>
-                  {[['diff', 'Diff'], ['mine', 'Mine'], ['theirs', 'Theirs'], ['az', 'A–Z']].map(([v, label]) => (
-                    <button key={v} onClick={() => setSortBy(v)}
-                      className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border transition-colors ${sortBy === v ? 'bg-box text-ink border-line' : 'bg-well text-ink-3 border-line-2 hover:text-ink hover:border-ink-3'}`}>
-                      {label}
-                    </button>
+                <div className="frow mb-3">
+                  <span className="text-[11px] text-ink-3 shrink-0">Sort</span>
+                  {[['diff', 'Biggest gap'], ['mine', 'Mine'], ['theirs', 'Theirs'], ['az', 'A–Z']].map(([v, label]) => (
+                    <button type="button" key={v} onClick={() => setSortBy(v)} aria-pressed={sortBy === v} className={`fchip ${sortBy === v ? 'on' : ''}`}>{label}</button>
                   ))}
-                </div>
-              )}
-
-              {sharedGames.length > 0 && (
-                <div className="flex items-center gap-2 px-2 mb-1">
-                  <div className="hidden md:block md:flex-1" />
-                  <div className="flex items-center w-full md:w-auto">
-                    <div className="flex-1 md:flex-none md:w-[120px] flex items-center justify-center gap-1 text-[8px] text-accent uppercase tracking-[0.07em] font-semibold">
-                      <ModeIcon hc={myIsHC} size={8} />
-                      <span>You</span>
-                    </div>
-                    <div className="w-px h-3 bg-line shrink-0" />
-                    <div className="flex-1 md:flex-none md:w-[120px] flex items-center justify-center gap-1 text-[8px] text-aqua uppercase tracking-[0.07em] font-semibold">
-                      <ModeIcon hc={theirIsHC} size={8} />
-                      <span>{otherUser}</span>
-                    </div>
-                  </div>
                 </div>
               )}
 
@@ -2152,64 +2091,33 @@ const CompareModal = ({ otherUser, myGames, compareData, loading, error, onClose
               ) : (
                 <div className="flex flex-col gap-[2px]">
                   {sorted.map(g => {
-                    const myBar    = Math.round(g.myPct);
-                    const theirBar = Math.round(g.theirPct);
                     const { baseTitle, subsetName, isSubset, tags } = parseTitle(g.title);
+                    const side = (pct, hc, kind, base, lead, label) => {
+                      const mastered = kind === 'mastered' || kind === 'completed';
+                      const c = mastered ? 'var(--gold)' : base;
+                      return (
+                        <span className={`cmpx ${lead ? 'lead' : ''}`} style={{ '--lc': base }} title={`${label}: ${Math.round(pct)}%${mastered ? ' · mastered' : ''}`}>
+                          <span className={`dring ${mastered ? 'full' : ''}`} style={{ '--p': pct, '--c': c, '--s': '24px', '--w': '3.5px' }} />
+                          <span className="cmpx-v">
+                            <b style={{ color: lead || mastered ? c : 'var(--ink-2)' }}>{Math.round(pct)}%</b>
+                            <ModeIcon hc={hc} size={10} />
+                          </span>
+                        </span>
+                      );
+                    };
                     return (
-                      <div key={g.gameId} className="flex flex-col gap-1 px-2 py-1.5 bg-box-hi hover:bg-box-hover rounded-[2px] transition-colors md:flex-row md:items-center md:gap-2">
-                        {/* Icon + title */}
-                        <div className="flex items-center gap-2 min-w-0 md:flex-1">
-                          <a href={`../game/?id=${g.gameId}&compare=${encodeURIComponent(otherUser)}`} className="shrink-0 w-7 h-7 rounded-[2px] border border-well bg-bar overflow-hidden block hover:scale-105 transition-transform">
-                            <img
-                              src={getMediaUrl(g.imageIcon)}
-                              alt={g.title}
-                              className="w-full h-full object-cover"
-                              onError={e => { e.currentTarget.style.opacity = '0.3'; }}
-                            />
-                          </a>
-                          <div className="flex-1 min-w-0">
-                            <a href={`../game/?id=${g.gameId}&compare=${encodeURIComponent(otherUser)}`} className="text-[10px] font-medium text-ink hover:text-accent transition-colors truncate leading-tight block">{baseTitle}</a>
-                            {isSubset && (
-                              <div className="flex items-center gap-1 mt-[1px]">
-                                <span className="text-[7px] font-bold uppercase tracking-[0.07em] px-1 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">Subset</span>
-                                <span className="text-[8px] text-gold-dim truncate">{subsetName}</span>
-                              </div>
-                            )}
-                            {!isSubset && tags.length > 0 && (
-                              <div className="flex items-center gap-1 mt-[1px]">{renderTildeTags(tags)}</div>
-                            )}
-                            <div className="text-[8px] text-ink-3 truncate">{g.consoleName}</div>
-                          </div>
-                        </div>
-                        {/* Progress bars */}
-                        <div className="flex items-stretch">
-                          <div className="flex-1 md:flex-none md:w-[120px] md:shrink-0 rounded-[2px] px-2 py-1.5 md:py-2.5 transition-colors"
-                            style={{ background: g.myPct > g.theirPct ? 'rgb(var(--c-accent) / 0.15)' : 'transparent' }}>
-                            <div className="flex items-center justify-between gap-1 mb-[3px]">
-                              <div className="flex items-center gap-[3px]">
-                                <ModeIcon hc={g.myHC} size={7} />
-                                <span className={`text-[9px] font-semibold ${g.myPct > g.theirPct ? 'text-accent' : 'text-ink-2'}`}>{myBar}%</span>
-                              </div>
-                              {awardBadge(g.highestAwardKind)}
-                            </div>
-                            <div className="h-[3px] w-full bg-bar rounded-full overflow-hidden">
-                              <div className="h-full rounded-full" style={{ width: `${myBar}%`, background: barColor(g.highestAwardKind, 'var(--accent)') }} />
-                            </div>
-                          </div>
-                          <div className="w-px self-stretch bg-line shrink-0" />
-                          <div className="flex-1 md:flex-none md:w-[120px] md:shrink-0 rounded-[2px] px-2 py-1.5 md:py-2.5 transition-colors"
-                            style={{ background: g.theirPct > g.myPct ? 'rgb(var(--c-accent) / 0.15)' : 'transparent' }}>
-                            <div className="flex items-center justify-between gap-1 mb-[3px]">
-                              <div className="flex items-center gap-[3px]">
-                                <ModeIcon hc={g.theirHC} size={7} />
-                                <span className={`text-[9px] font-semibold ${g.theirPct > g.myPct ? 'text-aqua' : 'text-ink-2'}`}>{theirBar}%</span>
-                              </div>
-                              {awardBadge(g.them.highestAwardKind)}
-                            </div>
-                            <div className="h-[3px] w-full bg-bar rounded-full overflow-hidden">
-                              <div className="h-full rounded-full" style={{ width: `${theirBar}%`, background: barColor(g.them.highestAwardKind, 'var(--aqua)') }} />
-                            </div>
-                          </div>
+                      <div key={g.gameId} className="cmpr">
+                        <a href={`../game/?id=${g.gameId}&compare=${encodeURIComponent(otherUser)}`} className="cmpr-g">
+                          <img src={getMediaUrl(g.imageIcon)} alt="" loading="lazy" onError={e => { e.currentTarget.style.opacity = '0.3'; }} />
+                          <span className="min-w-0 flex flex-col gap-[2px]">
+                            <span className="cmpr-t"><span className="truncate">{baseTitle}</span>{isSubset && <span className="subset-tag">Subset</span>}{!isSubset && renderTildeTags(tags)}</span>
+                            {isSubset && <span className="text-[11px] text-gold-dim truncate">{subsetName}</span>}
+                            <span className="cmpr-s"><span className="dex-no">No.{g.gameId}</span><span className="truncate">{g.consoleName}</span></span>
+                          </span>
+                        </a>
+                        <div className="cmpr-p">
+                          {side(g.myPct, g.myHC, g.highestAwardKind, 'var(--accent)', g.myPct > g.theirPct, 'You')}
+                          {side(g.theirPct, g.theirHC, g.them.highestAwardKind, 'var(--aqua)', g.theirPct > g.myPct, otherUser)}
                         </div>
                       </div>
                     );
@@ -2255,7 +2163,7 @@ const SocialUserRow = ({ user, isMutual, onCompare, cachedProfile }) => {
           <div className="relative group shrink-0">
             <ArrowLeftRight size={9} className="text-accent" />
             <div className="absolute left-0 bottom-full mb-1.5 z-10 hidden group-hover:block pointer-events-none">
-              <div className="text-[9px] font-medium text-ink bg-inset border border-line rounded-[2px] px-1.5 py-[3px] whitespace-nowrap shadow-lg">
+              <div className="text-[10px] font-medium text-ink bg-inset border border-line rounded-[2px] px-1.5 py-[3px] whitespace-nowrap shadow-lg">
                 Mutual follow
               </div>
             </div>
@@ -2277,26 +2185,26 @@ const SocialUserRow = ({ user, isMutual, onCompare, cachedProfile }) => {
                     <img src={getMediaUrl(lastPlayed.gameIcon)} alt=""
                       className="w-3 h-3 rounded-[1px] shrink-0 object-cover bg-bar" />
                   )}
-                  <span className="text-[9px] text-accent truncate min-w-0">{baseTitle}</span>
+                  <span className="text-[10px] text-accent truncate min-w-0">{baseTitle}</span>
                   <span className="text-ink-4 mx-0.5 shrink-0">·</span>
-                  <span className="text-[9px] text-ink-3 shrink-0">{timeAgo(lastPlayed.lastPlayedTs)}</span>
+                  <span className="text-[10px] text-ink-3 shrink-0">{timeAgo(lastPlayed.lastPlayedTs)}</span>
                 </div>
                 {(isSubset || tags.length > 0) && (
                   <div className="flex items-center gap-1 mt-[1px]">
-                    {isSubset && <><span className="text-[7px] font-bold uppercase tracking-[0.07em] px-1 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">Subset</span>{subsetName && <span className="text-[9px] text-gold-dim shrink-0">{subsetName}</span>}</>}
+                    {isSubset && <><span className="text-[7px] font-bold uppercase tracking-[0.07em] px-1 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">Subset</span>{subsetName && <span className="text-[10px] text-gold-dim shrink-0">{subsetName}</span>}</>}
                     {tags.length > 0 && renderTildeTags(tags)}
                   </div>
                 )}
               </a>
               {hasRichPresence && (
-                <span className="text-[9px] text-ink-3 truncate">{richPresence}</span>
+                <span className="text-[10px] text-ink-3 truncate">{richPresence}</span>
               )}
             </div>
           );
         }
         if (rawLastPlayed?.lastPlayedTs) {
           return (
-            <span className="text-[9px] text-ink-3 mt-[2px]">Last active {timeAgo(rawLastPlayed.lastPlayedTs)}</span>
+            <span className="text-[10px] text-ink-3 mt-[2px]">Last active {timeAgo(rawLastPlayed.lastPlayedTs)}</span>
           );
         }
         return null;
@@ -2307,10 +2215,8 @@ const SocialUserRow = ({ user, isMutual, onCompare, cachedProfile }) => {
         {displayPoints.toLocaleString()} pts
       </span>
     )}
-    <button
-      onClick={() => onCompare(user.user)}
-      className="shrink-0 text-[9px] font-semibold uppercase tracking-[0.07em] px-1.5 py-[2px] rounded-[2px] border border-aqua/30 bg-aqua/[0.07] text-aqua hover:bg-aqua/15 transition-colors">
-      Compare
+    <button type="button" onClick={() => onCompare(user.user)} className="fchip shrink-0" style={{ height: 26, padding: '0 9px' }}>
+      <ArrowLeftRight size={12} /> Compare
     </button>
   </div>
   );
@@ -2350,12 +2256,9 @@ const SocialTab = ({ socialData, socialError, onRetry, onCompare, profileMap = n
   if (!socialData) {
     return (
       <div className="flex flex-col gap-4">
-        <div className="flex gap-1 border-b border-line-faint pb-2">
+        <div className="frow">
           {subTabs.map(({ id, label }) => (
-            <button key={id} onClick={() => setSubTab(id)}
-              className={`text-[11px] px-3 py-1 rounded-[2px] border font-medium transition-colors uppercase tracking-wider ${subTab === id ? 'bg-box text-ink border-line' : 'bg-well text-ink-3 border-line-2 hover:text-ink'}`}>
-              {label}
-            </button>
+            <button type="button" key={id} onClick={() => setSubTab(id)} aria-pressed={subTab === id} className={`fchip ${subTab === id ? 'on' : ''}`}>{label}</button>
           ))}
         </div>
         <div className="flex flex-col gap-[2px]">
@@ -2380,25 +2283,17 @@ const SocialTab = ({ socialData, socialError, onRetry, onCompare, profileMap = n
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between border-b border-line-faint pb-2">
-        <div className="flex gap-1">
-          {subTabs.map(({ id, label, count }) => (
-            <button key={id} onClick={() => setSubTab(id)}
-              className={`text-[11px] px-3 py-1 rounded-[2px] border font-medium transition-colors uppercase tracking-wider ${subTab === id ? 'bg-box text-ink border-line' : 'bg-well text-ink-3 border-line-2 hover:text-ink'}`}>
-              {label}
-              <span className={`ml-1.5 text-[9px] ${subTab === id ? 'text-ink-3' : 'text-ink-4'}`}>{count}</span>
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-[8px] uppercase tracking-wider text-ink-3 shrink-0">Sort</span>
-          {[['az', 'A–Z'], ['points', 'Points']].map(([v, label]) => (
-            <button key={v} onClick={() => setSortBy(v)}
-              className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border transition-colors ${sortBy === v ? 'bg-box text-ink border-line' : 'bg-well text-ink-3 border-line-2 hover:text-ink hover:border-ink-3'}`}>
-              {label}
-            </button>
-          ))}
-        </div>
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {subTabs.map(({ id, label, count }) => (
+          <button type="button" key={id} onClick={() => setSubTab(id)} aria-pressed={subTab === id} className={`fchip ${subTab === id ? 'on' : ''}`}>
+            {label}<span className="n num">{count}</span>
+          </button>
+        ))}
+        <span className="fsep" />
+        <span className="text-[11px] text-ink-3">Sort</span>
+        {[['az', 'A–Z'], ['points', 'Points']].map(([v, label]) => (
+          <button type="button" key={v} onClick={() => setSortBy(v)} aria-pressed={sortBy === v} className={`fchip ${sortBy === v ? 'on' : ''}`}>{label}</button>
+        ))}
       </div>
       {active.users.length === 0 ? (
         <div className="text-[11px] text-ink-3 py-3">None yet.</div>
@@ -3056,10 +2951,10 @@ export default function App() {
                           <a href={`../achievement/?id=${PROFILE_DATA.mostRecentAchievement.id}`} className="text-[13px] font-medium text-gold hover:text-gold-hi transition-colors truncate leading-tight">
                             {PROFILE_DATA.mostRecentAchievement.title}
                           </a>
-                          <span className="text-[9px] font-bold text-gold num bg-well border border-line-2 px-1.5 py-[1px] rounded-sm shrink-0">{PROFILE_DATA.mostRecentAchievement.points} pts</span>
+                          <span className="text-[10px] font-bold text-gold num bg-well border border-line-2 px-1.5 py-[1px] rounded-sm shrink-0">{PROFILE_DATA.mostRecentAchievement.points} pts</span>
                           {PROFILE_DATA.mostRecentAchievement.trueRatio > 0 && PROFILE_DATA.mostRecentAchievement.points > 0 && (() => {
                             const ratio = PROFILE_DATA.mostRecentAchievement.trueRatio / PROFILE_DATA.mostRecentAchievement.points;
-                            return <span className="text-[9px] shrink-0" style={{ color: ratio >= 30 ? 'var(--hc)' : ratio >= 20 ? 'var(--gold)' : ratio >= 10 ? 'var(--accent)' : 'var(--ink-2)' }}>×{ratio.toFixed(1)}</span>;
+                            return <span className="text-[10px] shrink-0" style={{ color: ratio >= 30 ? 'var(--hc)' : ratio >= 20 ? 'var(--gold)' : ratio >= 10 ? 'var(--accent)' : 'var(--ink-2)' }}>×{ratio.toFixed(1)}</span>;
                           })()}
                         </div>
                         <p className="text-[10px] text-ink-2 leading-snug mb-1 truncate">{PROFILE_DATA.mostRecentAchievement.description}</p>
@@ -3070,7 +2965,7 @@ export default function App() {
                             {PROFILE_DATA.mostRecentAchievement.isSubset && (
                               <>
                                 <span className="text-[7px] font-bold uppercase tracking-[0.07em] px-1 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">Subset</span>
-                                <span className="text-[8px] text-gold-dim truncate">{PROFILE_DATA.mostRecentAchievement.subsetName}</span>
+                                <span className="text-[10px] text-gold-dim truncate">{PROFILE_DATA.mostRecentAchievement.subsetName}</span>
                               </>
                             )}
                             {!PROFILE_DATA.mostRecentAchievement.isSubset && renderTildeTags(PROFILE_DATA.mostRecentAchievement.tags)}
@@ -3139,11 +3034,11 @@ export default function App() {
                     <Loader2 size={11} className="text-accent animate-spin" />
                   )}
                   {!socialProfilesProgress && !socialRefreshing && socialTs && (
-                    <span className="text-[9px] text-ink-3">Synced {timeAgo(socialTs)}</span>
+                    <span className="text-[10px] text-ink-3">Synced {timeAgo(socialTs)}</span>
                   )}
                   {!socialProfilesProgress && !socialRefreshing && (
                     <button type="button" onClick={refreshSocial}
-                      className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider text-ink-3 hover:text-accent transition-colors">
+                      className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-3 hover:text-accent transition-colors">
                       <RefreshCw size={11} />
                       Refresh
                     </button>
@@ -3274,7 +3169,7 @@ export default function App() {
                     <span className="dring" title={`${Math.floor(pct)}% complete`} style={{ '--p': pct, '--c': 'var(--accent)', '--s': '26px', '--w': '4px' }} />
                   </span>
                 </>}
-                {status === 'mastered' && <span className="text-[9px] font-bold uppercase tracking-[0.07em] px-1.5 py-[1px] rounded-[2px] bg-gold text-well flex items-center gap-1"><Trophy size={9} />Mastered</span>}
+                {status === 'mastered' && <span className="text-[10px] font-bold uppercase tracking-[0.07em] px-1.5 py-[1px] rounded-[2px] bg-gold text-well flex items-center gap-1"><Trophy size={9} />Mastered</span>}
                 {status === 'notstarted' && <span className="text-[11px] text-ink-2 flex items-center gap-1 num" title={`${game.achievementsTotal} achievements`}><Trophy size={11} className="text-ink-3" />{game.achievementsTotal}</span>}
                 {status === 'noach' && <span className="text-[11px] text-ink-3 text-right leading-tight">No achievements</span>}
               </>;
@@ -3294,6 +3189,7 @@ export default function App() {
                         {renderTildeTags(game.tags)}
                       </div>
                       <div className="wrow-sub">
+                        <span className="dex-no">No.{game.id}</span>
                         {backlogGrouping !== 'console' && <span className="text-accent">{game.console}</span>}
                         {game.pointsTotal > 0 && <>{backlogGrouping !== 'console' && <i>·</i>}<span className="num">{game.pointsTotal.toLocaleString()} pts</span></>}
                         {game.isSubset && game.subsetName && <><i>·</i><span className="text-gold-dim shrink">{game.subsetName}</span></>}
@@ -3312,6 +3208,7 @@ export default function App() {
                     className={`wsub ${base ? '' : 'subset'} ${status === 'noach' ? 'dim' : ''}`} style={{ borderLeftColor: stripeOf(game) }}>
                     <img src={game.icon} alt="" loading="lazy" className="icon" />
                     <span className="name">{base ? 'Base set' : game.subsetName}</span>
+                    <span className="dex-no shrink-0">No.{game.id}</span>
                     {game.pointsTotal > 0 && <span className="pts num">· {game.pointsTotal.toLocaleString()} pts</span>}
                     <span className="end">{statusEnd(game, status, pct)}</span>
                   </a>
@@ -3490,7 +3387,7 @@ export default function App() {
         }
         .pop-wrap:hover .pop-box { display: block; }
         .pop-name { font-size: 10px; color: var(--ink); font-weight: 600; margin-bottom: 2px; }
-        .pop-sub  { font-size: 9px; color: var(--ink-3); margin-bottom: 2px; }
+        .pop-sub  { font-size: 10.5px; color: var(--ink-3); margin-bottom: 2px; }
         .pop-val  { font-size: 10px; font-weight: 700; }
         
         .mask-fade {

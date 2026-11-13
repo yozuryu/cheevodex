@@ -1,5 +1,12 @@
 import { getMediaUrl, formatTimeAgo, formatDate, parseTitle } from './helpers.js';
 
+// A game's art for row bands, tiles and headers: its in-game or title screenshot, never RA's
+// "No Screenshot Found" placeholder (/Images/000002.png) and never the icon stretched; null when there's none
+const gameArt = (...paths) => {
+  const p = paths.find(x => x && !/\/000002\.png$/.test(x));
+  return p ? getMediaUrl(p) : null;
+};
+
 export const transformData = (data) => {
   if (!data) return { profile: null, games: [], backlog: { total: 0, games: [] }, recentAchievements: [] };
 
@@ -38,7 +45,7 @@ export const transformData = (data) => {
         isMastered: false,
         isBeaten: false,
         icon: getMediaUrl(rg.imageIcon),
-        background: getMediaUrl(rg.imageIngame || rg.imageTitle || rg.imageIcon),
+        background: gameArt(rg.imageIngame, rg.imageTitle),
         totalPlayers: 1,
         achievements: []
       });
@@ -57,7 +64,7 @@ export const transformData = (data) => {
         lastPlayedStr: game.mostRecentAwardedDate,
         lastPlayed: formatTimeAgo(game.mostRecentAwardedDate, refTime),
         icon: getMediaUrl(game.imageIcon),
-        background: getMediaUrl(game.imageIngame || game.imageTitle || game.imageIcon),
+        background: gameArt(game.imageIngame, game.imageTitle),
         totalPlayers: 1,
         achievements: []
       };
@@ -88,7 +95,7 @@ export const transformData = (data) => {
         game.playtime = `${hours}h ${minutes}m`;
       }
 
-      game.background = getMediaUrl(details.imageIngame || details.imageTitle) || game.background;
+      game.background = gameArt(details.imageIngame, details.imageTitle) || game.background;
       game.totalPlayers   = details.numDistinctPlayersCasual  || game.totalPlayers;
       game.totalPlayersHC = details.numDistinctPlayersHardcore || game.totalPlayers;
 

@@ -49,7 +49,7 @@
         width: min(380px, calc(100vw - 32px));
         background: var(--box);
         border: 1px solid var(--line);
-        border-radius: 12px;
+        border-radius: 3px;
         box-shadow: 0 8px 32px rgba(0,0,0,0.65);
         font-family: var(--font);
         overflow: hidden;
@@ -75,7 +75,7 @@
       }
       .pwa-appicon {
         width: 40px; height: 40px;
-        border-radius: 10px;
+        border-radius: 3px;
         background: var(--page);
         border: 1px solid var(--line);
         flex-shrink: 0;
@@ -90,8 +90,8 @@
       .pwa-install-btn {
         height: 30px; padding: 0 13px;
         background: var(--install);
-        color: #fff;
-        border: none; border-radius: 6px;
+        color: var(--page);
+        border: none; border-radius: 3px;
         font-size: 12px; font-weight: 600;
         cursor: pointer;
         font-family: var(--font);
@@ -105,12 +105,12 @@
         background: none; border: none;
         color: var(--ink-3); cursor: pointer;
         display: flex; align-items: center; justify-content: center;
-        border-radius: 5px;
+        border-radius: 3px;
         flex-shrink: 0;
         transition: color 0.12s, background 0.12s;
         padding: 0;
       }
-      .pwa-close-btn:hover { color: var(--ink-2); background: rgba(255,255,255,0.06); }
+      .pwa-close-btn:hover { color: var(--ink-2); background: rgb(var(--c-ink) / 0.06); }
       .pwa-progress { height: 2px; background: var(--box-hover); }
       .pwa-bar { height: 100%; background: var(--install); width: 100%; }
     `;

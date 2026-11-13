@@ -112,8 +112,8 @@ function ConsoleCard({ console: c, onClick }) {
           : <Gamepad2 size={14} color="var(--ink-3)" />}
       </span>
       <span className="flex-1 min-w-0">
-        <span className="block text-[12px] font-medium text-ink group-hover:text-white transition-colors leading-snug truncate">{c.name}</span>
-        {!c.active && <span className="text-[9px] text-ink-3 uppercase tracking-wider">Inactive</span>}
+        <span className="block text-[12px] font-medium text-ink group-hover:text-accent-hi transition-colors leading-snug truncate">{c.name}</span>
+        {!c.active && <span className="text-[10.5px] text-ink-3">Inactive</span>}
       </span>
       <ChevronRight size={12} color="var(--line)" className="shrink-0" />
     </button>
@@ -168,27 +168,19 @@ function ConsoleListView({ onSelect }) {
             <span className="sec-t">Consoles</span>
             {consoles && <span className="text-[10px] text-ink-3"><span className="text-accent">{consoles.length}</span> systems</span>}
           </div>
-          <div className="flex items-center gap-3 ml-auto">
-            <a href="../search/"
-              className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider text-ink-3 hover:text-accent transition-colors">
-              <Search size={11} />
-              Search
-            </a>
-            <span className="text-line text-[10px] select-none">|</span>
-            <span className="text-[9px] text-ink-3 uppercase tracking-wider">Group</span>
+          <div className="flex items-center gap-1.5 ml-auto flex-wrap">
+            <span className="text-[11px] text-ink-3">Group by</span>
             {[
               { value: 'publisher', label: 'Publisher' },
-              { value: 'era',       label: 'Gen'       },
+              { value: 'era',       label: 'Generation' },
             ].map(opt => (
-              <button key={opt.value} type="button" onClick={() => switchGrouping(opt.value)}
-                className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-[2px] border transition-colors ${
-                  grouping === opt.value
-                    ? 'bg-box text-ink border-line'
-                    : 'bg-well text-ink-3 border-line-2 hover:text-ink hover:border-ink-3'
-                }`}>
+              <button key={opt.value} type="button" onClick={() => switchGrouping(opt.value)} aria-pressed={grouping === opt.value}
+                className={`fchip ${grouping === opt.value ? 'on' : ''}`}>
                 {opt.label}
               </button>
             ))}
+            <span className="fsep" />
+            <a href="../search/" className="fchip"><Search size={12} /> Search</a>
           </div>
         </div>
 
@@ -210,7 +202,7 @@ function ConsoleListView({ onSelect }) {
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-[3px] h-[12px] bg-line rounded-[1px] shrink-0" />
                   <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-ink">{group.name}</span>
-                  <span className="text-[9px] text-accent">{group.consoles.length}</span>
+                  <span className="text-[10px] text-accent">{group.consoles.length}</span>
                 </div>
                 {grid(group.consoles)}
               </div>
@@ -306,20 +298,21 @@ function GameListView({ consoleId, consoleName, onBack }) {
         </div>
 
         {/* Library coverage — how much of this system you have actually played */}
-        {coverage && (
-          <div className="flex items-center gap-2.5 mb-3 px-2.5 py-2 bg-box border border-line rounded-[3px]">
-            <span className="text-[9px] uppercase tracking-wider text-ink-3 shrink-0">Coverage</span>
-            <div className="flex-1 min-w-0 h-[6px] bg-well rounded-full overflow-hidden flex">
-              <div className="h-full transition-all duration-500" style={{ width: `${(coverage.mastered / coverage.total) * 100}%`, background: 'var(--gold)' }} />
-              <div className="h-full transition-all duration-500" style={{ width: `${((coverage.played - coverage.mastered) / coverage.total) * 100}%`, background: 'var(--accent)' }} />
+        {coverage && (() => {
+          const pct = v => coverage.total ? v / coverage.total * 100 : 0;
+          return (
+            <div className="drec-top sledger mb-3" style={{ alignItems: 'center' }}>
+              <span className="dring" title={`${coverage.played} of ${coverage.total} sets played`}
+                style={{ '--p': pct(coverage.played), '--b': pct(coverage.mastered), '--cb': 'var(--gold)', '--c': 'var(--accent)', '--s': '44px', '--w': '5px' }}>
+                <b style={{ fontSize: 11 }}>{Math.round(pct(coverage.played))}<small>%</small></b>
+              </span>
+              <div className="dledger" style={{ flex: 1 }}>
+                <div className="dl-row"><span className="dl-k">Sets played</span><span className="dl-dots" /><span className="dl-v" style={{ color: 'var(--accent)' }}>{coverage.played.toLocaleString()}<small>of {coverage.total.toLocaleString()}</small></span></div>
+                <div className="dl-row"><span className="dl-k">Mastered</span><span className="dl-dots" /><span className="dl-v" style={{ color: coverage.mastered ? 'var(--gold)' : 'var(--ink-3)' }}>{coverage.mastered.toLocaleString()}</span></div>
+              </div>
             </div>
-            <span className="text-[10px] tabular-nums text-ink-3 shrink-0">
-              <span className="text-accent font-semibold">{coverage.played.toLocaleString()}</span>
-              {' / '}{coverage.total.toLocaleString()}{' sets'}
-              {coverage.mastered > 0 && <span className="text-gold ml-1.5">{coverage.mastered}★</span>}
-            </span>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Search + filter */}
         <div className="flex flex-col gap-2 mb-3">
@@ -340,23 +333,19 @@ function GameListView({ consoleId, consoleName, onBack }) {
             )}
           </div>
           <div className="flex items-center gap-1.5 overflow-x-auto">
-            <span className="text-[9px] text-ink-3 uppercase tracking-wider shrink-0">Achievements</span>
+            <span className="text-[11px] text-ink-3 shrink-0">Achievements</span>
             {[
               { value: 'all',     label: 'All'     },
               { value: 'with',    label: 'With'    },
               { value: 'without', label: 'Without' },
             ].map(opt => (
-              <button key={opt.value} type="button" onClick={() => {
+              <button key={opt.value} type="button" aria-pressed={achFilter === opt.value} onClick={() => {
                 setAchFilter(opt.value);
                 const sp = new URLSearchParams(window.location.search);
                 sp.set('ach', opt.value);
                 history.replaceState(null, '', '?' + sp.toString());
               }}
-                className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-[2px] border shrink-0 transition-colors ${
-                  achFilter === opt.value
-                    ? 'bg-box text-ink border-line'
-                    : 'bg-well text-ink-3 border-line-2 hover:text-ink hover:border-ink-3'
-                }`}>
+                className={`fchip ${achFilter === opt.value ? 'on' : ''}`}>
                 {opt.label}
               </button>
             ))}
@@ -398,7 +387,7 @@ function GameListView({ consoleId, consoleName, onBack }) {
                       </span>}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[12px] font-medium text-ink group-hover:text-white transition-colors leading-snug">{baseTitle}</span>
+                      <span className="text-[12px] font-medium text-ink group-hover:text-accent-hi transition-colors leading-snug">{baseTitle}</span>
                       {isSubset && (
                         <span className="text-[7px] font-bold uppercase tracking-[0.07em] px-1 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">Subset</span>
                       )}
@@ -416,15 +405,17 @@ function GameListView({ consoleId, consoleName, onBack }) {
                       })}
                     </div>
                     {isSubset && subsetName && (
-                      <span className="text-[9px] text-gold-dim truncate block">{subsetName}</span>
+                      <span className="text-[11px] text-gold-dim truncate block">{subsetName}</span>
                     )}
-                    {g.numAchievements > 0 && (
-                      <span className="text-[9px] text-ink-3 flex items-center gap-1">
+                    {g.numAchievements > 0 ? (
+                      <span className="text-[11px] text-ink-3 flex items-center gap-1.5">
+                        <span className="dex-no">No.{g.id}</span>
+                        <span className="text-line">·</span>
                         <span className="text-accent">{g.numAchievements}</span> achievements
                         <span className="text-line">·</span>
                         <span className="text-gold">{g.points.toLocaleString()}</span> pts
                       </span>
-                    )}
+                    ) : <span className="dex-no">No.{g.id}</span>}
                   </div>
                   <ChevronRight size={12} color="var(--line)" className="shrink-0" />
                 </a>

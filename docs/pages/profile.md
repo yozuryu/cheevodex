@@ -39,12 +39,16 @@ The header sits on top, then the tab bar; nothing between them. Overview is `gri
 
 - **Last played**: the regular `GameListRow` with the rich presence as a `.grow-extra` line.
 - **Recent unlocks**: the newest unlock as a card; on ≥1024px also the next five as `.urow` rows (`.ulist`, hidden on phones) from the achievement chunks, which the wide Overview loads.
-- **User stats** (`.prail`): `StatTiles` (`.stiles` / `.stile`, two across in the rail, value over label, `STAT_LABELS` shortens labels, "of N" after a rank shown as small text); `statsRight` behind **More stats**.
+- **User stats** (`.prail`): `StatTiles` (index lines, `.sledger`; two across in the rail, value over label, `STAT_LABELS` shortens labels, "of N" after a rank shown as small text); `statsRight` behind **More stats**.
 - **Game awards**: `CompletionsPanel` (`assets/completions.js`, `.cmp-*`): Mastered / Beaten counts, the newest award as a card with the game's screenshot behind, then the icons with a tiles / list switch (`cheevodex:awardsView`). Items link to the game page (`gameId` from the award's `awardData`, added in `transform.js`).
+
+## Compare sheet
+
+`CompareModal` (a `useSheet` sheet) compares your progress with a friend's on the games you share: index lines for Shared, You ahead, Tied and them ahead; Sort chips (Biggest gap, Mine, Theirs, A–Z by the shown title); one `.cmpr` row per game (icon, title + tags, dex number, console) with your ring (blue) and theirs (aqua), gold when mastered, the mode icon, and the leader's side tinted.
 
 ## Game lists: list / tiles
 
-Recent and Progress render `GameListRow` (`.grow` in a `.glist`, two columns from md: icon, title, console + subset + tilde tags + mode icon, playtime · `shortAgo` last played, count and a short bar on the right, the screenshot faded in on the right, status colour on the left edge) or `GameTile`s in `.gtiles`, chosen with `ViewToggle` and remembered by `useGameView()` (`assets/game-view.js`, `cheevodex:gameView`). Rows and tiles link to the game page. `gameStatus(game)` gives the status colour (gold mastered, silver beaten, blue in progress, `line-2` not started).
+Recent and Progress render `GameListRow` (`.grow` in a `.glist`, two columns from md: icon, title, console + subset + tilde tags + mode icon, playtime · `shortAgo` last played ("18h ago"), the count beside a small `.dring` on the right, the screenshot faded in on the right, status colour on the left edge) or `GameTile`s in `.gtiles`, chosen with `ViewToggle` and remembered by `useGameView()` (`assets/game-view.js`, `cheevodex:gameView`). Rows and tiles link to the game page. `gameStatus(game)` gives the status colour (gold mastered, silver beaten, blue in progress, `line-2` not started). Tiles show the count beside a small ring (`.gtile-n`). Game art (`game.background`) is the in-game or title screenshot only, or none (`gameArt()` in `transform.js` skips RA's `000002.png` placeholder).
 
 Filters use Savepoint's shared filter styles (`.frow` / `.fchip` / `.fsep` / `.fbar` / `.fsearch` / `.fselect-w` + `.fselect` / `.crits` in `assets/ui.css`): Recent has `SearchField` + `ViewToggle`; Progress has `ProgressFilterBar` (view chips with counts, the Mastered toggle in All, search, sort select in All: Overall % or Last played, view toggle, and the view's rules as `.crit` chips). Search uses `fold()` (no accents or case).
 
@@ -168,9 +172,9 @@ API surface.
 | `gameAwards` | `PROFILE_DATA.gameAwards` (needs the raw `awardedAt` field added in `transform.js`) |
 | `heatmapData` | the same memo the Activity tab uses |
 
-### Tiles (`StatTile`) — `grid-cols-2 md:grid-cols-4`
+### Streaks and pace (`StatLine`, index lines in `.stat-lines`, two columns from md)
 
-| Tile | Derived from |
+| Line | Derived from |
 |---|---|
 | Current streak | `heatmapData` day keys. Counts back from today; a quiet today starts the count at yesterday rather than breaking the streak |
 | Longest streak | Longest consecutive run in the loaded window |

@@ -61,7 +61,7 @@ function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo / branding */}
         <div className="flex flex-col items-center gap-3 mb-8">
-          <img src="./assets/appicon.svg" alt="" className="w-16 h-16 rounded-[4px] shadow-[0_8px_24px_rgba(0,0,0,0.5)]" style={{ imageRendering: 'pixelated' }} />
+          <img src="./assets/appicon.svg" alt="" className="w-16 h-16 rounded-[3px] shadow-[0_8px_24px_rgba(0,0,0,0.5)]" style={{ imageRendering: 'pixelated' }} />
           <h1 className="wm !text-[28px]">Cheevo<em>dex</em></h1>
           <p className="text-[11px] text-ink-3 uppercase tracking-[0.1em]">Register every unlock</p>
         </div>
@@ -101,7 +101,7 @@ function LoginPage() {
                   href="https://retroachievements.org/settings"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-[9px] text-ink-3 hover:text-accent transition-colors uppercase tracking-wider"
+                  className="text-[10px] text-ink-3 hover:text-accent transition-colors uppercase tracking-wider"
                 >
                   Get your key ↗
                 </a>

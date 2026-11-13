@@ -75,7 +75,7 @@ function AchievementRow({ ach, totalPlayersCasual, totalPlayersHardcore, extAch,
           alt={ach.title}
           className={`w-full h-full object-cover ${!unlocked ? 'grayscale brightness-40' : ''}`}
         />
-        {!unlocked && <Lock size={14} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/50" />}
+        {!unlocked && <Lock size={14} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-ink/50" />}
       </a>
 
       {/* Content */}
@@ -85,9 +85,9 @@ function AchievementRow({ ach, totalPlayersCasual, totalPlayersHardcore, extAch,
             className={`text-[12px] font-medium tracking-wide leading-tight transition-colors ${unlocked ? 'text-gold hover:text-gold-hi' : 'text-ink-2 hover:text-ink'}`}>
             {ach.title}
           </a>
-          <span className="text-[9px] font-bold text-gold num bg-well border border-line-2 px-1.5 py-[1px] rounded-sm shrink-0">{ach.points} pts</span>
+          <span className="text-[10px] font-bold text-gold num bg-well border border-line-2 px-1.5 py-[1px] rounded-sm shrink-0">{ach.points} pts</span>
           {ratio > 1 && (
-            <span className="text-[9px] shrink-0"
+            <span className="text-[10px] shrink-0"
               style={{ color: ratio >= 30 ? 'var(--hc)' : ratio >= 20 ? 'var(--gold)' : ratio >= 10 ? 'var(--accent)' : 'var(--ink-2)' }}>
               ×{ratio.toFixed(1)}
             </span>
@@ -105,22 +105,22 @@ function AchievementRow({ ach, totalPlayersCasual, totalPlayersHardcore, extAch,
 
         <p className="text-[10px] text-ink-2 leading-snug mb-1">{ach.description}</p>
         {extAch?.author && (
-          <p className="text-[9px] text-ink-3 mb-1">by {extAch.author}{extAch.dateCreated ? ` · added ${formatDate(extAch.dateCreated)}` : ''}</p>
+          <p className="text-[10px] text-ink-3 mb-1">by {extAch.author}{extAch.dateCreated ? ` · added ${formatDate(extAch.dateCreated)}` : ''}</p>
         )}
 
         <div className="flex items-center justify-between gap-2">
           <div className="flex flex-col gap-0.5 flex-1 min-w-0">
             <div className="relative h-1.5 bg-well rounded-full overflow-hidden w-full max-w-[180px]">
               {casualPct !== null && <div className="absolute top-0 left-0 h-full bg-ink-3" style={{ width: `${casualPct}%` }} />}
-              {hardcorePct !== null && <div className="absolute top-0 left-0 h-full bg-hc" style={{ width: `${hardcorePct}%` }} />}
+              {hardcorePct !== null && <div className="absolute top-0 left-0 h-full bg-gold" style={{ width: `${hardcorePct}%` }} />}
             </div>
-            <div className="flex gap-3 text-[8px] font-medium w-full max-w-[180px]">
-              {hardcorePct !== null && <span className="flex items-center gap-0.5 text-hc"><Flame size={8} />{hardcorePct}%</span>}
+            <div className="flex gap-3 text-[10px] font-medium w-full max-w-[180px]">
+              {hardcorePct !== null && <span className="flex items-center gap-0.5 text-gold"><Flame size={8} />{hardcorePct}%</span>}
               {casualPct   !== null && <span className="flex items-center gap-0.5 text-ink-3"><Feather size={8} />{casualPct}%</span>}
             </div>
           </div>
           {unlocked && (
-            <p className="text-[9px] text-accent shrink-0">Unlocked: {formatDate(ach.dateEarned)}</p>
+            <p className="text-[10px] text-accent shrink-0">Unlocked: {formatDate(ach.dateEarned)}</p>
           )}
         </div>
       </div>
@@ -175,7 +175,7 @@ const POC_HINT_STYLE = {
 function PocHintLine({ icon, text }) {
   const { Icon, color } = POC_HINT_STYLE[icon] || POC_HINT_STYLE.location;
   return (
-    <p className="flex items-start gap-1.5 text-[9px] text-ink-2 leading-snug">
+    <p className="flex items-start gap-1.5 text-[10px] text-ink-2 leading-snug">
       <Icon size={10} className="shrink-0 mt-[1px]" style={{ color }} />
       <span>{text}</span>
     </p>
@@ -212,7 +212,7 @@ function PocEntryRow({ entry, reference, version }) {
               ))}
             </div>
           ) : (
-            <p className="text-[9px] text-ink-3 italic mt-0.5">{entry.ach.description}</p>
+            <p className="text-[10px] text-ink-3 italic mt-0.5">{entry.ach.description}</p>
           )
         )}
       </div>
@@ -586,11 +586,11 @@ function GameApp() {
                   {/* Dex number: the RA game ID, in the pixel face (doc-012) */}
                   <div className="dex-no lg art-shadow mb-1.5">Dex No.<b>{gameId}</b></div>
                   <div className="flex items-start gap-2 flex-wrap mb-1">
-                    <h1 className="text-[18px] md:text-[22px] font-semibold text-white leading-tight art-shadow">
+                    <h1 className="text-[18px] md:text-[22px] font-semibold text-ink leading-tight art-shadow">
                       {parsed?.baseTitle || game.title}
                     </h1>
                     {parsed?.isSubset && (
-                      <span className="text-[8px] font-bold uppercase tracking-[0.07em] px-1.5 py-[2px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0 mt-1">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.07em] px-1.5 py-[2px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0 mt-1">
                         Subset
                       </span>
                     )}
@@ -607,14 +607,14 @@ function GameApp() {
                       );
                     })}
                     {activeClaims.length > 0 && (
-                      <span className="text-[8px] font-bold uppercase tracking-[0.07em] px-1.5 py-[2px] rounded-[2px] border shrink-0 mt-1"
+                      <span className="text-[10px] font-bold uppercase tracking-[0.07em] px-1.5 py-[2px] rounded-[2px] border shrink-0 mt-1"
                         style={{ color: 'var(--gold)', borderColor: 'rgb(var(--c-gold) / 0.3)', background: 'rgb(var(--c-gold) / 0.1)' }}>
                         In Dev
                       </span>
                     )}
                     {award && (
                       <span
-                        className="text-[8px] font-bold uppercase tracking-[0.07em] px-1.5 py-[2px] rounded-[2px] flex items-center gap-1 shrink-0 mt-1"
+                        className="text-[10px] font-bold uppercase tracking-[0.07em] px-1.5 py-[2px] rounded-[2px] flex items-center gap-1 shrink-0 mt-1"
                         style={{ color: award.color, background: `color-mix(in srgb, ${award.color} 9.4%, transparent)`, border: `1px solid color-mix(in srgb, ${award.color} 26.7%, transparent)` }}
                       >
                         <award.Icon size={9} /> {award.label}
@@ -632,7 +632,7 @@ function GameApp() {
                         className="w-4 h-4 rounded-[2px] border border-well object-cover shrink-0 bg-black" />
                       <span className="text-[10px] text-ink-2">Subset of</span>
                       <a href={`?id=${game.parentGameId}`}
-                        className="text-[10px] text-ink hover:text-white transition-colors truncate max-w-[200px]">
+                        className="text-[10px] text-ink hover:text-ink transition-colors truncate max-w-[200px]">
                         {parseTitle(parentGame.title).baseTitle}
                       </a>
                     </div>
@@ -648,8 +648,8 @@ function GameApp() {
                   {unlockedCount > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-1">
                       {game.numAwardedToUserHardcore > 0
-                        ? <span className="text-[9px] font-bold uppercase tracking-[0.07em] px-1.5 py-[1px] rounded-[2px] border border-hc/40 text-hc bg-well/60 flex items-center gap-1"><Flame size={10} />Hardcore</span>
-                        : <span className="text-[9px] font-bold uppercase tracking-[0.07em] px-1.5 py-[1px] rounded-[2px] border border-line-2 text-ink-2 bg-well/60 flex items-center gap-1"><Feather size={10} />Softcore</span>}
+                        ? <span className="text-[10px] font-bold uppercase tracking-[0.07em] px-1.5 py-[1px] rounded-[2px] border border-gold/40 text-gold bg-well/60 flex items-center gap-1"><Flame size={10} />Hardcore</span>
+                        : <span className="text-[10px] font-bold uppercase tracking-[0.07em] px-1.5 py-[1px] rounded-[2px] border border-line-2 text-ink-2 bg-well/60 flex items-center gap-1"><Feather size={10} />Softcore</span>}
                     </div>
                   )}
                 </div>
@@ -767,8 +767,8 @@ function GameApp() {
               {difficulty && (
                 <div className="mb-3 bg-box border border-line rounded-[3px] p-2.5">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[9px] uppercase tracking-wider text-ink-3">Difficulty curve</span>
-                    <span className="text-[9px] text-ink-3 ml-auto">share of {game.numDistinctPlayersCasual.toLocaleString()} players who unlocked each</span>
+                    <span className="text-[10px] uppercase tracking-wider text-ink-3">Difficulty curve</span>
+                    <span className="text-[10px] text-ink-3 ml-auto">share of {game.numDistinctPlayersCasual.toLocaleString()} players who unlocked each</span>
                   </div>
                   {/* Columns are capped at 46px and centred rather than stretched across the
                       card — filling the width rendered them as 157×40px slabs with no readable
@@ -786,7 +786,7 @@ function GameApp() {
                             <div style={{ height: `${b.total ? (b.unlocked / b.total) * 100 : 0}%`, background: b.color }} />
                           </div>
                         </div>
-                        <span className="text-[9px] tabular-nums leading-none" style={{ color: b.unlocked > 0 ? b.color : 'var(--ink-3)' }}>
+                        <span className="text-[10px] tabular-nums leading-none" style={{ color: b.unlocked > 0 ? b.color : 'var(--ink-3)' }}>
                           {b.unlocked}<span className="text-ink-3">/{b.total}</span>
                         </span>
                         <span className="text-[7px] uppercase tracking-wider text-ink-3 text-center w-full" style={{ lineHeight: 1.15 }}>{b.label}</span>
@@ -879,7 +879,7 @@ function GameApp() {
                     onError={e => { e.currentTarget.style.visibility = 'hidden'; }}
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="text-[8px] uppercase tracking-wider text-ink-3">Comparing with</div>
+                    <div className="text-[10px] uppercase tracking-wider text-ink-3">Comparing with</div>
                     <div className="text-[11px] font-semibold text-gold truncate">{selectedFriend.user}</div>
                     {!loadingFriendData && friendAchMap.size > 0 && (() => {
                       const total = achList.length;
@@ -893,7 +893,7 @@ function GameApp() {
                             <div className="absolute top-0 left-0 h-full rounded-full bg-ink-2" style={{ width: `${scPct}%` }} />
                             <div className="absolute top-0 left-0 h-full rounded-full bg-gold" style={{ width: `${hcPct}%` }} />
                           </div>
-                          <span className="text-[9px] shrink-0 tabular-nums" style={{ color: hcPct > 0 ? 'var(--gold)' : 'var(--ink-2)' }}>
+                          <span className="text-[10px] shrink-0 tabular-nums" style={{ color: hcPct > 0 ? 'var(--gold)' : 'var(--ink-2)' }}>
                             {(hcPct > 0 ? hcPct : scPct).toFixed(1)}%
                           </span>
                         </div>
@@ -1007,7 +1007,7 @@ function GameApp() {
                           className="block rounded-[2px] border border-line overflow-hidden hover:border-ink-3 transition-colors bg-bar">
                           <img src={getMediaUrl(m.src)} alt={m.label} className="w-full object-cover" />
                         </a>
-                        <span className="text-[9px] text-ink-3 uppercase tracking-wider text-center">{m.label}</span>
+                        <span className="text-[10px] text-ink-3 uppercase tracking-wider text-center">{m.label}</span>
                       </div>
                     ))}
                   </div>
@@ -1038,7 +1038,7 @@ function GameApp() {
                   <div className="flex items-center gap-2 pb-2 mb-3 border-b border-line">
                     <span className="sec-mark" />
                     <span className="sec-t">Time to Beat</span>
-                    <span className="text-[9px] text-ink-3 ml-1">median</span>
+                    <span className="text-[10px] text-ink-3 ml-1">median</span>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     {[
@@ -1049,7 +1049,7 @@ function GameApp() {
                     ].filter(c => c.value).map(c => (
                       <div key={c.label} className="bg-box border border-line rounded-[2px] flex flex-col items-center py-2.5 px-2">
                         <span className="text-[14px] font-bold" style={{ color: c.color }}>{fmtPlaytime(c.value)}</span>
-                        <span className="text-[8px] uppercase tracking-[0.07em] text-ink-3 mt-0.5">{c.label}</span>
+                        <span className="text-[10px] uppercase tracking-[0.07em] text-ink-3 mt-0.5">{c.label}</span>
                       </div>
                     ))}
                   </div>
@@ -1075,7 +1075,7 @@ function GameApp() {
                   ].filter(Boolean).filter(r => r.value).map(r => (
                     <div key={r.label} className="flex items-center gap-3 px-3 py-2">
                       <span className="text-ink-3 shrink-0">{r.icon}</span>
-                      <span className="text-[9px] uppercase tracking-wider text-ink-3 w-20 shrink-0">{r.label}</span>
+                      <span className="text-[10px] uppercase tracking-wider text-ink-3 w-20 shrink-0">{r.label}</span>
                       <span className="text-[11px] text-ink break-words min-w-0">{r.value}</span>
                     </div>
                   ))}
@@ -1143,7 +1143,7 @@ function GameApp() {
                             <img src={s.userPic ? getMediaUrl(s.userPic) : `${MEDIA_URL}/UserPic/${s.user}.png`} alt={s.user}
                               className="w-6 h-6 rounded-full border border-line bg-bar object-cover shrink-0" />
                             <a href={`../profile/?u=${s.user}`}
-                              className="flex-1 text-[11px] font-medium transition-colors hover:text-white truncate"
+                              className="flex-1 text-[11px] font-medium transition-colors hover:text-ink truncate"
                               style={{ color: s.user === creds?.username ? 'var(--aqua)' : 'var(--ink)' }}>
                               {s.user}
                             </a>
@@ -1177,7 +1177,7 @@ function GameApp() {
                             <div className="flex items-start justify-between gap-2 mb-1">
                               <span className="text-[12px] font-medium text-ink leading-snug">{lb.title}</span>
                               <div className="flex items-center gap-1.5 shrink-0">
-                                <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-[2px] rounded-sm border"
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-[2px] rounded-sm border"
                                   style={{ color: fmtColor, borderColor: `color-mix(in srgb, ${fmtColor} 25.1%, transparent)`, background: `color-mix(in srgb, ${fmtColor} 7.8%, transparent)` }}>
                                   {({ SCORE: 'Score', TIME: 'Time', TIMESECS: 'Time (s)', MILLISECS: 'Time (ms)', VALUE: 'Value' })[lb.format] ?? lb.format}
                                 </span>
@@ -1189,13 +1189,13 @@ function GameApp() {
                             )}
                             <div className="flex items-center justify-between gap-2 flex-wrap">
                               {userEntry ? (
-                                <span className="text-[9px] px-1.5 py-[2px] rounded-sm border"
+                                <span className="text-[10px] px-1.5 py-[2px] rounded-sm border"
                                   style={{ color: 'var(--aqua)', borderColor: 'rgb(var(--c-aqua) / 0.3)', background: 'rgb(var(--c-aqua) / 0.08)' }}>
                                   Your Entry: #{userEntry.rank} · {userEntry.formattedScore}
                                 </span>
                               ) : <span />}
                               {lb.topEntry && (
-                                <span className="text-[9px] text-ink-3">
+                                <span className="text-[10px] text-ink-3">
                                   👑 {lb.topEntry.user} · {lb.topEntry.formattedScore}
                                 </span>
                               )}
@@ -1225,12 +1225,12 @@ function GameApp() {
                                         <img src={e.userPic ? getMediaUrl(e.userPic) : `${MEDIA_URL}/UserPic/${e.user}.png`} alt={e.user}
                                           className="w-6 h-6 rounded-full border border-line bg-bar object-cover shrink-0" />
                                         <a href={`../profile/?u=${e.user}`}
-                                          className="flex-1 text-[11px] transition-colors hover:text-white"
+                                          className="flex-1 text-[11px] transition-colors hover:text-ink"
                                           style={{ color: isMe ? 'var(--aqua)' : 'var(--ink)' }}>
                                           {e.user}
                                         </a>
                                         <span className="text-[11px] font-bold text-gold">{e.formattedScore}</span>
-                                        <span className="text-[9px] text-ink-3 shrink-0">{formatDate(e.dateSubmitted)}</span>
+                                        <span className="text-[10px] text-ink-3 shrink-0">{formatDate(e.dateSubmitted)}</span>
                                       </div>
                                     );
                                   })}
@@ -1291,7 +1291,7 @@ function GameApp() {
                             <div className="flex-1 min-w-0">
                               <a href={`../profile/?u=${m.user}`}
                                 className="block text-[11px] font-medium text-gold hover:text-gold-hi transition-colors truncate">{m.user}</a>
-                              <span className="text-[9px] text-ink-3">{formatTimeAgo(m.lastAward)}</span>
+                              <span className="text-[10px] text-ink-3">{formatTimeAgo(m.lastAward)}</span>
                             </div>
                           </div>
                         ))}
@@ -1326,7 +1326,7 @@ function GameApp() {
                               <div className="flex items-baseline gap-2 mb-1">
                                 <a href={`../profile/?u=${c.user}`}
                                   className="text-[11px] font-medium text-gold hover:text-gold-hi transition-colors shrink-0">{c.user}</a>
-                                <span className="text-[9px] text-ink-3">{formatTimeAgo(c.submitted)}</span>
+                                <span className="text-[10px] text-ink-3">{formatTimeAgo(c.submitted)}</span>
                               </div>
                               <p className="text-[11px] text-ink leading-snug break-words">{c.commentText}</p>
                             </div>
@@ -1378,18 +1378,18 @@ function GameApp() {
                         <span className="text-[11px] text-ink leading-snug break-all">{h.name || '—'}</span>
                         {h.patchUrl && (
                           <a href={h.patchUrl} target="_blank" rel="noreferrer"
-                            className="shrink-0 text-[9px] font-semibold uppercase tracking-wider text-accent border border-accent/40 bg-accent/10 px-2 py-[2px] rounded-sm hover:bg-accent/20 transition-colors flex items-center gap-1">
+                            className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-accent border border-accent/40 bg-accent/10 px-2 py-[2px] rounded-sm hover:bg-accent/20 transition-colors flex items-center gap-1">
                             <ExternalLink size={9} /> Patch
                           </a>
                         )}
                       </div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <code className="text-[9px] text-ink-3 font-mono tracking-wider break-all">{h.md5}</code>
+                        <code className="text-[10px] text-ink-3 font-mono tracking-wider break-all">{h.md5}</code>
                         {h.labels.map(l => {
                           const lc = l.toLowerCase();
                           const color = lc === 'nointro' ? 'var(--accent)' : lc === 'rapatches' ? 'var(--gold)' : lc === 'unverified' ? 'var(--hc)' : 'var(--ink-2)';
                           return (
-                            <span key={l} className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-[1px] rounded-sm border"
+                            <span key={l} className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-[1px] rounded-sm border"
                               style={{ color, borderColor: `color-mix(in srgb, ${color} 25.1%, transparent)`, background: `color-mix(in srgb, ${color} 7.8%, transparent)` }}>{l}</span>
                           );
                         })}
@@ -1408,10 +1408,10 @@ function GameApp() {
               {/* Sibling version links */}
               {pocSubset.siblings.length > 0 && (
                 <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-                  <span className="text-[8px] uppercase tracking-wider text-ink-3">Also see</span>
+                  <span className="text-[10px] uppercase tracking-wider text-ink-3">Also see</span>
                   {pocSubset.siblings.map(s => (
                     <a key={s.id} href={`?id=${s.id}&tab=poc`}
-                      className="text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border bg-well text-ink-2 border-line-2 hover:text-ink hover:border-ink-3 transition-colors">
+                      className="text-[10px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border bg-well text-ink-2 border-line-2 hover:text-ink hover:border-ink-3 transition-colors">
                       {s.label}
                     </a>
                   ))}
@@ -1467,10 +1467,10 @@ function GameApp() {
                                 : <span className="shrink-0 w-[14px] h-[14px] rounded-full border border-ink-3" />}
                               <div className="flex-1 min-w-0">
                                 <span className="text-[12px] font-medium text-ink">{cp.leader}</span>
-                                {cp.title !== cp.leader && <span className="text-[9px] text-ink-3 ml-1.5">{cp.title}</span>}
+                                {cp.title !== cp.leader && <span className="text-[10px] text-ink-3 ml-1.5">{cp.title}</span>}
                               </div>
                               {cp.entries.length > 0 && (
-                                <span className="text-[9px] font-semibold shrink-0" style={{ color: caught === cp.entries.length ? 'var(--gold)' : 'var(--accent)' }}>
+                                <span className="text-[10px] font-semibold shrink-0" style={{ color: caught === cp.entries.length ? 'var(--gold)' : 'var(--accent)' }}>
                                   {caught} / {cp.entries.length}
                                 </span>
                               )}
@@ -1516,7 +1516,7 @@ function GameApp() {
         }
         .pop-wrap:hover .pop-box { display: block; }
         .pop-name { font-size: 10px; color: var(--ink); font-weight: 600; margin-bottom: 2px; }
-        .pop-sub  { font-size: 9px; color: var(--ink-3); margin-bottom: 2px; }
+        .pop-sub  { font-size: 10.5px; color: var(--ink-3); margin-bottom: 2px; }
       `}</style>
 
       <Footer

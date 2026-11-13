@@ -159,6 +159,18 @@ Cheevodex's own pieces, not Savepoint's (CHV-040; styles in `assets/ui.css`):
 
 Shared with Savepoint on purpose: the tab bar, filter chips, sheets, the activity day headings, and watchlist rows. Activity runs (Mine and Friends) use Cheevodex's own `RunStrip`: mode-coloured edge and wash, gold +N.
 
+### Consistency rules (CHV-046)
+
+- **Mode colours:** hardcore is gold, softcore grey, everywhere (pills, flames, counts, bars, run edges). Red (`--hc`) means errors, win conditions and the top RetroRatio band only.
+- **Progress is a ring** (`.dring`) beside its count. No progress bars on game rows, tiles, watchlist or compare.
+- **Controls are filter chips** (`.fchip`, `.on` when active, `.n` for a count). No tiny uppercase toggle buttons.
+- **Numbers in lists are index lines** (`.dledger`), not boxed tiles.
+- **Dex numbers** (`.dex-no`, 8px pixel face) on every game row: Dex, Recent, Progress, Activity runs, watchlist, console list, search, compare.
+- **Time ago** is one style: `5m ago`, `18h ago`, `3d ago`, then the date (`formatTimeAgo`, `timeAgo`, `shortAgo` + " ago").
+- **Text** is 10px or larger; only the 7px Subset / tilde tags and chart axis labels are smaller.
+- **Corners** 2–3px, sheets included. No `#fff` / `text-white`: use `ink`.
+- **Game art** is a real screenshot or nothing (never RA's placeholder, never the icon stretched).
+
 ### Dex numbers
 
 A game's dex number is its RA game ID, written `No.<id>` (or `Dex No.<id>` in page headings) with class `.dex-no` — the only place the Silkscreen pixel face is used. "Dex" is the word for an entry in the codex; never seen / caught or other Pokédex wording.
