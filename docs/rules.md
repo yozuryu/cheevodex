@@ -169,6 +169,8 @@ Shared with Savepoint on purpose: the tab bar, filter chips, sheets, the activit
 - **Time ago** is one style: `5m ago`, `18h ago`, `3d ago`, then the date (`formatTimeAgo`, `timeAgo`, `shortAgo` + " ago").
 - **Text** is 10px or larger; only the 7px Subset / tilde tags and chart axis labels are smaller.
 - **Corners** 2–3px, sheets included. No `#fff` / `text-white`: use `ink`.
+- **Page width:** single-column pages (game, achievement, consoles, console, search, changelog) use `max-w-4xl mx-auto px-4 md:px-8`; the profile uses its rail layout. Long text keeps ~72ch inside it.
+- **Footer:** `Footer({ label: 'Cheevodex · <page>', raHref })` on every page; the RA link points to the matching RA page.
 - **Game art** is a real screenshot or nothing (never RA's placeholder, never the icon stretched).
 
 ### Dex numbers

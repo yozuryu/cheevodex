@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client';
 import { Trophy, Crown, Medal, Lock, ExternalLink, AlertCircle, AlertTriangle, Flame, Feather, Gamepad2, Tag, Code, Calendar, BookOpen, MessageSquare, Loader, X, MapPin, ArrowUpCircle, Egg, Sparkles, ChevronDown, CheckCircle2, Compass, Info, ListOrdered, Hash, Users } from 'lucide-react';
 import { MEDIA_URL, SITE_URL, TILDE_TAG_COLORS } from '../profile/utils/constants.js';
 import { getMediaUrl, parseTitle, formatDate, formatTimeAgo } from '../profile/utils/helpers.js';
+
+// A release date the same way everywhere on this page ("23 Aug 2007"); RA's raw text when it isn't a full date
+const fmtReleased = d => { if (!d) return null; const f = formatDate(d); return f && !f.includes('Invalid') ? f : d; };
 import { getCredentials, clearCredentials, getGameInfoAndUserProgress, getGameHashes, getGameProgression, getGameExtended, getActiveClaims, getGameRankAndScore, getComments, getGameLeaderboards, getUserGameLeaderboards, getLeaderboardEntries, getGame, fetchSocial, getSocialProfileMap } from '../profile/utils/ra-api.js';
 import { Topbar, Footer } from '../assets/ui.js';
 import { TabBar, useSwipeTabs } from '../assets/tabs.js';
@@ -720,7 +723,7 @@ function GameApp() {
                       ['Developer', game.developer],
                       ['Publisher', game.publisher],
                       ['Genre', game.genre],
-                      ['Released', game.released ? (formatDate(game.released) && !formatDate(game.released).includes('Invalid') ? formatDate(game.released) : game.released) : null],
+                      ['Released', fmtReleased(game.released)],
                       ['Players', game.numDistinctPlayersCasual ? game.numDistinctPlayersCasual.toLocaleString() : null],
                     ].filter(([, v]) => v).map(([k, v]) => <div key={k}><dt>{k}</dt><dd title={v}>{v}</dd></div>)}
                   </dl>
@@ -1021,9 +1024,9 @@ function GameApp() {
                     <span className="sec-mark" />
                     <span className="sec-t">Time to Beat</span>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="sledger dledger info-lines">
                     {[...Array(4)].map((_, i) => (
-                      <div key={i} className="shimmer h-14 rounded-[2px]" />
+                      <div key={i} className="shimmer h-3.5 rounded-[2px]" />
                     ))}
                   </div>
                 </div>
@@ -1040,16 +1043,16 @@ function GameApp() {
                     <span className="sec-t">Time to Beat</span>
                     <span className="text-[10px] text-ink-3 ml-1">median</span>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="sledger dledger info-lines">
                     {[
-                      { label: 'Beat',           value: gameProgression.medianTimeToBeat,          color: 'var(--accent)' },
-                      { label: 'Beat (Hardcore)', value: gameProgression.medianTimeToBeatHardcore,  color: 'var(--gold)' },
-                      { label: 'Complete',        value: gameProgression.medianTimeToComplete,       color: 'var(--accent)' },
+                      { label: 'Beat',            value: gameProgression.medianTimeToBeat,          color: 'var(--ink)' },
+                      { label: 'Beat (hardcore)', value: gameProgression.medianTimeToBeatHardcore,  color: 'var(--gold)' },
+                      { label: 'Complete',        value: gameProgression.medianTimeToComplete,       color: 'var(--ink)' },
                       { label: 'Master',          value: gameProgression.medianTimeToMaster,         color: 'var(--gold)' },
                     ].filter(c => c.value).map(c => (
-                      <div key={c.label} className="bg-box border border-line rounded-[2px] flex flex-col items-center py-2.5 px-2">
-                        <span className="text-[14px] font-bold" style={{ color: c.color }}>{fmtPlaytime(c.value)}</span>
-                        <span className="text-[10px] uppercase tracking-[0.07em] text-ink-3 mt-0.5">{c.label}</span>
+                      <div key={c.label} className="dl-row">
+                        <span className="dl-k">{c.label}</span><span className="dl-dots" />
+                        <span className="dl-v" style={{ color: c.color }}>{fmtPlaytime(c.value)}</span>
                       </div>
                     ))}
                   </div>
@@ -1062,21 +1065,21 @@ function GameApp() {
                   <span className="sec-mark" />
                   <span className="sec-t">Info</span>
                 </div>
-                <div className="bg-box border border-line rounded-[2px] divide-y divide-line">
+                <div className="sledger dledger info-lines">
                   {[
-                    { label: 'Console',    value: game.consoleName,   icon: <Gamepad2 size={11} /> },
-                    { label: 'Developer',  value: game.developer,     icon: <Code     size={11} /> },
-                    { label: 'Publisher',  value: game.publisher,     icon: <BookOpen size={11} /> },
-                    { label: 'Genre',      value: game.genre,         icon: <Tag      size={11} /> },
-                    { label: 'Released',   value: game.released,      icon: <Calendar size={11} /> },
+                    { label: 'Console',    value: game.consoleName,   icon: <Gamepad2 size={12} /> },
+                    { label: 'Developer',  value: game.developer,     icon: <Code     size={12} /> },
+                    { label: 'Publisher',  value: game.publisher,     icon: <BookOpen size={12} /> },
+                    { label: 'Genre',      value: game.genre,         icon: <Tag      size={12} /> },
+                    { label: 'Released',   value: fmtReleased(game.released), icon: <Calendar size={12} /> },
                     gameExtended?.updated
-                      ? { label: 'Updated', value: formatDate(gameExtended.updated), icon: <Calendar size={11} /> }
+                      ? { label: 'Set updated', value: formatDate(gameExtended.updated), icon: <Calendar size={12} /> }
                       : null,
                   ].filter(Boolean).filter(r => r.value).map(r => (
-                    <div key={r.label} className="flex items-center gap-3 px-3 py-2">
-                      <span className="text-ink-3 shrink-0">{r.icon}</span>
-                      <span className="text-[10px] uppercase tracking-wider text-ink-3 w-20 shrink-0">{r.label}</span>
-                      <span className="text-[11px] text-ink break-words min-w-0">{r.value}</span>
+                    <div key={r.label} className="dl-row">
+                      <span className="dl-k inline-flex items-center gap-2"><span className="text-ink-3">{r.icon}</span>{r.label}</span>
+                      <span className="dl-dots" />
+                      <span className="dl-v" style={{ fontFamily: 'var(--font)', fontWeight: 500 }}>{r.value}</span>
                     </div>
                   ))}
                 </div>
@@ -1519,18 +1522,7 @@ function GameApp() {
         .pop-sub  { font-size: 10.5px; color: var(--ink-3); margin-bottom: 2px; }
       `}</style>
 
-      <Footer
-        label={game ? `${parsed?.baseTitle || game.title} · ${game.consoleName}` : 'Cheevodex · Game'}
-        right={game
-          ? React.createElement('a', {
-              href: `${SITE_URL}/game/${gameId}`,
-              target: '_blank',
-              rel: 'noreferrer',
-              className: 'text-[10px] text-ink-3 hover:text-accent transition-colors flex items-center gap-1',
-            }, 'retroachievements.org ↗')
-          : null
-        }
-      />
+      <Footer label={game ? `Cheevodex · ${parsed?.baseTitle || game.title} · ${game.consoleName}` : 'Cheevodex · Game'} raHref={`${SITE_URL}/game/${gameId}`} />
     </div>
   );
 }

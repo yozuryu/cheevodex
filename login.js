@@ -76,7 +76,7 @@ function LoginPage() {
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] text-ink-2 uppercase tracking-[0.1em] font-semibold">
+              <label className="text-[12px] text-ink-2 font-medium">
                 RA Username
               </label>
               <input
@@ -94,14 +94,14 @@ function LoginPage() {
 
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-[10px] text-ink-2 uppercase tracking-[0.1em] font-semibold">
+                <label className="text-[12px] text-ink-2 font-medium">
                   API Key
                 </label>
                 <a
                   href="https://retroachievements.org/settings"
                   target="_blank"
                   rel="noreferrer"
-                  className="text-[10px] text-ink-3 hover:text-accent transition-colors uppercase tracking-wider"
+                  className="text-[11.5px] text-accent hover:text-ink transition-colors"
                 >
                   Get your key ↗
                 </a>
@@ -119,7 +119,7 @@ function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowKey(v => !v)}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink-2 transition-colors text-[10px] select-none"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink-2 transition-colors text-[11px] select-none"
                   tabIndex={-1}
                 >
                   {showKey ? 'hide' : 'show'}
@@ -127,7 +127,7 @@ function LoginPage() {
               </div>
               {/* How-to hint */}
               <div className="bg-bar border border-line rounded-[2px] px-3 py-2.5 flex flex-col gap-1.5 mt-0.5">
-                <p className="text-[10px] text-ink-2 font-semibold uppercase tracking-[0.08em]">How to get your API key</p>
+                <p className="text-[11.5px] text-ink-2 font-semibold">How to get your API key</p>
                 <ol className="flex flex-col gap-1">
                   {[
                     <>Log in at <a href="https://retroachievements.org" target="_blank" rel="noreferrer" className="text-accent hover:text-ink transition-colors">retroachievements.org</a></>,
@@ -153,7 +153,7 @@ function LoginPage() {
             <button
               type="submit"
               disabled={loading || !username.trim() || !apiKey.trim()}
-              className="flex items-center justify-center gap-2 bg-gold hover:bg-gold-press disabled:bg-disabled disabled:text-ink-3 text-well disabled:cursor-not-allowed font-bold text-[11px] uppercase tracking-[0.1em] px-4 py-2.5 rounded-[2px] transition-colors"
+              className="flex items-center justify-center gap-2 h-10 bg-accent hover:bg-accent-hi disabled:bg-disabled disabled:text-ink-3 text-page disabled:cursor-not-allowed font-semibold text-[13px] px-4 rounded-[3px] transition-colors"
             >
               {loading ? (
                 <>

@@ -175,7 +175,7 @@ function AchievementApp() {
       <div className="min-h-screen bg-page flex flex-col">
         <Topbar crumbs={[{ label: 'Cheevodex', href: '../profile/' }, { label: null }, { label: null }, { label: null }]} />
         <div className="relative overflow-hidden bg-box border-b border-line">
-          <div className="relative max-w-3xl mx-auto px-4 md:px-8 pt-8 pb-4 md:pt-5">
+          <div className="relative max-w-4xl mx-auto px-4 md:px-8 pt-8 pb-4 md:pt-5">
             <div className="shimmer h-4 w-40 rounded mb-4" />
             <div className="flex gap-4 items-start">
               <div className="shimmer w-16 h-16 md:w-28 md:h-28 rounded-[3px] shrink-0" />
@@ -188,17 +188,12 @@ function AchievementApp() {
             </div>
           </div>
           <div className="border-t border-well bg-bar/50">
-            <div className="max-w-3xl mx-auto px-4 md:px-8 py-2.5 grid grid-flow-col auto-cols-fr">
-              {[0, 1, 2].map(i => (
-                <div key={i} className="flex flex-col items-center gap-1 py-1">
-                  <div className="shimmer h-4 w-12 rounded" />
-                  <div className="shimmer h-2 w-10 rounded" />
-                </div>
-              ))}
+            <div className="max-w-4xl mx-auto px-4 md:px-8 py-3 dledger ach-lines">
+              {[0, 1, 2].map(i => <div key={i} className="shimmer h-3.5 rounded-[2px]" />)}
             </div>
           </div>
         </div>
-        <div className="flex-1 max-w-3xl mx-auto w-full px-4 md:px-8 py-6">
+        <div className="flex-1 max-w-4xl mx-auto w-full px-4 md:px-8 py-6">
           <div className="shimmer h-[52px] rounded mb-5" />
           <div className="flex items-center gap-2 mb-4">
             <div className="shimmer h-7 w-32 rounded-sm" />
@@ -208,7 +203,7 @@ function AchievementApp() {
             <div key={i} className="shimmer h-9 rounded mb-1" />
           ))}
         </div>
-        <Footer label="cheevodex · retroachievements.org" />
+        <Footer label="Cheevodex · Achievement" raHref={achId ? `${SITE_URL}/achievement/${achId}` : undefined} />
       </div>
     );
   }
@@ -220,7 +215,7 @@ function AchievementApp() {
       <div className="min-h-screen bg-page flex flex-col">
         <Topbar crumbs={[{ label: 'Cheevodex', href: '../profile/' }, { label: null }, { label: null }, { label: null }]} />
         <div className="flex-1 flex items-center justify-center text-ink-2 text-sm">{error}</div>
-        <Footer label="cheevodex · retroachievements.org" />
+        <Footer label="Cheevodex · Achievement" raHref={achId ? `${SITE_URL}/achievement/${achId}` : undefined} />
       </div>
     );
   }
@@ -243,7 +238,7 @@ function AchievementApp() {
       {/* ── Hero ── */}
       <div className="phead">
         {heroBg && <ArtBg urls={[getMediaUrl(heroBg)]} variant="art-header" />}
-        <div className="relative max-w-3xl mx-auto px-4 md:px-8 pt-8 pb-4 md:pt-5">
+        <div className="relative max-w-4xl mx-auto px-4 md:px-8 pt-8 pb-4 md:pt-5">
 
           {/* Game info row */}
           {(gameName || consoleName) && (
@@ -353,34 +348,27 @@ function AchievementApp() {
         {/* Stats strip */}
         {achData && (
           <div className="relative border-t border-well bg-bar/50">
-            <div className="max-w-3xl mx-auto px-2 md:px-8 py-2.5 grid grid-flow-col auto-cols-fr">
-              {[
-                { label: 'Hardcore',      value: achData.unlocksHardcoreCount, pct: hcPct,  color: 'var(--gold)', Icon: Flame   },
-                { label: 'Softcore',      value: achData.unlocksCount,         pct: anyPct, color: 'var(--ink-2)', Icon: Feather },
-                { label: 'Total Players', value: achData.totalPlayers,         pct: null,   color: 'var(--ink-3)', Icon: null    },
-              ].map((s, i) => (
-                <div key={i} className="flex flex-col items-center py-1 px-2 min-w-0">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-[12px] md:text-[14px] font-bold" style={{ color: s.color }}>
-                      {s.value.toLocaleString()}
-                    </span>
-                    {s.pct !== null && (
-                      <span className="text-[10px] md:text-[10px] text-ink-3">{s.pct}%</span>
-                    )}
+            <div className="max-w-4xl mx-auto px-4 md:px-8 py-3">
+              <div className="dledger ach-lines">
+                {[
+                  { label: 'Unlocked in hardcore', value: achData.unlocksHardcoreCount, pct: hcPct,  color: 'var(--gold)', Icon: Flame   },
+                  { label: 'Unlocked in total',    value: achData.unlocksCount,         pct: anyPct, color: 'var(--ink)', Icon: Feather },
+                  { label: 'Players of the game',  value: achData.totalPlayers,         pct: null,   color: 'var(--ink-2)', Icon: Users },
+                ].map(st => (
+                  <div key={st.label} className="dl-row">
+                    <span className="dl-k inline-flex items-center gap-1.5"><st.Icon size={12} style={{ color: st.color }} />{st.label}</span>
+                    <span className="dl-dots" />
+                    <span className="dl-v" style={{ color: st.color }}>{st.value.toLocaleString()}{st.pct !== null && <small>{st.pct}%</small>}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-[10px] md:text-[10px] text-ink-3 uppercase tracking-[0.07em]">
-                    {s.Icon && <s.Icon size={8} />}
-                    {s.label}
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}
       </div>
 
       {/* ── Content ── */}
-      <div className="flex-1 max-w-3xl mx-auto w-full px-4 md:px-8 py-6">
+      <div className="flex-1 max-w-4xl mx-auto w-full px-4 md:px-8 py-6">
 
         {/* Your Status — always visible */}
         <div className="mb-5">
@@ -443,15 +431,12 @@ function AchievementApp() {
                     onError={e => { e.currentTarget.style.visibility = 'hidden'; }}
                   />
                   <a href={`../profile/?u=${u.user}`}
-                    className="text-[11px] font-medium text-gold hover:text-gold-hi transition-colors truncate flex-1 min-w-0">
+                    className="text-[12px] font-medium text-ink hover:text-accent-hi transition-colors truncate flex-1 min-w-0">
                     {u.user}
                   </a>
-                  {u.hardcoreMode && (
-                    <span className="flex items-center gap-0.5 text-[10px] font-bold px-1 py-[1px] rounded-sm shrink-0"
-                      style={{ color: 'var(--gold)', background: 'rgb(var(--c-gold) / 0.12)', border: '1px solid rgb(var(--c-gold) / 0.3)' }}>
-                      <Flame size={7} /> Hardcore
-                    </span>
-                  )}
+                  {u.hardcoreMode
+                    ? <Flame size={12} className="text-gold shrink-0" aria-label="Hardcore" />
+                    : <Feather size={12} className="text-ink-2 shrink-0" aria-label="Softcore" />}
                   <span className="text-[10px] text-ink-3 shrink-0">{formatTimeAgo(u.dateAwarded, new Date().toISOString())}</span>
                 </div>
               ))}
@@ -576,7 +561,7 @@ function AchievementApp() {
 
       </div>
 
-      <Footer label="cheevodex · retroachievements.org" />
+      <Footer label="Cheevodex · Achievement" raHref={achId ? `${SITE_URL}/achievement/${achId}` : undefined} />
     </div>
   );
 }

@@ -19,8 +19,8 @@ import { Menu, X, FileText, RotateCcw, LogOut, Trash2, Gamepad2, Bug } from 'luc
  *   label === null     → shimmer block
  *
  * Footer props:
- *   label   — string or element for the left-side text.
- *   right   — optional element rendered on the far right.
+ *   label   — "Cheevodex · <page>", string or element.
+ *   raHref  — the matching page on RetroAchievements; defaults to the site.
  */
 
 // ── Debug panel ──────────────────────────────────────────────────────────────
@@ -353,13 +353,16 @@ export function Topbar({ crumbs = [], right }) {
 
 // ── Footer ────────────────────────────────────────────────────────────────────
 
-export function Footer({ label, right }) {
+// Every page: "Cheevodex · <page>" (+ a note), the unofficial line, and a link to the matching page on
+// RetroAchievements (`raHref`, else the site)
+export function Footer({ label, raHref }) {
   return React.createElement(
     'footer',
     { className: 'bg-box border-t-2 border-line px-4 md:px-8 py-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 mt-auto' },
     React.createElement('div', { className: 'w-[3px] h-[18px] rounded-[1px] bg-accent opacity-50 shrink-0' }),
-    React.createElement('div', { className: 'text-[10px] text-ink-3 min-w-0' }, label),
-    React.createElement('div', { key: 'unofficial', className: 'text-[10px] text-ink-3 ml-auto' }, 'Unofficial. Not affiliated with RetroAchievements.'),
-    right ? React.createElement('div', { key: 'right', className: 'shrink-0' }, right) : null
+    React.createElement('div', { className: 'text-[11px] text-ink-3 min-w-0' }, label),
+    React.createElement('div', { key: 'unofficial', className: 'text-[11px] text-ink-3 ml-auto' }, 'Unofficial. Not affiliated with RetroAchievements.'),
+    React.createElement('a', { key: 'ra', href: raHref || 'https://retroachievements.org', target: '_blank', rel: 'noreferrer',
+      className: 'shrink-0 text-[11px] text-ink-3 hover:text-accent transition-colors' }, 'RetroAchievements ↗')
   );
 }

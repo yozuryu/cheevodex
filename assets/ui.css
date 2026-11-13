@@ -918,3 +918,11 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 /* Stats tab: streaks and pace as index lines, two columns from md */
 .stat-lines { gap: 7px; }
 @media (min-width: 768px) { .stat-lines { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; } }
+.clog-e > span, .clog-e > button { max-width: 72ch; }
+.clog-meta p { max-width: 72ch; }
+/* Game page Info tab: time to beat and facts as index lines, two columns from md */
+.info-lines { gap: 7px; }
+@media (min-width: 768px) { .info-lines { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; } }
+/* Achievement page: unlock numbers as index lines, three across from md */
+.ach-lines { gap: 6px; }
+@media (min-width: 768px) { .ach-lines { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 28px; } }

@@ -3348,10 +3348,8 @@ export default function App() {
         {isVisitorMode && <div className="md:hidden h-14" />}
       </main>
 
-      <Footer
-        label={<>Generated from <span className="text-ink-2">RetroAchievements API</span><span className="mx-2 text-line">·</span>Data as of <span className="text-ink-2">{rawData?.metadata?.extractionTimestamp ? new Date(rawData.metadata.extractionTimestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</span></>}
-        right={<a href={SITE_URL} target="_blank" rel="noreferrer" className="text-[10px] text-ink-3 hover:text-accent transition-colors">retroachievements.org ↗</a>}
-      />
+      <Footer label={<>Cheevodex · {isVisitorMode ? targetUser : 'Profile'}<span className="mx-2 text-line">·</span>data as of <span className="text-ink-2">{rawData?.metadata?.extractionTimestamp ? new Date(rawData.metadata.extractionTimestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}</span></>}
+        raHref={`${SITE_URL}/user/${isVisitorMode ? targetUser : (getCredentials()?.username || '')}`} />
 
       {/* Scroll-to-top button */}
       {showScrollTop && (

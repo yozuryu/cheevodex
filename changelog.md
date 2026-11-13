@@ -2,11 +2,16 @@
 
 ## v26.11.13 — Cheevodex: new name, Modern RA look, Savepoint components
 
+### Auth
+
+- Login: field labels and "How to get your API key" in normal case, and Connect is a solid blue button in normal case, like the rest of the app (was tiny uppercase)
+
 ### Cache
 
 - Service worker cache renamed to `cheevodex-…` and bumped so installed apps pick up the new name, icons and styles; the new shared files (`tokens.css`, `tw-config.js`, `ui.css`, `motion.css`, `sheet.js`, `tabs.js`, `game-view.js`) are precached
 - IndexedDB renamed from `cheevo_tracker` to `cheevodex`; the old database is deleted on first open, so each browser re-downloads its cache once. Logins (`raCredentials`) and settings in localStorage are untouched
 - Service worker cache bumped so installed apps pick up the new activity summary, friends feed and changelog styles
+- Service worker cache bumped for the consistency pass (styles, footers, page widths)
 
 ### Structure
 
@@ -50,12 +55,14 @@
 - Achievement filters are one row of chips with counts (All, Unlocked, Locked, Progression, Missable), then the count, a sort select and a Compare chip; tabs have icons
 - **Each game reads as its dex**: "Dex No." above the title, the facts (developer, publisher, genre, release, players) as a labelled block on desktop and one line on phones, and in the default view the achievements in two chapters, Progression (needed to beat the game) and Everything else, each with its done count and missables. A See also section links a subset's base game and the other Professor Oak subsets
 - **Dex record** under the title: a completion ring (gold and glowing when mastered), Achievements / Points / Played as index lines with dotted leaders, and the progression as a path of diamonds on a line (one per progression achievement, grouped past 20). The player count sits in the facts line, and Hardcore / Softcore shows as a tag
+- Info tab: Time to Beat and the game's facts are index lines (two columns on desktop) instead of boxed tiles and a tiny-uppercase table; the release date reads the same as in the header ("23 Aug 2007", was "2007-08-23")
 
 ### Achievement Page
 
 - Same art-lit header as the game page (blurred art, gold/blue glows); an unlocked badge gets a 2px gold ring with a glow, locked stays greyscale. Tabs use the new sliding-underline tab bar
 - Tabs have icons, like the profile and game pages
 - Shows its place in the game's dex ("Dex No.16244 · 7 of 76") with Prev / Next to page through the set
+- Unlock numbers (in hardcore, in total, players) are index lines under the header instead of a strip of big centred numbers; Recent unlocks show the mode by the row's edge and a flame or feather instead of a second "Hardcore" pill
 
 ### Backlog
 
@@ -89,6 +96,8 @@
 - Dex numbers also on Activity runs (Mine and Friends), watchlist rows and stacked sets, the console page's game list and Search results
 - Readable sizes: no 8–9px labels or buttons remain (raised to 10px; the 7px Subset / tilde tags stay); bottom-nav labels 10px; dex numbers in the pixel face at a crisp 8px. Corners follow the 2–3px rule on the install banner, sheets and menu sheet
 - Loading placeholders match the new shapes: Mine shows run strips with rows, Friends shows the friend strip and posts on the rail
+- **One page width on desktop.** The game, achievement, console, search and changelog pages share one 896px column that starts at the same left edge (the achievement page and changelog were 768px, so pages shifted sideways as you moved between them); the profile keeps its wider rail layout; changelog lines stay at a comfortable reading length
+- **Same footer on every page:** "Cheevodex · <page>", the unofficial note, and a RetroAchievements ↗ link to the matching RA page (the game, the achievement, your profile) or the site
 
 ## v26.09.27 — Not-found page + silver Beaten + POC fixes, FireRed & LeafGreen + new icon
 

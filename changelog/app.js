@@ -213,7 +213,7 @@ const App = () => {
             <Topbar crumbs={[{ label: 'Cheevodex', href: '../profile/' }, { label: 'Changelog' }]} />
 
             <header className="phead">
-                <div className="phead-in max-w-3xl">
+                <div className="phead-in max-w-4xl md:px-8">
                     <div className="flex items-center gap-2.5">
                         <span className="sec-mark" />
                         <h1 className="text-[22px] font-semibold text-ink leading-tight tracking-[-0.01em] flex items-center gap-2.5">
@@ -230,7 +230,7 @@ const App = () => {
                 </div>
             </header>
 
-            <main className="max-w-3xl mx-auto px-4 md:px-8 py-5 flex-1 w-full clog">
+            <main className="max-w-4xl mx-auto px-4 md:px-8 py-5 flex-1 w-full clog">
                 {releases === null ? (
                     <div className="flex flex-col gap-3">
                         {[...Array(5)].map((_, i) => <div key={i} className="shimmer h-[34px] rounded-[2px]" />)}
