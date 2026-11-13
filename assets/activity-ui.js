@@ -4,7 +4,8 @@
 // assets/ui.css, the same classes the Activity page uses.
 //   computeStreak(heatmapData, minValue)  current / longest run and the last 14 days
 //   useSummaryOpen()                      folded on phones, open from md, remembered per device
-//   ActivitySummary                       folded row or full card (stats, 14 days + streak, heatmap)
+//   ActivitySummary                       the dexes that moved (page-built rows), opening to the year,
+//                                         streaks and heatmap
 //   DayHead                               sticky day heading
 //   RunCard                               one run of unlocks in one game: art band + rows, long runs fold
 //   UnlockRow                             one unlock
@@ -74,33 +75,6 @@ export function useSummaryOpen() {
   return [open, toggle];
 }
 
-// Last 14 days as diamonds on a line (the progression path's mark): each sized and lit by its unlocks
-// against the busiest day, the current streak gold along the line
-function RecentDays({ streak, heatmapData, cellLabel, describe, selectedDay, onSelectDay, slim }) {
-  const days = streak.last14;
-  const vals = days.map(d => heatmapData[d.key]?.count ?? 0);
-  const max = Math.max(1, ...vals);
-  const inStreak = new Set();
-  let k = days.length - 1;
-  if (!days[k].active) k--;
-  while (k >= 0 && days[k].active) inStreak.add(days[k--].key);
-  return h('div', { className: `ddays ${slim ? 'slim' : ''}` }, days.map((d, i) => {
-    const v = vals[i];
-    const s = inStreak.has(d.key);
-    const cls = [s ? 'streak' : d.active ? 'on' : v ? 'low' : '',
-      s && inStreak.has(days[i - 1]?.key) ? 'sl' : '', s && inStreak.has(days[i + 1]?.key) ? 'sr' : '',
-      selectedDay === d.key ? 'sel' : '', d.isToday ? 'today' : ''].filter(Boolean).join(' ');
-    const size = v ? Math.round((slim ? 7 : 8) + (slim ? 7 : 9) * v / max) : 6;
-    return h('button', {
-      key: d.key, title: describe(d.key), disabled: !v, className: `dday ${cls}`,
-      onClick: () => onSelectDay(selectedDay === d.key ? null : d.key),
-    },
-      !slim && h('span', { className: 'dday-v' }, v ? cellLabel(d.key) : ''),
-      h('span', { className: 'dday-g' }, h('i', { style: { width: size, height: size } })),
-      !slim && h('span', { className: 'dday-l' }, d.label.slice(0, 2)));
-  }));
-}
-
 // Index lines: label, dotted leader, value (+ a quiet note)
 const Ledger = ({ rows, cls = '' }) => h('div', { className: `dledger ${cls}` }, rows.map(r =>
   h('div', { key: r.l, className: `dl-row ${r.cls ?? ''}` },
@@ -120,28 +94,25 @@ function StreakLines({ streak }) {
   ].filter(Boolean) });
 }
 
-// fold: up to 3 stats for the folded row (the last one only from sm, behind a divider);
-// stats: the open card's three past-year numbers
-export function ActivitySummary({ open, onToggle, fold, stats, streak, heatmapData, cellLabel, describe, selectedDay, onSelectDay, heatmap }) {
-  const recent = slim => h(RecentDays, { slim, streak, heatmapData, cellLabel, describe, selectedDay, onSelectDay });
-  if (!open) {
-    return h('section', { className: 'asum closed' },
-      h('div', { className: 'asum-fold anim-fade' },
-        h('button', { className: 'afold-stats', onClick: onToggle, 'aria-expanded': false },
-          h(Ledger, { rows: fold.map((s, i) => ({ ...s, cls: i === 2 ? 'hidden sm:flex' : '' })) })),
-        h('div', { className: 'afold-days' }, recent(true), h('span', null, 'Last 14 days')),
-        h('button', { className: 'afold-btn', onClick: onToggle, 'aria-label': 'Show the year' }, h(Icon, { name: 'chevron', size: 16 }))));
-  }
-  return h('section', { className: 'asum' },
-    h('div', { className: 'anim-fade relative' },
-      h('button', { className: 'asum-less', onClick: onToggle, 'aria-expanded': true }, 'Less', h(Icon, { name: 'chevron', size: 13, style: { transform: 'rotate(180deg)' } })),
+// Cheevodex's summary is about dexes, not days: `children` are the page's rows for the games that moved in
+// the last 14 days, `totals` one line over them. The toggle opens the year: past-year index lines, streaks, heatmap
+export function ActivitySummary({ open, onToggle, title, totals, children, stats, streak, selectedDay, onSelectDay, heatmap }) {
+  return h('section', { className: 'asum mdex' },
+    h('div', { className: 'mdex-h' },
+      h('span', { className: 'sec-mark sm' }),
+      h('span', { className: 'mdex-t' }, title),
+      totals && h('span', { className: 'mdex-tot' }, totals)),
+    children,
+    h('button', { className: 'mdex-open', onClick: onToggle, 'aria-expanded': open },
+      open ? 'Hide the year' : 'The year, streaks and heatmap',
+      h(Icon, { name: 'chevron', size: 13, style: open ? { transform: 'rotate(180deg)' } : undefined })),
+    open && h('div', { className: 'anim-fade' },
       h('div', { className: 'asum-top' },
         h('div', { className: 'asum-sec' },
           h('div', { className: 'asum-h' }, h('span', { className: 'sec-mark sm' }), h('span', null, 'Past year')),
           h(Ledger, { cls: 'astats-l', rows: stats })),
         h('div', { className: 'asum-sec' },
-          h('div', { className: 'asum-h' }, h('span', { className: 'sec-mark sm' }), h('span', null, 'Last 14 days')),
-          recent(false),
+          h('div', { className: 'asum-h' }, h('span', { className: 'sec-mark sm' }), h('span', null, 'Streaks')),
           h(StreakLines, { streak }))),
       h('div', { className: 'asum-sec' },
         h('div', { className: 'asum-h' },
@@ -235,21 +206,13 @@ export { Fragment };
 const sk = (style, cls = '', key) => h('div', { key, className: `shimmer ${cls}`, style: { borderRadius: 2, ...style } });
 
 export function SummarySkeleton() {
-  if (!initialOpen()) {
-    return h('section', { className: 'asum closed', 'aria-busy': true },
-      h('div', { className: 'asum-fold' },
-        h('div', { className: 'afold-stats flex flex-col gap-[7px]' },
-          [0, 1, 2].map(i => h('div', { key: i, className: i === 2 ? 'hidden sm:block' : '' }, sk({ width: '100%', height: 12 })))),
-        h('div', { className: 'afold-days' }, sk({ width: '100%', maxWidth: 336, height: 26 }), h('span', null, 'Last 14 days')),
-        h('span', { className: 'afold-btn' })));
-  }
-  return h('section', { className: 'asum', 'aria-busy': true },
-    h('div', { className: 'asum-top' },
-      h('div', { className: 'asum-sec flex flex-col gap-3' },
-        sk({ height: 12, width: 90 }),
-        [0, 1, 2].map(i => sk({ height: 13, width: '100%' }, '', i))),
-      h('div', { className: 'asum-sec flex flex-col gap-3' }, sk({ height: 12, width: 90 }), sk({ height: 50, width: '100%' }), sk({ height: 34, width: '100%' }))),
-    h('div', { className: 'asum-sec' }, sk({ height: 104, width: '100%' })));
+  return h('section', { className: 'asum mdex', 'aria-busy': true },
+    h('div', { className: 'mdex-h' }, sk({ height: 12, width: 180 })),
+    [0, 1].map(i => h('div', { key: i, className: 'mrow' },
+      sk({ width: 40, height: 40, borderRadius: '50%', flexShrink: 0 }),
+      h('div', { className: 'flex-1 flex flex-col gap-1.5' }, sk({ height: 12, width: `${55 - i * 15}%` }), sk({ height: 10, width: 90 })),
+      sk({ width: 48, height: 22 }))),
+    h('span', { className: 'mdex-open' }, 'The year, streaks and heatmap'));
 }
 
 export function TimelineSkeleton() {

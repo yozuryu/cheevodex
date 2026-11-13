@@ -707,7 +707,7 @@ const RAchievementModal = ({ game, onClose, loadingDetails }) => {
 
 // ── ActivityTab Component ──────────────────────────────────────────────────
 
-const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, loadingMore, allLoaded, socialView, setSocialView, friendsActivityStatus, setFriendsActivityStatus, friendsActivity, friendsFetchProgress, failedFriends, onRefreshFriends, onResetFriends, friendsActivityTs, ownUsername, socialProfileMap = new Map() }) => {
+const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, games = [], loadingMore, allLoaded, socialView, setSocialView, friendsActivityStatus, setFriendsActivityStatus, friendsActivity, friendsFetchProgress, failedFriends, onRefreshFriends, onResetFriends, friendsActivityTs, ownUsername, socialProfileMap = new Map() }) => {
   const [selectedDay, setSelectedDay] = useState(null);
   const [visibleSessionCount, setVisibleSessionCount] = useState(100);
 
@@ -821,11 +821,29 @@ const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, loading
   const streak  = useMemo(() => computeStreak(heatmapData, 1), [heatmapData]);
   const year    = useMemo(() => yearOf(heatmapData), [heatmapData]);
   const yearPts = useMemo(() => yearOf(heatmapData, 'points').total, [heatmapData]);
-  const recent14 = useMemo(() => {
+  // The dexes that moved in the last 14 days: unlocks and points gained in each game, newest first, with its
+  // progress now and before the fortnight (now minus what was unlocked in it) for the two-tone ring
+  const moved = useMemo(() => {
     const from = addDays(dayKey(new Date()), -13);
-    const recentAchs = achievements.filter(a => dayKey(a.date) >= from);
-    return { n: recentAchs.length, games: new Set(recentAchs.map(a => a.gameId)).size };
-  }, [achievements]);
+    const byGame = new Map();
+    achievements.forEach(a => {
+      if (dayKey(a.date) < from) return;
+      const r = byGame.get(a.gameId) ?? { gameId: a.gameId, gameTitle: a.gameTitle, gameIcon: a.gameIcon, consoleName: a.consoleName, n: 0, pts: 0, last: a.date };
+      r.n++; r.pts += a.points || 0;
+      if (a.date > r.last) r.last = a.date;
+      byGame.set(a.gameId, r);
+    });
+    const byId = new Map(games.map(g => [Number(g.id), g]));
+    return [...byGame.values()].map(r => {
+      const g = byId.get(Number(r.gameId));
+      const total = g?.achievementsTotal || 0;
+      const now = g ? g.achievementsUnlocked : null;
+      const before = now != null ? Math.max(0, now - r.n) : null;
+      return { ...r, game: g, total, now, before };
+    }).sort((a, b) => b.last.localeCompare(a.last));
+  }, [achievements, games]);
+  const [movedAll, setMovedAll] = useState(false);
+  const movedTotals = useMemo(() => moved.reduce((t, m) => ({ n: t.n + m.n, pts: t.pts + m.pts }), { n: 0, pts: 0 }), [moved]);
   const describeDay = key => heatmapData[key] ? `${key} · ${heatmapData[key].count} achievement${heatmapData[key].count !== 1 ? 's' : ''} · ${heatmapData[key].points} pts` : key;
 
   // Merged feed for Friends view: own achievements + all friends' achievements, sorted newest first
@@ -1108,20 +1126,53 @@ const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, loading
           <div className="flex flex-col gap-4 anim-fade tl-tabs">
             <ActivitySummary
               open={summaryOpen} onToggle={toggleSummary}
-              fold={[
-                { v: recent14.n, l: recent14.n === 1 ? 'Unlock' : 'Unlocks', color: 'var(--accent)' },
-                { v: recent14.games, l: recent14.games === 1 ? 'Game' : 'Games' },
-                { v: year.total.toLocaleString(), l: 'Past year' },
-              ]}
+              title="Last 14 days"
+              totals={moved.length > 0 && <>
+                <b className="num">{movedTotals.n}</b> unlock{movedTotals.n !== 1 ? 's' : ''} · <b className="num text-gold">+{movedTotals.pts}</b> pts · <b className="num">{moved.length}</b> dex{moved.length !== 1 ? 'es' : ''}
+              </>}
               stats={[
                 { v: year.total.toLocaleString(), l: 'Unlocks', color: 'var(--accent)' },
                 { v: yearPts.toLocaleString(), l: 'Points', color: 'var(--gold)' },
                 { v: year.best ? year.best.count : '–', l: 'Best day', sub: year.best ? fmtDayLong(year.best.key) : null },
               ]}
-              streak={streak} heatmapData={heatmapData}
-              cellLabel={key => heatmapData[key]?.count ?? ''} describe={describeDay}
+              streak={streak}
               selectedDay={selectedDay} onSelectDay={setSelectedDay}
-              heatmap={heatmap} />
+              heatmap={heatmap}>
+              {moved.length === 0 ? (
+                <p className="mdex-none">No dex moved in the last 14 days.{achievements[0] && <> Your last unlock was on {fmtDayLong(dayKey(achievements[0].date))}.</>}</p>
+              ) : (
+                <div className="mdex-list">
+                  {(movedAll ? moved : moved.slice(0, 3)).map(m => {
+                    const p = parseTitle(m.gameTitle);
+                    const pct = v => m.total ? v / m.total * 100 : 0;
+                    const mastered = m.total > 0 && m.now >= m.total;
+                    const c = mastered ? 'var(--gold)' : m.game?.isBeaten ? 'var(--silver)' : 'var(--accent)';
+                    return (
+                      <a key={m.gameId} href={`../game/?id=${m.gameId}`} className="mrow">
+                        <span className={`dring ${mastered ? 'full' : ''}`} title={m.total ? `${m.before} → ${m.now} of ${m.total}` : undefined}
+                          style={{ '--p': pct(m.now ?? 0), '--b': pct(m.before ?? 0), '--cb': 'rgb(var(--c-ink) / 0.3)', '--c': c, '--s': '44px', '--w': '4px' }}>
+                          <img src={getMediaUrl(m.gameIcon)} alt="" loading="lazy" />
+                        </span>
+                        <span className="mrow-main">
+                          <span className="mrow-t"><span className="truncate">{p.baseTitle}</span>{p.isSubset && <span className="subset-tag">Subset</span>}</span>
+                          <span className="mrow-s"><span className="dex-no">No.{m.gameId}</span>{m.consoleName && <span className="truncate">{m.consoleName}</span>}{mastered && m.before < m.total && <b className="text-gold">Mastered</b>}</span>
+                        </span>
+                        <span className="mrow-e">
+                          <b style={{ color: c }}>+{m.n}</b>
+                          {m.total > 0 && <span>{m.before} → {m.now}<small>/{m.total}</small></span>}
+                        </span>
+                      </a>
+                    );
+                  })}
+                  {moved.length > 3 && (
+                    <button type="button" onClick={() => setMovedAll(o => !o)} className="roster-more mdex-all">
+                      {movedAll ? 'Show fewer' : `${moved.length - 3} more dex${moved.length - 3 !== 1 ? 'es' : ''}`}
+                      <ChevronDown size={12} className={movedAll ? 'rotate-180' : ''} />
+                    </button>
+                  )}
+                </div>
+              )}
+            </ActivitySummary>
 
             <div>
               <div className="flex items-center gap-2 border-b border-line pb-1.5 mt-2 mb-1">
@@ -3052,6 +3103,7 @@ export default function App() {
                   refTime={rawData?.metadata?.extractionTimestamp}
                   heatmapData={heatmapData}
                   gameArt={gameArt}
+                  games={ALL_GAMES}
                   loadingMore={achievementsLoadingMore}
                   allLoaded={achievements !== null && !achievementsLoadingMore}
                   socialView={socialView}

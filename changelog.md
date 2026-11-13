@@ -33,7 +33,7 @@
 - **Identity rail on desktop.** From 1024px the profile is two columns: a pinned card on the left with the player (avatar, rank, motto, points, achievements, rank), the dex counter, the stat tiles and member since; tabs and content on the right, in place of the wide header
 - Game rows show their dex number
 - Game rows show the count beside a small completion ring (blue in progress, silver beaten, gold mastered) and the dex number before the title, in place of Savepoint's thin bar. User stats (Overview and the desktop rail) and the Mastered / Beaten award counts are index lines with dotted leaders instead of boxed tiles
-- **Activity summary in Cheevodex's shapes.** The last 14 days are a row of diamonds on a line, each sized and lit by that day's unlocks, with the current streak running gold along the line; tap a day to filter the timeline as before. The folded numbers, the past-year numbers and the streaks are index lines (label, dotted leader, value) instead of Savepoint's big-number tiles, bars and streak tiles
+- **Activity summary: the dexes that moved.** The top of Activity no longer counts days; it lists the games you progressed in the last 14 days, newest first, each with its icon inside a two-tone ring (what you had before the fortnight dim, what you gained in it bright, gold when mastered), its dex number and console, the unlocks gained (+9) and the count before → now. One line on top totals unlocks, points and dexes; three dexes show, the rest behind "N more dexes". "The year, streaks and heatmap" opens the past-year numbers and current / best streak as index lines, and the heatmap (tap a day to filter the timeline). Replaces Savepoint's numbers-plus-14-day-bars card
 
 ### Social
 

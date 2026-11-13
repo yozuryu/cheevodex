@@ -434,17 +434,6 @@ button.grow:hover { background: var(--box-hover); }
 .asum-less { position: absolute; top: 12px; right: 12px; z-index: 1; display: inline-flex; align-items: center; gap: 3px; height: 22px; padding: 0 2px;
              font-size: 11.5px; color: var(--accent); background: none; border: 0; }
 .asum-less:hover { color: var(--ink); }
-/* Folded: index lines, then the 14 days as diamonds at a fixed shape, then the toggle */
-.asum-fold { display: flex; align-items: center; gap: 16px; padding: 10px 8px 10px 14px; }
-.afold-stats { flex: 0 1 190px; min-width: 116px; padding: 0; background: none; border: 0; text-align: left; }
-.afold-stats .dledger { gap: 4px; }
-.afold-stats .dl-k { font-size: 11.5px; }
-.afold-stats .dl-v { font-size: 12.5px; }
-.afold-days { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-.afold-days .ddays { width: 100%; max-width: 336px; }
-.afold-days > span { font-size: 10px; color: var(--ink-3); white-space: nowrap; }
-.afold-btn { flex-shrink: 0; align-self: stretch; display: grid; place-items: center; width: 28px; color: var(--accent); background: none; border: 0; border-radius: 2px; }
-.afold-btn:hover { color: var(--ink); background: var(--box-hi); }
 .asum-h { display: flex; align-items: center; gap: 8px; min-height: 22px; margin-bottom: 8px; }
 .asum-h > span:not(.sec-mark) { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); }
 .asum-h > .sec-mark { margin-right: -2px; }
@@ -460,30 +449,6 @@ button.grow:hover { background: var(--box-hover); }
 .split-legend > span.dim { opacity: 0.4; }
 .split-legend i { width: 7px; height: 7px; border-radius: 2px; }
 .split-legend b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
-
-/* Last 14 days: one diamond per day on a thin line, sized by its unlocks; the streak runs gold */
-.ddays { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); }
-.dday { display: flex; flex-direction: column; align-items: stretch; gap: 3px; padding: 0; background: none; border: 0; min-width: 0; }
-.dday:disabled { cursor: default; }
-.dday-v { height: 12px; font-family: var(--mono); font-size: 9.5px; line-height: 12px; text-align: center; color: var(--ink-3); white-space: nowrap; overflow: hidden; }
-.dday-g { position: relative; height: 30px; display: grid; place-items: center; }
-.ddays.slim .dday-g { height: 26px; }
-.dday-g::before, .dday-g::after { content: ''; position: absolute; top: 50%; height: 1px; background: var(--line-2); }
-.dday-g::before { left: 0; right: 50%; }
-.dday-g::after { left: 50%; right: 0; }
-.dday:first-child .dday-g::before, .dday:last-child .dday-g::after { display: none; }
-.dday.sl .dday-g::before, .dday.sr .dday-g::after { background: var(--gold); }
-.dday-g i { position: relative; z-index: 1; transform: rotate(45deg); background: var(--well); border: 1px solid var(--line-2); transition: width 300ms, height 300ms; }
-.dday.low .dday-g i { background: var(--heat-1); border-color: var(--heat-2); }
-.dday.on .dday-g i { background: var(--heat-2); border-color: var(--accent); }
-.dday.streak .dday-g i { background: var(--gold); border-color: var(--gold-hi); box-shadow: 0 0 6px rgb(var(--c-gold) / 0.5); }
-.dday.on .dday-v { color: var(--accent-hi); }
-.dday.streak .dday-v { color: var(--gold); }
-.dday.today .dday-g i { outline: 1px solid var(--ink-3); outline-offset: 1px; }
-.dday.sel .dday-g i { outline: 1.5px solid var(--ink); outline-offset: 2px; }
-.dday:not(:disabled):hover .dday-g i { filter: brightness(1.25); }
-.dday-l { font-size: 9.5px; text-align: center; color: var(--ink-3); }
-.dday.today .dday-l { color: var(--ink); font-weight: 700; }
 
 .tday { position: sticky; top: env(safe-area-inset-top); z-index: 20; display: flex; align-items: baseline; gap: 8px;
         padding: 8px 2px 6px; margin-bottom: 4px; background: var(--page); }
@@ -782,7 +747,7 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 /* Progress ring: conic fill masked to a ring; the value sits in the middle */
 .dring { position: relative; flex-shrink: 0; width: var(--s, 72px); height: var(--s, 72px); display: grid; place-items: center; }
 .dring::before { content: ''; position: absolute; inset: 0; border-radius: 50%;
-  background: conic-gradient(var(--c) calc(var(--p) * 1%), rgb(var(--c-ink) / 0.09) 0);
+  background: conic-gradient(var(--cb, var(--c)) 0 calc(var(--b, var(--p)) * 1%), var(--c) 0 calc(var(--p) * 1%), rgb(var(--c-ink) / 0.09) 0);
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--w, 6px)), black calc(100% - var(--w, 6px) + 0.5px));
           mask: radial-gradient(farthest-side, transparent calc(100% - var(--w, 6px)), black calc(100% - var(--w, 6px) + 0.5px)); }
 .dring.full::before { filter: drop-shadow(0 0 6px rgb(var(--c-gold) / 0.55)); }
@@ -882,3 +847,30 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 .clog-jump button { padding: 0 2px; font-size: 11.5px; color: var(--accent); background: none; border: 0; }
 .clog-rh .dvol-t { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.35; }
 .clog-rh .dvol-m { align-self: center; }
+
+/* Activity summary: the dexes that moved in the last 14 days. Each ring shows what you had before the fortnight
+   (dim) and what you gained in it (bright), the game's icon inside */
+.mdex-h { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; padding: 12px 14px 4px; }
+.mdex-t { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); }
+.mdex-tot { margin-left: auto; font-size: 11.5px; color: var(--ink-3); white-space: nowrap; }
+.mdex-tot b { color: var(--ink-2); font-weight: 600; }
+.mdex-list { display: flex; flex-direction: column; padding: 2px 6px 4px; }
+.mrow { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 7px 8px; border-radius: 2px; }
+.mrow:hover { background: var(--box-hi); }
+.mrow .dring > img { position: relative; width: 30px; height: 30px; border-radius: 50%; object-fit: cover; background: var(--well); }
+.mrow-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.mrow-t { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 13px; font-weight: 600; color: var(--ink); }
+.mrow-s { display: flex; align-items: baseline; gap: 7px; min-width: 0; font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+.mrow-s > b { font-weight: 600; }
+.mrow-e { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-family: var(--mono); }
+.mrow-e > b { font-size: 17px; font-weight: 600; line-height: 1; }
+.mrow-e > span { font-size: 11px; color: var(--ink-2); white-space: nowrap; }
+.mrow-e small { color: var(--ink-3); font-size: 10.5px; }
+.mdex-all { margin: 2px 8px 4px; }
+.mdex-none { padding: 6px 14px 10px; font-size: 12px; color: var(--ink-3); }
+.mdex-open { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; padding: 8px; font-size: 11.5px; color: var(--accent);
+  background: none; border: 0; border-top: 1px solid var(--line-soft); }
+.mdex-open:hover { color: var(--ink); background: var(--box-hi); }
+.mdex > .anim-fade { border-top: 1px solid var(--line-soft); }
+.mdex .astreak { margin-top: 0; }
+.mrow-s .dex-no { font-size: 8px; color: var(--ink-2); }
