@@ -189,6 +189,12 @@ Bust cache: `sessionStorage.clear()` for session data, `localStorage.removeItem(
 - Any API call returning `AUTH_ERROR` also triggers `handleAuthError()`.
 - `validateCredentials(u, k)` is the only function used before credentials are stored (login flow).
 
+## Search engines
+
+- The sign-in page (`index.html`) carries the title, description, canonical and Open Graph tags, using the website's share image; it links to the website (yozuryu.github.io/cheevodex-site), which holds the full SEO head and sitemap.
+- Pages behind sign-in (profile, game, achievement, console, search) carry `<meta name="robots" content="noindex">`: without an account they render nothing.
+- The domain root's `robots.txt` (root site repo) lists the website's sitemap.
+
 ## PWA / Service Worker
 
 - Cache-first for same-origin static assets.

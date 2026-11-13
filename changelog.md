@@ -5,6 +5,7 @@
 ### Auth
 
 - **Login in the app's style.** Field labels and "How to get your API key" in normal case, and Connect is a solid blue button in normal case (was tiny uppercase)
+- Sign-in page for search engines and link previews: a real title and description, a canonical URL and an Open Graph card using the website's share image; a "See what Cheevodex does" link to the new website (yozuryu.github.io/cheevodex-site) under the form
 
 ### Cache
 
@@ -12,6 +13,7 @@
 - IndexedDB renamed from `cheevo_tracker` to `cheevodex`; the old database is deleted on first open, so each browser re-downloads its cache once. Logins (`raCredentials`) and settings in localStorage are untouched
 - Service worker cache bumped so installed apps pick up the new activity summary, friends feed and changelog styles
 - Service worker cache bumped for the consistency pass (styles, footers, page widths)
+- Service worker cache bumped for the sign-in page changes
 
 ### Structure
 
@@ -26,6 +28,7 @@
 - Game art (row bands, tiles, profile header) is the game's in-game or title screenshot only: RA's "No Screenshot Found" placeholder (`/Images/000002.png`) and the stretched icon are no longer used as art (`gameArt()` in `profile/utils/transform.js`)
 - One time-ago style everywhere: "5m ago", "18h ago", "3d ago", then the date (was "18 hrs ago" in some places and a bare "18h" in game rows, where it read like playtime)
 - No hard-coded white left: `#fff` and Tailwind's `text-white` became the `ink` token; the old run-card styles (`.tcard`, `.tlist`) and the segmented bar (`SegBar`) are removed
+- Pages behind sign-in (profile, game, achievement, console, search) carry `noindex`: without an account they show nothing, so they stay out of search results; the sign-in page and changelog stay indexable
 
 ### Profile
 

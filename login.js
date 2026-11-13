@@ -170,7 +170,10 @@ function LoginPage() {
         <p className="text-center text-[10px] text-ink-3 mt-5 leading-relaxed">
           Your API key is stored only in your browser's local storage<br/>and sent directly to RetroAchievements.
         </p>
-        <p className="text-center text-[10px] text-ink-3 mt-3">Unofficial. Not affiliated with RetroAchievements.</p>
+        <p className="text-center text-[11px] text-ink-3 mt-3">
+          New here? <a href="https://yozuryu.github.io/cheevodex-site/" className="text-accent hover:text-ink">See what Cheevodex does</a>
+        </p>
+        <p className="text-center text-[10px] text-ink-3 mt-2">Unofficial. Not affiliated with RetroAchievements.</p>
       </div>
     </div>
   );
