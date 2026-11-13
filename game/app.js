@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Trophy, Crown, Medal, Lock, ExternalLink, AlertCircle, AlertTriangle, Flame, Feather, Gamepad2, Tag, Code, Calendar, BookOpen, MessageSquare, Loader, X, MapPin, ArrowUpCircle, Egg, Sparkles, ChevronDown, CheckCircle2, Compass } from 'lucide-react';
+import { Trophy, Crown, Medal, Lock, ExternalLink, AlertCircle, AlertTriangle, Flame, Feather, Gamepad2, Tag, Code, Calendar, BookOpen, MessageSquare, Loader, X, MapPin, ArrowUpCircle, Egg, Sparkles, ChevronDown, CheckCircle2, Compass, Info, ListOrdered, Hash, Users } from 'lucide-react';
 import { MEDIA_URL, SITE_URL, TILDE_TAG_COLORS } from '../profile/utils/constants.js';
 import { getMediaUrl, parseTitle, formatDate, formatTimeAgo } from '../profile/utils/helpers.js';
 import { getCredentials, clearCredentials, getGameInfoAndUserProgress, getGameHashes, getGameProgression, getGameExtended, getActiveClaims, getGameRankAndScore, getComments, getGameLeaderboards, getUserGameLeaderboards, getLeaderboardEntries, getGame, fetchSocial, getSocialProfileMap } from '../profile/utils/ra-api.js';
@@ -583,6 +583,8 @@ function GameApp() {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
+                  {/* Dex number: the RA game ID, in the pixel face (doc-012) */}
+                  <div className="dex-no lg art-shadow mb-1.5">Dex No.<b>{gameId}</b></div>
                   <div className="flex items-start gap-2 flex-wrap mb-1">
                     <h1 className="text-[18px] md:text-[22px] font-semibold text-white leading-tight art-shadow">
                       {parsed?.baseTitle || game.title}
@@ -638,54 +640,90 @@ function GameApp() {
 
                   <div className="flex items-center gap-2 flex-wrap text-[10px] mb-3">
                     <span className="flex items-center gap-1 text-accent"><Gamepad2 size={10} className="shrink-0" />{game.consoleName}</span>
-                    {game.developer && <>
-                      <span className="text-ink-3 select-none">·</span>
-                      <span className="flex items-center gap-1 text-ink-2"><Code size={10} className="shrink-0 text-ink-3" />{game.developer}</span>
-                    </>}
                     <span className="text-ink-3 select-none">·</span>
                     <a href={`${SITE_URL}/game/${gameId}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-ink-3 hover:text-accent transition-colors"><ExternalLink size={10} className="shrink-0" />RA</a>
                   </div>
 
-                  {/* Completion bar */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 bg-well h-[5px] rounded-[2px] overflow-hidden">
-                      <div
-                        className="h-full rounded-[2px] transition-all"
-                        style={{
-                          width: `${completionPct}%`,
-                          background: completionPct === 100 ? 'var(--gold)' : 'var(--accent)',
-                        }}
-                      />
+                  {/* Mode: hardcore once any unlock was hardcore */}
+                  {unlockedCount > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-1">
+                      {game.numAwardedToUserHardcore > 0
+                        ? <span className="text-[9px] font-bold uppercase tracking-[0.07em] px-1.5 py-[1px] rounded-[2px] border border-hc/40 text-hc bg-well/60 flex items-center gap-1"><Flame size={10} />Hardcore</span>
+                        : <span className="text-[9px] font-bold uppercase tracking-[0.07em] px-1.5 py-[1px] rounded-[2px] border border-line-2 text-ink-2 bg-well/60 flex items-center gap-1"><Feather size={10} />Softcore</span>}
                     </div>
-                    <span className="num text-[10px] font-semibold" style={{ color: completionPct === 100 ? 'var(--gold)' : 'var(--accent)' }}>
-                      {completionPct.toFixed(1)}%
-                    </span>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* ── Stats strip ── */}
-            <div className="border-t border-line bg-well/50">
-              <div className="max-w-4xl mx-auto px-2 md:px-8 py-2.5 grid grid-flow-col auto-cols-fr">
-                {[
-                  { label: 'Cheevos',  value: `${unlockedCount}`, sub: `/ ${achList.length}`,                         color: 'var(--accent)' },
-                  { label: 'Points',   value: earnedPoints.toLocaleString(), sub: `/ ${totalPoints.toLocaleString()}`, color: 'var(--gold)' },
-                  { label: 'Hardcore', value: game.numAwardedToUserHardcore.toString(),                                color: 'var(--gold)' },
-                  playtime ? { label: 'Playtime', value: playtime,                                                     color: 'var(--ink-2)' }
-                           : { label: 'Players',  value: game.numDistinctPlayersCasual.toLocaleString(),               color: 'var(--ink-3)' },
-                  playtime ? { label: 'Players',  value: game.numDistinctPlayersCasual.toLocaleString(),               color: 'var(--ink-3)' } : null,
-                ].filter(Boolean).map((s, i) => (
-                  <div key={i} className="flex flex-col items-center py-1 px-2 min-w-0">
-                    <div className="flex items-baseline gap-1">
-                      <span className="num text-[12px] md:text-[14px] font-bold" style={{ color: s.color }}>{s.value}</span>
-                      {s.sub && <span className="text-[9px] md:text-[10px] text-ink-3">{s.sub}</span>}
+            {/* ── Completion card (Savepoint's SheetHead card; .shd-* in assets/ui.css): % big, the numbers beside it,
+                 the progression meter, the bar along the bottom edge, tinted up to the % in the status colour ── */}
+            {(() => {
+              const done = completionPct >= 100;
+              const color = done ? 'var(--gold)' : 'var(--accent)';
+              const lit = Math.floor(completionPct) > 0;
+              const prog = achList.filter(a => a.type === 'progression' || a.type === 'win_condition');
+              const progDone = prog.filter(a => !!a.dateEarned).length;
+              const MAX_SEG = 20;
+              let meter = null;
+              if (prog.length > 0) {
+                const n = prog.length;
+                if (n <= MAX_SEG) meter = Array.from({ length: n }, (_, i) => <i key={i} className={i < progDone ? 'on' : ''} />);
+                else {
+                  const per = Math.ceil(n / MAX_SEG), segs = Math.ceil(n / per);
+                  meter = Array.from({ length: segs }, (_, i) => {
+                    const size = Math.min(per, n - i * per), part = Math.max(0, Math.min(size, progDone - i * per)) / size;
+                    return <i key={i} className={part >= 1 ? 'on' : ''}>{part > 0 && part < 1 && <u style={{ width: `${part * 100}%` }} />}</i>;
+                  });
+                }
+              }
+              const stats = [
+                { value: unlockedCount, total: achList.length, label: 'Achievements', color: 'var(--accent)' },
+                { value: earnedPoints.toLocaleString(), total: totalPoints.toLocaleString(), label: 'Points', color: 'var(--gold)' },
+                playtime ? { value: playtime, label: 'Played', color: 'var(--ink)' }
+                         : { value: game.numDistinctPlayersCasual.toLocaleString(), label: 'Players', color: 'var(--ink)' },
+              ];
+              return (
+                <div className="relative max-w-4xl mx-auto px-4 md:px-8 pb-4">
+                  <div className={`shd-card !mx-0 !mb-0${lit ? ' wash' : ''}`} style={{ '--p': `${Math.min(100, completionPct)}%`, '--c': color }}>
+                    <div className="shd-hrow">
+                      <div className="shd-big"><b className="num" style={{ color }}>{Math.floor(completionPct)}<small>%</small></b><span>Complete</span></div>
+                      <div className="shd-cells n3">
+                        {stats.map(st => (
+                          <div key={st.label} className="shd-stat">
+                            <div className="shd-v num"><b style={{ color: st.color }}>{st.value}</b>{st.total != null && <em>/{st.total}</em>}</div>
+                            <div className="shd-l">{st.label}</div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <span className="text-[8px] md:text-[9px] text-ink-3 uppercase tracking-[0.07em] whitespace-nowrap">{s.label}</span>
+                    {meter && (
+                      <div className="shd-steps">
+                        <Trophy size={12} className="shrink-0" /><span className="shd-steps-l">Progression</span>
+                        <span className="shd-meter">{meter}</span>
+                        <b className="num">{progDone}<span>/{prog.length}</span></b>
+                      </div>
+                    )}
+                    <span className="shd-track">{lit && <i style={{ width: `max(${Math.min(100, completionPct)}%, 8px)`, '--c': color }} />}</span>
                   </div>
-                ))}
-              </div>
-            </div>
+                  {/* The dex's facts, like the summary box at the top of a guide entry: one line on phones, labelled from md */}
+                  {(() => {
+                    const rel = game.released ? (formatDate(game.released) && !formatDate(game.released).includes('Invalid') ? formatDate(game.released) : game.released) : null;
+                    const facts = [game.developer, game.genre, rel, game.numDistinctPlayersCasual ? `${game.numDistinctPlayersCasual.toLocaleString()} players` : null].filter(Boolean);
+                    return facts.length > 0 && <p className="md:hidden mt-2.5 px-0.5 text-[11.5px] text-ink-2 leading-snug art-shadow">{facts.join(' · ')}</p>;
+                  })()}
+                  <dl className="dsum hidden md:grid">
+                    {[
+                      ['Developer', game.developer],
+                      ['Publisher', game.publisher],
+                      ['Genre', game.genre],
+                      ['Released', game.released ? (formatDate(game.released) && !formatDate(game.released).includes('Invalid') ? formatDate(game.released) : game.released) : null],
+                      ['Players', game.numDistinctPlayersCasual ? game.numDistinctPlayersCasual.toLocaleString() : null],
+                    ].filter(([, v]) => v).map(([k, v]) => <div key={k}><dt>{k}</dt><dd title={v}>{v}</dd></div>)}
+                  </dl>
+                </div>
+              );
+            })()}
           </div>
 
           {/* ── Claims banner ── */}
@@ -710,12 +748,12 @@ function GameApp() {
 
           {/* ── Tab bar (assets/tabs.js) ── */}
           <TabBar className="md:top-[26px] px-2 md:px-[max(1.375rem,calc((100%_-_56rem)/2_+_1.375rem))]" active={tab} onChange={switchTab} tabs={[
-            { id: 'achievements', label: 'Achievements', count: achList.length },
-            { id: 'details',      label: 'Info' },
-            { id: 'leaderboards', label: 'Leaderboards' },
-            { id: 'community',    label: 'Community' },
-            { id: 'hashes',       label: 'Hashes' },
-            ...(pocSubset ? [{ id: 'poc', label: 'Professor Oak' }] : []),
+            { id: 'achievements', label: 'Achievements', count: achList.length, icon: <Trophy size={15} /> },
+            { id: 'details',      label: 'Info',         icon: <Info size={15} /> },
+            { id: 'leaderboards', label: 'Leaderboards', icon: <ListOrdered size={15} /> },
+            { id: 'community',    label: 'Community',    icon: <MessageSquare size={15} /> },
+            { id: 'hashes',       label: 'Hashes',       icon: <Hash size={15} /> },
+            ...(pocSubset ? [{ id: 'poc', label: 'Professor Oak', icon: <Compass size={15} /> }] : []),
           ]} />
 
           <div ref={tabContentRef} className="flex-1 flex flex-col">
@@ -755,72 +793,53 @@ function GameApp() {
                 </div>
               )}
 
-              {/* Controls */}
-              <div className="flex flex-col mb-3 gap-1.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[8px] uppercase tracking-wider text-ink-3 w-[44px] shrink-0">Status</span>
+              {/* Controls (Savepoint's filter chips; .frow / .fchip / .fbar in assets/ui.css): status and type chips
+                   with counts in one row, then the count, sort and compare */}
+              <div className="flex flex-col mb-3 gap-2.5">
+                <div className="frow" role="group" aria-label="Show">
                   {[
-                    { value: 'all',      label: 'All'      },
-                    { value: 'unlocked', label: `Unlocked (${unlockedCount})` },
-                    { value: 'locked',   label: `Locked (${achList.length - unlockedCount})` },
+                    { value: 'all',      label: 'All',      n: achList.length },
+                    { value: 'unlocked', label: 'Unlocked', n: unlockedCount, Icon: Trophy },
+                    { value: 'locked',   label: 'Locked',   n: achList.length - unlockedCount, Icon: Lock },
                   ].map(opt => (
-                    <button key={opt.value} type="button" onClick={() => setFilter(opt.value)}
-                      className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border transition-colors ${
-                        filter === opt.value
-                          ? 'bg-accent text-well border-accent'
-                          : 'bg-well text-ink-2 border-line-2 hover:text-ink hover:border-ink-3'
-                      }`}>{opt.label}</button>
+                    <button key={opt.value} type="button" onClick={() => setFilter(opt.value)} aria-pressed={filter === opt.value}
+                      className={`fchip ${filter === opt.value ? 'on' : ''}`}>
+                      {opt.Icon && <opt.Icon size={12} />}{opt.label}<span className="n num">{opt.n}</span>
+                    </button>
+                  ))}
+                  <span className="fsep" />
+                  {[
+                    { value: 'progression', label: 'Progression', n: achList.filter(a => a.type === 'progression' || a.type === 'win_condition').length, Icon: Trophy, color: TYPE_CONFIG.progression.color },
+                    { value: 'missable',    label: 'Missable',    n: achList.filter(a => a.type === 'missable').length, Icon: AlertTriangle, color: TYPE_CONFIG.missable.color },
+                  ].filter(opt => opt.n > 0).map(opt => (
+                    <button key={opt.value} type="button" onClick={() => setTypeFilter(typeFilter === opt.value ? 'all' : opt.value)} aria-pressed={typeFilter === opt.value}
+                      className={`fchip ${typeFilter === opt.value ? 'on' : ''}`}>
+                      <opt.Icon size={12} style={{ color: opt.color }} />{opt.label}<span className="n num">{opt.n}</span>
+                    </button>
                   ))}
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[8px] uppercase tracking-wider text-ink-3 w-[44px] shrink-0">Sort</span>
-                  {[
-                    { value: 'order',  label: 'Default'  },
-                    { value: 'points', label: 'Points'   },
-                    { value: 'date',   label: 'Unlocked' },
-                  ].map(opt => (
-                    <button key={opt.value} type="button" onClick={() => setSort(opt.value)}
-                      className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border transition-colors ${
-                        sort === opt.value
-                          ? 'bg-box text-ink border-line'
-                          : 'bg-well text-ink-3 border-line-2 hover:text-ink hover:border-ink-3'
-                      }`}>{opt.label}</button>
-                  ))}
-                  <span className="ml-auto text-[9px] text-ink-3">{filteredSorted.length} / {achList.length}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[8px] uppercase tracking-wider text-ink-3 w-[44px] shrink-0">Type</span>
-                  {[
-                    { value: 'all',         label: 'All',         color: null                            },
-                    { value: 'progression', label: 'Progression', color: TYPE_CONFIG.progression.color   },
-                    { value: 'missable',    label: 'Missable',    color: TYPE_CONFIG.missable.color      },
-                  ].map(opt => (
-                    <button key={opt.value} type="button" onClick={() => setTypeFilter(opt.value)}
-                      className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border transition-colors ${
-                        typeFilter === opt.value
-                          ? 'text-well border-transparent'
-                          : 'bg-well text-ink-2 border-line-2 hover:text-ink hover:border-ink-3'
-                      }`}
-                      style={typeFilter === opt.value ? {
-                        background: opt.color || 'var(--accent)',
-                        borderColor: opt.color || 'var(--accent)',
-                      } : {}}
-                    >{opt.label}</button>
-                  ))}
-                </div>
-
-                {/* Compare row */}
-                <div className="flex items-center gap-1.5 relative">
-                  <span className="text-[8px] uppercase tracking-wider text-ink-3 w-[44px] shrink-0">Compare</span>
+                <div className="fbar">
+                  <span className="fmeta flex-1 min-w-0"><b className="num">{filteredSorted.length}</b> of {achList.length}</span>
+                  <span className="fselect-w">
+                    <select value={sort} onChange={e => setSort(e.target.value)} className="fselect" aria-label="Sort">
+                      <option value="order">Default order</option>
+                      <option value="points">Points</option>
+                      <option value="date">Unlock date</option>
+                    </select>
+                  </span>
+                {/* Compare with a friend */}
+                <div className="relative shrink-0">
                   <button type="button"
                     onClick={() => { loadFollowing(); setShowFriendPicker(true); }}
-                    className="text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-sm border bg-well text-ink-2 border-line-2 hover:text-ink hover:border-ink-3 transition-colors flex items-center gap-1">
-                    {loadingFollowing ? <><Loader size={9} className="animate-spin" /> Loading…</> : selectedFriend ? 'Change ▾' : 'Select Friend ▾'}
+                    className={`fchip !h-[34px] ${selectedFriend ? 'on' : ''}`}>
+                    {loadingFollowing ? <Loader size={12} className="animate-spin" /> : <Users size={12} />}
+                    {selectedFriend ? 'Change' : 'Compare'}
+                    <ChevronDown size={12} />
                   </button>
                   {showFriendPicker && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setShowFriendPicker(false)} />
-                      <div className="absolute top-full left-[52px] z-50 mt-1 w-56 bg-bar border border-line rounded-[3px] shadow-2xl overflow-hidden">
+                      <div className="absolute top-full right-0 z-50 mt-1 w-56 bg-bar border border-line rounded-[3px] shadow-2xl overflow-hidden">
                         {!followingList || followingList.length === 0 ? (
                           <div className="px-3 py-4 text-[10px] text-ink-3 text-center">
                             {loadingFollowing ? 'Loading…' : 'No following found.'}
@@ -843,6 +862,7 @@ function GameApp() {
                       </div>
                     </>
                   )}
+                </div>
                 </div>
               </div>
 
@@ -892,8 +912,8 @@ function GameApp() {
                   <div className="py-10 text-center text-[11px] text-ink-3">
                     {achList.length === 0 ? 'This game has no achievements yet.' : 'No achievements match this filter.'}
                   </div>
-                ) : (
-                  filteredSorted.map(ach => (
+                ) : (() => {
+                  const row = ach => (
                     <AchievementRow
                       key={ach.id}
                       ach={ach}
@@ -903,9 +923,62 @@ function GameApp() {
                       friendUser={selectedFriend ? selectedFriend.user : undefined}
                       friendAch={selectedFriend ? (loadingFriendData ? null : friendAchMap.get(ach.id)) : undefined}
                     />
-                  ))
-                )}
+                  );
+                  // Default view reads like a guide: the progression path in set order, then the rest.
+                  // Any filter, type or sort shows the plain list
+                  const isProg = a => a.type === 'progression' || a.type === 'win_condition';
+                  const prog = filteredSorted.filter(isProg);
+                  const chaptered = filter === 'all' && typeFilter === 'all' && sort === 'order' && prog.length > 0 && prog.length < filteredSorted.length;
+                  if (!chaptered) return filteredSorted.map(row);
+                  const side = filteredSorted.filter(a => !isProg(a));
+                  const chapter = (title, sub, list) => {
+                    const done = list.filter(a => !!a.dateEarned).length;
+                    const missable = list.filter(a => a.type === 'missable').length;
+                    return (
+                      <React.Fragment key={title}>
+                        <div className="dchap">
+                          <span className="dchap-t">{title}</span>
+                          <span className="dchap-s">{sub}{missable > 0 && <> · <span className="text-warn">{missable} missable</span></>}</span>
+                          <span className="dchap-n"><b>{done}</b>/{list.length}</span>
+                        </div>
+                        {list.map(row)}
+                      </React.Fragment>
+                    );
+                  };
+                  return [
+                    chapter('Progression', 'needed to beat the game', prog),
+                    chapter('Everything else', 'side content and extras', side),
+                  ];
+                })()}
               </div>
+
+              {/* See also: related dexes (the parent game of a subset, the other Professor Oak subsets) */}
+              {(() => {
+                const related = [
+                  ...(parsed?.isSubset && parentGame ? [{ id: game.parentGameId, title: parseTitle(parentGame.title).baseTitle, icon: parentGame.imageIcon, kind: 'Base game' }] : []),
+                  ...(pocSubset?.siblings ?? []).map(sb => ({ id: sb.id, title: `Professor Oak Challenge (${sb.label})`, icon: null, kind: 'Related subset' })),
+                ].filter(r => r.id);
+                if (!related.length) return null;
+                return (
+                  <div className="mt-6">
+                    <div className="flex items-center gap-2 border-b border-line pb-1.5 mb-3">
+                      <span className="sec-mark" />
+                      <span className="sec-t">See also</span>
+                    </div>
+                    <div className="seealso">
+                      {related.map(r => (
+                        <a key={r.id} href={`?id=${r.id}`}>
+                          {r.icon ? <img src={getMediaUrl(r.icon)} alt="" /> : <span className="w-8 h-8 shrink-0 rounded-[2px] bg-well" />}
+                          <span className="min-w-0 flex flex-col">
+                            <span className="dex-no">Dex No.<b>{r.id}</b> · {r.kind}</span>
+                            <span className="t">{r.title}</span>
+                          </span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 

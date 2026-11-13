@@ -145,7 +145,15 @@ All page `<main>` sections use `px-4 md:px-8`. Sticky bars that span edge-to-edg
 
 ### Tab bars (sticky)
 
-Use `TabBar` from `assets/tabs.js` for page tabs (uppercase 12px/600, sliding 3px blue underline). It is sticky at the top; pass `className="md:top-[26px]"` (the global Topbar is 26px tall on desktop) plus any page padding. Wrap the tab content in one element and call `useSwipeTabs(ref, ids, active, onChange, ready)` for phone swipe.
+Use `TabBar` from `assets/tabs.js` for page tabs (an icon on every tab + uppercase 12px/600 label, sliding 3px blue underline), on phones too. It is sticky at the top; pass `className="md:top-[26px]"` (the global Topbar is 26px tall on desktop) plus any page padding. Wrap the tab content in one element and call `useSwipeTabs(ref, ids, active, onChange, ready)` for phone swipe.
+
+### Dex numbers
+
+A game's dex number is its RA game ID, written `No.<id>` (or `Dex No.<id>` in page headings) with class `.dex-no` — the only place the Silkscreen pixel face is used. "Dex" is the word for an entry in the codex; never seen / caught or other Pokédex wording.
+
+### Filters
+
+Use Savepoint's shared filter styles in `assets/ui.css`, never stacked uppercase label rows: a `.frow` of sentence-case `.fchip`s (counts in `.n`, `.fsep` between groups, the row scrolls sideways), a `.fbar` with `.fsearch` (search icon + clear button), sort / group as a `<select class="fselect">` inside `<span class="fselect-w">` (its icons are token-coloured masks), and the `ViewToggle`. Counts and hints go in a plain `.fmeta` line or `.crit` chips.
 
 ### Layout direction
 

@@ -271,6 +271,7 @@ export const transformData = (data) => {
             })
             .map((a, i) => ({
               id: i,
+              gameId: a.awardData ?? null,
               title: a.title || "Unknown Game",
               ...parseTitle(a.title || "Unknown Game"),
               type: a.awardType,

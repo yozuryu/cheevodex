@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Gamepad2, Activity, BarChart2, Award, Star, ChevronDown, ChevronUp, AlertCircle, Trophy, Crown, Lock, Unlock, AlertTriangle, Flame, Feather, Medal, ShieldOff, CircleDashed, X, Clock, Layers, Users, Loader2, RefreshCw, RotateCcw, ArrowLeftRight, PieChart, TrendingUp, List, LayoutGrid } from 'lucide-react';
+import { Gamepad2, Activity, BarChart2, Award, Star, ChevronDown, ChevronUp, AlertCircle, Trophy, Crown, Lock, Unlock, AlertTriangle, Flame, Feather, Medal, ShieldOff, CircleDashed, X, Clock, Layers, Users, Loader2, RefreshCw, RotateCcw, ArrowLeftRight, PieChart, TrendingUp, List, LayoutGrid, Search, Check, Plus, Radio, ArrowDown, Hourglass, User, BookMarked, Circle, CircleDot } from 'lucide-react';
 import { MEDIA_URL, SITE_URL, TILDE_TAG_COLORS } from './utils/constants.js';
 import { getMediaUrl, parseTitle, formatTimeAgo } from './utils/helpers.js';
 import { transformData } from './utils/transform.js';
@@ -16,8 +16,11 @@ import {
 } from './utils/ra-api.js';
 import { Topbar, Footer } from '../assets/ui.js';
 import { useSheet, ArtBg } from '../assets/sheet.js';
-import { TabBar, useSwipeTabs } from '../assets/tabs.js';
-import { useGameView } from '../assets/game-view.js';
+import { TabBar, useSwipeTabs, scrollToTabs } from '../assets/tabs.js';
+import { useGameView, shortAgo } from '../assets/game-view.js';
+import { CompletionsPanel } from '../assets/completions.js';
+import { ActivitySummary, useSummaryOpen, computeStreak, yearOf, DayHead, RunCard, RunCount, UnlockRow, ActivitySkeleton } from '../assets/activity-ui.js';
+import { dayKey, addDays, fmtClock, fmtDayKey, TZ } from '../assets/time.js';
 
 const _visitedUser = new URLSearchParams(window.location.search).get('u');
 const compareParam = _visitedUser ? `&compare=${encodeURIComponent(_visitedUser)}` : '';
@@ -129,133 +132,340 @@ const GameTile = ({ game }) => {
   );
 };
 
-const GameCard = ({ game }) => {
-  const stripeColor = game.isMastered
-    ? 'border-l-gold'
-    : game.isBeaten
-    ? 'border-l-silver'
-    : game.achievementsUnlocked > 0
-    ? 'border-l-accent'
-    : game.achievementsTotal > 0
-    ? 'border-l-line-2'
-    : 'border-l-line-faint';
+// ── Game list rows (Savepoint's GameListRow; styles .grow / .glist in assets/ui.css) ──
+// RA dates come as "YYYY-MM-DD HH:MM:SS" (UTC) or ISO; Safari can't parse the former
+const raDateMs = s => {
+  if (!s) return 0;
+  const t = new Date(s.includes('T') ? s : s.replace(' ', 'T') + 'Z').getTime();
+  return Number.isNaN(t) ? 0 : t;
+};
+// Search text without accents or case, so "pokemon" finds "Pokémon"
+const fold = str => (str ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
-  const hasAchievements = game.achievementsTotal > 0;
+const ModeIcon = ({ game, size = 11 }) => {
+  if (!game.achievementsUnlocked) return null;
+  return game.hardcore
+    ? <Flame size={size} className="text-hc shrink-0" aria-label="Hardcore" />
+    : <Feather size={size} className="text-ink-2 shrink-0" aria-label="Softcore" />;
+};
+
+const GameProgress = ({ game }) => (
+  <>
+    <span className="gcount num" style={game.isMastered ? { color: 'var(--gold)' } : undefined}>
+      {game.achievementsUnlocked}<span>/{game.achievementsTotal}</span>
+    </span>
+    <div className="gbar"><i style={{ width: `${game.rawProgress}%`, background: game.isMastered ? 'var(--gold)' : 'var(--accent)' }} /></div>
+  </>
+);
+
+// One compact row: icon, title, console + subset + tags + mode, playtime · last played, count and bar,
+// the game's screenshot faded in on the right, status colour on the left edge. Links to the game page.
+const GameListRow = ({ game, extra = null }) => {
+  const hasAch = game.achievementsTotal > 0;
+  const ago = shortAgo(raDateMs(game.lastPlayedStr));
+  return (
+    <a href={`../game/?id=${game.id}${compareParam}`} className="grow" style={{ borderLeftColor: gameStatus(game).color }}>
+      {game.background && <div className="grow-art"><img src={game.background} alt="" loading="lazy" onError={e => { e.currentTarget.style.display = 'none'; }} /></div>}
+      <img src={game.icon} alt="" loading="lazy" className="grow-icon" />
+      <div className="grow-main">
+        <span className="grow-title">{game.baseTitle || game.title}</span>
+        <div className="grow-sub">
+          <span className="text-accent keep">{game.console}</span>
+          {game.isSubset && game.subsetName && <span className="text-gold-dim shrink">{game.subsetName}</span>}
+          {renderTildeTags(game.tags)}
+          <ModeIcon game={game} />
+          <span className="shrink">{[game.playtime !== 'Unknown' ? game.playtime : null, ago].filter(Boolean).join(' · ')}</span>
+        </div>
+        {extra}
+      </div>
+      <div className="grow-prog">
+        <span className="dex-no">No.<b>{game.id}</b></span>
+        {hasAch ? <GameProgress game={game} /> : <span className="text-[11px] text-ink-3">No achievements</span>}
+      </div>
+    </a>
+  );
+};
+
+const GameViewSkeleton = ({ view, count = 4 }) => view === 'tiles' ? (
+  <div className="gtiles">
+    {[...Array(count)].map((_, i) => (
+      <div key={i} className="gtile"><div className="gtile-art shimmer" /><div className="gtile-body"><div className="shimmer h-3 w-3/4 rounded-[2px]" /><div className="shimmer h-2.5 w-1/2 rounded-[2px]" /><div className="shimmer h-1 rounded-[2px]" /></div></div>
+    ))}
+  </div>
+) : (
+  <div className="glist">
+    {[...Array(count)].map((_, i) => (
+      <div key={i} className="grow"><div className="grow-icon shimmer" /><div className="grow-main"><div className="shimmer h-3 w-2/3 rounded-[2px]" /><div className="shimmer h-2.5 w-1/2 rounded-[2px]" /></div></div>
+    ))}
+  </div>
+);
+
+// ── The dex (Cheevodex's own: .dexc / .dgrid / .dent in assets/ui.css) ─────────
+// The codex of the player's cheevos: every game they've played is an entry, numbered by its RA game ID,
+// in RA's own states (played, beaten, mastered); an entry with no unlocks yet shows its icon dimmed.
+const dexState = g => g.isMastered ? 'mastered' : g.isBeaten ? 'beaten' : 'played';
+const dexCounts = games => {
+  const played = games.length;
+  const started = games.filter(g => g.achievementsUnlocked > 0).length;
+  const beaten = games.filter(g => g.isBeaten || g.isMastered).length;
+  const mastered = games.filter(g => g.isMastered).length;
+  return { played, started, beaten, mastered };
+};
+
+// Played / Beaten / Mastered with a bar each (started, beaten and mastered as a share of played)
+const DexCounter = ({ counts, onPick }) => {
+  const pct = n => counts.played ? (n / counts.played) * 100 : 0;
+  const cells = [
+    { key: 'all',      label: 'Played',   n: counts.played,   bar: pct(counts.started),  c: 'var(--accent)', title: `${counts.played} games played, ${counts.started} with unlocks` },
+    { key: 'beaten',   label: 'Beaten',   n: counts.beaten,   bar: pct(counts.beaten),   c: 'var(--silver)', title: `${counts.beaten} beaten or mastered` },
+    { key: 'mastered', label: 'Mastered', n: counts.mastered, bar: pct(counts.mastered), c: 'var(--gold)',   title: `${counts.mastered} mastered` },
+  ];
+  return (
+    <div className="dexc" role="list" aria-label="Dex">
+      {cells.map(cl => {
+        const Tag = onPick ? 'button' : 'div';
+        return (
+          <Tag key={cl.key} role="listitem" type={onPick ? 'button' : undefined} onClick={onPick ? () => onPick(cl.key) : undefined}
+            className={`dexc-cell ${cl.key}`} style={{ '--c': cl.c }} title={cl.title}>
+            <span>{cl.label}</span>
+            <b>{cl.n.toLocaleString()}</b>
+            <i><u style={{ width: `${cl.bar}%` }} /></i>
+          </Tag>
+        );
+      })}
+    </div>
+  );
+};
+
+const DEX_STATE_ICON = {
+  mastered: <Star size={11} className="text-gold" fill="currentColor" aria-label="Mastered" />,
+  beaten:   <Medal size={11} className="text-silver" aria-label="Beaten" />,
+  played:   <CircleDot size={11} className="text-accent" aria-label="In progress" />,
+  unstarted: <Circle size={11} className="text-ink-4" aria-label="Not started" />,
+};
+
+const DexEntry = ({ game }) => {
+  const st = dexState(game);
+  const unstarted = game.achievementsUnlocked === 0 && st === 'played';
+  const hasAch = game.achievementsTotal > 0;
+  return (
+    <a href={`../game/?id=${game.id}${compareParam}`} className={`dent ${st} ${unstarted ? 'unstarted' : ''}`} title={game.title}>
+      <div className="dent-top">
+        <span className="dex-no">No.<b>{game.id}</b></span>
+        <span className="dent-st">{DEX_STATE_ICON[unstarted ? 'unstarted' : st]}</span>
+      </div>
+      <div className="dent-pic"><img src={game.icon} alt="" loading="lazy" onError={e => { e.currentTarget.style.visibility = 'hidden'; }} /></div>
+      <span className="dent-t">{game.baseTitle || game.title}</span>
+      <span className="dent-c">{game.isSubset && game.subsetName ? game.subsetName : game.console}</span>
+      <div className="dent-m">
+        {hasAch ? <span><b>{game.achievementsUnlocked}</b>/{game.achievementsTotal}</span> : <span className="text-ink-3">No set</span>}
+        {hasAch && <span>{Math.floor(game.rawProgress)}%</span>}
+      </div>
+    </a>
+  );
+};
+
+const DEX_FILTERS = [
+  { value: 'all',      label: 'All'      },
+  { value: 'unbeaten', label: 'Unbeaten' },
+  { value: 'beaten',   label: 'Beaten'   },
+  { value: 'mastered', label: 'Mastered' },
+];
+const DEX_SORTS = [
+  { value: 'no',       label: 'Dex No.'     },
+  { value: 'recent',   label: 'Last played' },
+  { value: 'progress', label: 'Progress'    },
+  { value: 'title',    label: 'Title'       },
+];
+
+const DexTab = ({ games, filter, onFilter }) => {
+  const [search, setSearch] = useState('');
+  const [consoleName, setConsoleName] = useState('all');
+  const [sort, setSort] = useState('no');
+  const consoles = useMemo(() => {
+    const m = new Map();
+    games.forEach(g => m.set(g.console, (m.get(g.console) || 0) + 1));
+    return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [games]);
+  const inScope = games.filter(g => (consoleName === 'all' || g.console === consoleName)
+    && (!search || fold(g.baseTitle || g.title).includes(fold(search)) || fold(g.subsetName).includes(fold(search)) || String(g.id) === search.trim()));
+  const counts = {
+    all: inScope.length,
+    unbeaten: inScope.filter(g => !g.isBeaten && !g.isMastered).length,
+    beaten: inScope.filter(g => g.isBeaten || g.isMastered).length,
+    mastered: inScope.filter(g => g.isMastered).length,
+  };
+  const shown = inScope
+    .filter(g => filter === 'all' || (filter === 'unbeaten' ? !g.isBeaten && !g.isMastered : filter === 'beaten' ? g.isBeaten || g.isMastered : g.isMastered))
+    .sort(sort === 'recent' ? (a, b) => raDateMs(b.lastPlayedStr) - raDateMs(a.lastPlayedStr)
+        : sort === 'progress' ? (a, b) => b.rawProgress - a.rawProgress || a.id - b.id
+        : sort === 'title' ? (a, b) => (a.baseTitle || a.title).localeCompare(b.baseTitle || b.title)
+        : (a, b) => a.id - b.id);
+  // Shown as an index (grouped by console, biggest volume first) in Dex No. order with no console or search picked
+  const asIndex = sort === 'no' && consoleName === 'all' && !search;
+  const volumes = useMemo(() => {
+    if (!asIndex) return [];
+    const m = new Map();
+    shown.forEach(g => { if (!m.has(g.console)) m.set(g.console, []); m.get(g.console).push(g); });
+    return [...m.entries()].map(([name, gs]) => ({
+      name, games: gs,
+      beaten: gs.filter(g => g.isBeaten && !g.isMastered).length,
+      mastered: gs.filter(g => g.isMastered).length,
+    })).sort((a, b) => b.games.length - a.games.length || a.name.localeCompare(b.name));
+  }, [asIndex, shown]);
+  const volId = name => `dex-${name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`;
 
   return (
-    <div className={`flex flex-col bg-box-hi rounded-[3px] transition-transform duration-200 hover:-translate-y-0.5 border-l-[3px] border border-line-2 shadow-md ${stripeColor}`}>
-
-      <div className="relative flex flex-row p-3 gap-3 md:gap-4 items-center min-h-[90px] z-10 overflow-hidden rounded-t-[3px]">
-
-        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden rounded-t-[3px]">
-          <img 
-            src={game.background} 
-            alt="" 
-            className="absolute right-0 top-0 h-full w-full md:w-1/2 object-cover opacity-[0.55] object-center mix-blend-screen mask-fade" 
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-box-hi via-box-hi/95 to-transparent"></div>
+    <div className="flex flex-col gap-3">
+      {/* Search, then console and sort (one row from md); then the state chips with counts */}
+      <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col md:flex-row gap-2">
+          <div className="fsearch">
+            <Search size={14} />
+            <input type="text" inputMode="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search the dex or a No." aria-label="Search the dex" />
+            {search && <button type="button" onClick={() => setSearch('')} aria-label="Clear search"><X size={13} /></button>}
+          </div>
+          <div className="flex gap-2 md:shrink-0">
+            <span className="fselect-w !max-w-none flex-1 md:flex-none md:w-[200px]">
+              <select value={consoleName} onChange={e => setConsoleName(e.target.value)} className="fselect" aria-label="Console">
+                <option value="all">All consoles</option>
+                {consoles.map(([c, n]) => <option key={c} value={c}>{c} ({n})</option>)}
+              </select>
+            </span>
+            <span className="fselect-w !max-w-none">
+              <select value={sort} onChange={e => setSort(e.target.value)} className="fselect" aria-label="Sort">
+                {DEX_SORTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </span>
+          </div>
         </div>
-
-        <a href={`../game/?id=${game.id}${compareParam}`} className="relative z-10 shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-[2px] shadow-sm border border-well overflow-hidden bg-well hover:scale-105 transition-transform">
-           <img src={game.icon} alt={game.title} className="w-full h-full object-cover" />
-        </a>
-
-        <div className="relative z-10 flex-1 flex flex-col justify-center min-w-0">
-
-          <div className="flex flex-col mb-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <a href={`../game/?id=${game.id}${compareParam}`} className="text-[15px] md:text-base text-white font-medium tracking-wide drop-shadow-sm hover:text-accent transition-colors">
-                {game.baseTitle || game.title}
-              </a>
-              {game.isSubset && (
-                <span className="text-[8px] font-bold uppercase tracking-[0.07em] px-1.5 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">
-                  Subset
-                </span>
-              )}
-              {renderTildeTags(game.tags)}
-            </div>
-            {game.isSubset && game.subsetName && (
-              <span className="text-[10px] text-gold-dim truncate">{game.subsetName}</span>
-            )}
-          </div>
-
-          <div className="text-[11px] text-accent mb-1.5 flex items-center gap-2 flex-wrap">
-            <span className="flex items-center gap-1 shrink-0"><Gamepad2 size={12} /> {game.console}</span>
-            <span className="text-ink-3 shrink-0">|</span>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              
-              {!hasAchievements ? (
-                <span className="shrink-0 text-[9px] text-ink-3 border border-line-2 bg-well/60 px-1.5 py-[1px] rounded-sm font-semibold uppercase tracking-wider flex items-center gap-1">
-                  <ShieldOff size={10} /> No Achievements
-                </span>
-              ) : game.achievementsUnlocked === 0 ? (
-                <span className="shrink-0 text-[9px] text-ink-2 border border-line-2 bg-well/60 px-1.5 py-[1px] rounded-sm font-semibold uppercase tracking-wider flex items-center gap-1">
-                  <CircleDashed size={10} /> Not Started
-                </span>
-              ) : game.hardcore ? (
-                <span className="shrink-0 text-[9px] text-hc border border-hc/30 bg-well/60 px-1.5 py-[1px] rounded-sm font-semibold uppercase tracking-wider flex items-center gap-1">
-                  <Flame size={10} /> Hardcore
-                </span>
-              ) : (
-                <span className="shrink-0 text-[9px] text-ink-2 border border-line-2 bg-well/60 px-1.5 py-[1px] rounded-sm font-semibold uppercase tracking-wider flex items-center gap-1">
-                  <Feather size={10} /> Softcore
-                </span>
-              )}
-              
-              {game.isMastered && (
-                <span className="shrink-0 text-[9px] text-well bg-gold px-1.5 py-[1px] rounded-sm font-bold uppercase tracking-wider shadow-sm flex items-center gap-1">
-                  <Trophy size={10} /> Mastered
-                </span>
-              )}
-              {game.isBeaten && !game.isMastered && (
-                <span className="shrink-0 text-[9px] text-ink bg-chip px-1.5 py-[1px] rounded-sm font-bold uppercase tracking-wider border border-silver/40 flex items-center gap-1">
-                  <Medal size={10} /> Beaten
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 text-[10px] md:text-[11px] mb-2">
-            {game.playtime !== "Unknown" && <><div className="flex items-center gap-1 text-ink"><Clock size={9} className="text-ink-2 shrink-0" />{game.playtime}</div><span className="text-ink-3">·</span></>}
-            <span className="text-ink-3">Last Played <span className="text-ink-2">{game.lastPlayed}</span></span>
-          </div>
-
-          {hasAchievements && (() => {
-            const progAchs = game.achievements.filter(a => a.type === 'progression' || a.type === 'win_condition');
-            const progTotal = progAchs.length;
-            const progUnlocked = progAchs.filter(a => a.isUnlocked).length;
-            const progPct = progTotal > 0 ? (progUnlocked / progTotal) * 100 : null;
-            const labelW = 'w-[70px] shrink-0';
-            return (
-              <div className="flex flex-col gap-1.5">
-                {progPct !== null && (
-                  <div className="flex items-center gap-2">
-                    <span className={`${labelW} text-[8px] text-ink-3 uppercase tracking-wider text-right`}>Progression</span>
-                    <div className="flex-1 bg-well h-[4px] rounded-sm overflow-hidden max-w-full">
-                      <div
-                        className="h-full transition-all duration-1000 ease-out rounded-sm bg-gold"
-                        style={{ width: `${progPct}%` }}
-                      ></div>
-                    </div>
-                    <div className="text-[10px] text-gold shrink-0 whitespace-nowrap" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.6)' }}>
-                      <span>{progUnlocked}</span>/{progTotal} <span className="ml-0.5">({progPct.toFixed(2)}%)</span>
-                    </div>
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 min-w-0">
-                    <SegBar pct={game.rawProgress} total={game.achievementsTotal} color={gameStatus(game).color} glow={game.isMastered} />
-                  </div>
-                  <div className="num text-[10px] text-ink-2 shrink-0 whitespace-nowrap" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.6)' }}>
-                    <span className="text-ink">{game.achievementsUnlocked}</span>/{game.achievementsTotal} <span className="ml-0.5">({game.rawProgress.toFixed(2)}%)</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
+        <div className="frow" role="group" aria-label="Show">
+          {DEX_FILTERS.map(f => (
+            <button type="button" key={f.value} onClick={() => onFilter(f.value)} aria-pressed={filter === f.value}
+              className={`fchip ${filter === f.value ? 'on' : ''}`}>{f.label}<span className="n num">{counts[f.value].toLocaleString()}</span></button>
+          ))}
         </div>
       </div>
+      {/* Index line, and the console jump list when the dex is shown as an index */}
+      <div className="dindex"><b>{inScope.length.toLocaleString()}</b> dexes · <b>{new Set(inScope.map(g => g.console)).size}</b> consoles</div>
+      {asIndex && volumes.length > 1 && (
+        <div className="frow" role="navigation" aria-label="Jump to console">
+          {volumes.map(v => (
+            <button type="button" key={v.name} className="fchip" onClick={() => document.getElementById(volId(v.name))?.scrollIntoView({ block: 'start', behavior: 'smooth' })}>
+              {v.name}<span className="n num">{v.games.length}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {shown.length === 0
+        ? <div className="text-center py-12 text-ink-3 text-[12px]">No dexes match.</div>
+        : asIndex
+          ? <div key={`${filter}-idx`} className="anim-fade tl-tabs">
+              {volumes.map(v => (
+                <section key={v.name} id={volId(v.name)} className="dvol">
+                  <div className="dvol-h">
+                    <span className="dvol-t">{v.name}</span>
+                    <span className="dvol-n">{v.games.length}</span>
+                    <span className="dvol-m">
+                      {v.beaten > 0 && <span><b className="text-silver">{v.beaten}</b> beaten</span>}
+                      {v.mastered > 0 && <span><b className="text-gold">{v.mastered}</b> mastered</span>}
+                    </span>
+                  </div>
+                  <div className="dgrid">{v.games.map(g => <DexEntry key={g.id} game={g} />)}</div>
+                </section>
+              ))}
+            </div>
+          : <div key={`${filter}-${sort}-${consoleName}`} className="dgrid anim-fade">{shown.map(g => <DexEntry key={g.id} game={g} />)}</div>}
+    </div>
+  );
+};
 
+// ── Overview stat tiles (styles .stiles / .stile in assets/ui.css) ─────────────
+const StatTiles = ({ items }) => (
+  <div className="stiles">
+    {items.map(st => {
+      // "#37,546 of 172,642": the total after the rank as small text, so it fits the narrow rail
+      const [main, rest] = String(st.value).split(/ (?=of )/);
+      return <div key={st.label} className="stile"><b title={st.value} className={st.dim ? 'text-ink-3 italic' : 'num'}>{main}{rest && <small>{rest}</small>}</b><span>{st.label}</span></div>;
+    })}
+  </div>
+);
+// Shorter labels for the tiles
+const STAT_LABELS = {
+  'Points earned in the last 7 days': 'Points, last 7 days',
+  'Points earned in the last 30 days': 'Points, last 30 days',
+  'Average points per week': 'Avg points per week',
+};
+
+// ── Progress filter bar (Savepoint's ProgressFilterBar; .frow / .fchip / .fbar in assets/ui.css) ──
+// Views bucket started-but-unfinished games, first match wins: nearly there → in progress → abandoned.
+// "Nearly there" ignores recency on purpose — a game dropped at 80% is the one most worth picking back up.
+const NEARLY_PCT = 75;
+const STALE_MS   = 30 * 24 * 60 * 60 * 1000;
+const PROGRESS_VIEWS = [
+  { value: 'all',        label: 'All'          },
+  { value: 'nearly',     label: 'Nearly there', rules: [[Trophy, <><b>75%+</b> done</>], [ArrowDown, 'Fewest left first']] },
+  { value: 'inprogress', label: 'In progress',  rules: [[Clock, <>Played in the last <b>30</b> days</>], [ArrowDown, 'Most recent first']] },
+  { value: 'abandoned',  label: 'Abandoned',    rules: [[Hourglass, 'Unfinished'], [Clock, <>Idle <b>30+</b> days</>]] },
+];
+const PROGRESS_SORTS = [
+  { value: 'overall', label: 'Overall %'   },
+  { value: 'recent',  label: 'Last played' },
+];
+
+const applyProgressView = (games, view) => {
+  const now = Date.now();
+  const isNearly = g => !g.isMastered && g.rawProgress >= NEARLY_PCT;
+  const isStale  = g => { const t = raDateMs(g.lastPlayedStr); return !t || now - t > STALE_MS; };
+  const byRecency = (a, b) => raDateMs(b.lastPlayedStr) - raDateMs(a.lastPlayedStr);
+  const left = g => g.achievementsTotal - g.achievementsUnlocked;
+  if (view === 'nearly')     return games.filter(isNearly).sort((a, b) => (left(a) - left(b)) || (b.rawProgress - a.rawProgress));
+  if (view === 'inprogress') return games.filter(g => !g.isMastered && !isNearly(g) && !isStale(g)).sort(byRecency);
+  if (view === 'abandoned')  return games.filter(g => !g.isMastered && !isNearly(g) && isStale(g)).sort(byRecency);
+  return null; // 'all': the caller applies its sort and the Mastered toggle
+};
+const progressViewCounts = (games, showMastered) => Object.fromEntries(PROGRESS_VIEWS.map(v => [v.value,
+  v.value === 'all' ? games.filter(g => showMastered || !g.isMastered).length : applyProgressView(games, v.value).length]));
+
+const SearchField = ({ value, onChange }) => (
+  <div className="fsearch">
+    <Search size={14} />
+    <input type="text" inputMode="search" value={value} onChange={e => onChange(e.target.value)} placeholder="Search games" aria-label="Search games" />
+    {value && <button type="button" onClick={() => onChange('')} aria-label="Clear search"><X size={13} /></button>}
+  </div>
+);
+
+const ProgressFilterBar = ({ view, onView, sort, onSort, showMastered, onShowMastered, counts, search, onSearch, viewToggle }) => {
+  const rules = PROGRESS_VIEWS.find(v => v.value === view)?.rules;
+  return (
+    <div className="flex flex-col gap-2.5 mb-1 anim-fade">
+      <div className="frow" role="group" aria-label="Show">
+        {PROGRESS_VIEWS.map(v => (
+          <button type="button" key={v.value} onClick={() => onView(v.value)} aria-pressed={view === v.value}
+            className={`fchip ${view === v.value ? 'on' : ''}`}>{v.label}{counts && <span className="n num">{counts[v.value].toLocaleString()}</span>}</button>
+        ))}
+        {view === 'all' && (
+          <>
+            <span className="fsep" />
+            <button type="button" onClick={() => onShowMastered(v => !v)} aria-pressed={showMastered} title="Include mastered games"
+              className={`fchip anim-fade ${showMastered ? 'on' : ''}`}>
+              {showMastered ? <Check size={12} /> : <Plus size={12} />}Mastered
+            </button>
+          </>
+        )}
+      </div>
+      <div className="fbar">
+        <SearchField value={search} onChange={onSearch} />
+        {view === 'all' && (
+          <span className="fselect-w anim-fade">
+            <select value={sort} onChange={e => onSort(e.target.value)} className="fselect" aria-label="Sort">
+              {PROGRESS_SORTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </span>
+        )}
+        {viewToggle}
+      </div>
+      {rules && <div key={view} className="crits anim-fade">{rules.map(([Icon, text], i) => <span key={i} className="crit"><Icon />{text}</span>)}</div>}
     </div>
   );
 };
@@ -669,9 +879,8 @@ const FeedSession = ({ session, hideUser = false, socialProfileMap = new Map() }
 
 // ── ActivityTab Component ──────────────────────────────────────────────────
 
-const ActivityTab = ({ achievements, refTime, heatmapData, loadingMore, allLoaded, socialView, setSocialView, friendsActivityStatus, setFriendsActivityStatus, friendsActivity, friendsFetchProgress, failedFriends, onRefreshFriends, onResetFriends, friendsActivityTs, ownUsername, socialProfileMap = new Map() }) => {
+const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, loadingMore, allLoaded, socialView, setSocialView, friendsActivityStatus, setFriendsActivityStatus, friendsActivity, friendsFetchProgress, failedFriends, onRefreshFriends, onResetFriends, friendsActivityTs, ownUsername, socialProfileMap = new Map() }) => {
   const [selectedDay, setSelectedDay] = useState(null);
-  const [collapsedDays, setCollapsedDays] = useState(new Set());
   const [visibleSessionCount, setVisibleSessionCount] = useState(100);
 
   const heatmapScrollRef = useRef(null);
@@ -681,11 +890,6 @@ const ActivityTab = ({ achievements, refTime, heatmapData, loadingMore, allLoade
     requestAnimationFrame(() => { heatmapScrollRef.current.scrollLeft = heatmapScrollRef.current.scrollWidth; });
   }, [heatmapKeys]);
 
-  const toggleDay = (day) => setCollapsedDays(prev => {
-    const next = new Set(prev);
-    next.has(day) ? next.delete(day) : next.add(day);
-    return next;
-  });
 
   // Build day map: { 'YYYY-MM-DD': { count, points, achievements[] } }
   const dayMap = useMemo(() => {
@@ -784,6 +988,18 @@ const ActivityTab = ({ achievements, refTime, heatmapData, loadingMore, allLoade
       });
   }, [achievements, selectedDay, dayMap]);
 
+  // Summary numbers (assets/activity-ui.js): the last 14 days (folded row) and the past year (open card)
+  const [summaryOpen, toggleSummary] = useSummaryOpen();
+  const streak  = useMemo(() => computeStreak(heatmapData, 1), [heatmapData]);
+  const year    = useMemo(() => yearOf(heatmapData), [heatmapData]);
+  const yearPts = useMemo(() => yearOf(heatmapData, 'points').total, [heatmapData]);
+  const recent14 = useMemo(() => {
+    const from = addDays(dayKey(new Date()), -13);
+    const recentAchs = achievements.filter(a => dayKey(a.date) >= from);
+    return { n: recentAchs.length, games: new Set(recentAchs.map(a => a.gameId)).size };
+  }, [achievements]);
+  const describeDay = key => heatmapData[key] ? `${key} · ${heatmapData[key].count} achievement${heatmapData[key].count !== 1 ? 's' : ''} · ${heatmapData[key].points} pts` : key;
+
   // Merged feed for Friends view: own achievements + all friends' achievements, sorted newest first
   const mergedFeed = useMemo(() => {
     const ownRows = achievements.map(ach => ({ ach, username: ownUsername, isOwn: true }));
@@ -871,10 +1087,10 @@ const ActivityTab = ({ achievements, refTime, heatmapData, loadingMore, allLoade
       {/* ── Mine / Friends toggle ── */}
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-1.5">
-          {['mine', 'friends'].map(v => (
-            <button key={v} onClick={() => setSocialView(v)}
-              className={`text-[11px] px-3 py-1 rounded-[2px] border font-medium transition-colors uppercase tracking-wider ${socialView === v ? 'bg-box text-ink border-line' : 'bg-well text-ink-3 border-line-2 hover:text-ink'}`}>
-              {v}
+          {[['mine', 'Mine'], ['friends', 'Friends']].map(([v, label]) => (
+            <button type="button" key={v} onClick={() => setSocialView(v)} aria-pressed={socialView === v}
+              className={`fchip ${socialView === v ? 'on' : ''}`}>
+              {label}
             </button>
           ))}
           {socialView === 'friends' && (
@@ -906,9 +1122,9 @@ const ActivityTab = ({ achievements, refTime, heatmapData, loadingMore, allLoade
             </div>
           )}
         </div>
-        <div className="flex items-center justify-between">
+        {socialView === 'friends' && <div className="flex items-center justify-between">
           <span className="text-[9px] text-ink-3 opacity-60">{tzName}</span>
-          {socialView === 'friends' && (
+          {(
             <div className="flex items-center gap-1">
               {[['sessions', 'By Session'], ['users', 'By User']].map(([mode, label]) => (
                 <button key={mode} onClick={() => setGroupMode(mode)}
@@ -918,7 +1134,7 @@ const ActivityTab = ({ achievements, refTime, heatmapData, loadingMore, allLoade
               ))}
             </div>
           )}
-        </div>
+        </div>}
       </div>
 
       {socialView === 'friends' ? (
@@ -1107,236 +1323,146 @@ const ActivityTab = ({ achievements, refTime, heatmapData, loadingMore, allLoade
 
 
         </div>
-      ) : <>
-
-      {/* ── Heatmap ── */}
-      <div>
-        <div className="flex items-center gap-2 border-b border-line pb-1.5 mb-3">
-          <span className="sec-mark" />
-          <span className="sec-t flex items-center gap-2"><Activity size={15} className="text-accent" /> Activity</span>
-          <span className="text-[10px] text-ink-3 ml-auto hidden sm:block">{allLoaded ? '1 year' : '~6 months'} · {achievements.length} achievements · click a day to filter</span>
-          <span className="text-[10px] text-ink-3 ml-auto sm:hidden">{achievements.length} achievements</span>
-        </div>
-
-        <div className="overflow-x-auto" ref={heatmapScrollRef}>
-          <div style={{ minWidth: `${53 * 14}px` }}>
-            {/* Month labels */}
-            <div className="flex mb-1" style={{ paddingLeft: '28px' }}>
-              {weeks.map((_week, wi) => {
-                const ml = monthLabels.find(m => m.wi === wi);
-                return <div key={wi} style={{ flex: 1, fontSize: '8px', color: 'var(--ink-3)', whiteSpace: 'nowrap', overflow: 'hidden' }}>{ml ? ml.label : ''}</div>;
-              })}
-            </div>
-
-            <div className="flex gap-0">
-              {/* Day labels */}
-              <div className="flex flex-col gap-[2px] mr-1" style={{ paddingTop: '1px' }}>
-                {['M','','W','','F','','S'].map((l, i) => (
-                  <div key={i} style={{ height: '12px', width: '20px', fontSize: '7px', lineHeight: '12px', textAlign: 'right', color: 'var(--ink-3)', flexShrink: 0 }}>{l}</div>
+      ) : (() => {
+        // ── Mine: Savepoint's timeline (assets/activity-ui.js): summary card, sticky day headings, one card per run ──
+        const heatmap = (
+          <div className="overflow-x-auto" ref={heatmapScrollRef}>
+            <div style={{ minWidth: `${53 * 14}px` }}>
+              <div className="flex mb-1" style={{ paddingLeft: '28px' }}>
+                {weeks.map((_week, wi) => {
+                  const ml = monthLabels.find(m => m.wi === wi);
+                  return <div key={wi} className="text-ink-3" style={{ flex: 1, fontSize: '8px', whiteSpace: 'nowrap', overflow: 'hidden' }}>{ml ? ml.label : ''}</div>;
+                })}
+              </div>
+              <div className="flex gap-0">
+                <div className="flex flex-col gap-[2px] mr-1" style={{ paddingTop: '1px' }}>
+                  {['M','','W','','F','','S'].map((l, i) => (
+                    <div key={i} className="text-ink-3" style={{ height: '12px', width: '20px', fontSize: '7px', lineHeight: '12px', textAlign: 'right', flexShrink: 0 }}>{l}</div>
+                  ))}
+                </div>
+                <div className="flex flex-1 gap-[2px]">
+                  {weeks.map((week, wi) => (
+                    <div key={wi} className="flex flex-col gap-[2px] flex-1" style={{ minWidth: '10px' }}>
+                      {week.map(({ key }) => (
+                        <div key={key}
+                          onClick={() => heatmapData[key] && setSelectedDay(selectedDay === key ? null : key)}
+                          title={describeDay(key)}
+                          style={{ height: '12px', borderRadius: '1px', background: getColor(key), cursor: heatmapData[key] ? 'pointer' : 'default', outline: selectedDay === key ? '2px solid var(--accent)' : 'none' }} />
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-1 mt-2" style={{ paddingLeft: '28px' }}>
+                <span className="text-[8px] text-ink-3">Less</span>
+                {['var(--well)', 'var(--heat-1)', 'var(--heat-2)', 'var(--accent)', 'var(--gold)'].map(c => (
+                  <div key={c} style={{ width: '10px', height: '10px', borderRadius: '1px', background: c, flexShrink: 0 }} />
                 ))}
+                <span className="text-[8px] text-ink-3">More</span>
+              </div>
+            </div>
+          </div>
+        );
+        const fmtDayLong = key => fmtDayKey(key, { day: '2-digit', month: 'short', year: 'numeric' });
+        return (
+          <div className="flex flex-col gap-4 anim-fade tl-tabs">
+            <ActivitySummary
+              open={summaryOpen} onToggle={toggleSummary}
+              fold={[
+                { v: recent14.n, l: recent14.n === 1 ? 'Unlock' : 'Unlocks', color: 'var(--accent)' },
+                { v: recent14.games, l: recent14.games === 1 ? 'Game' : 'Games' },
+                { v: year.total.toLocaleString(), l: 'Past year' },
+              ]}
+              stats={[
+                { v: year.total.toLocaleString(), l: 'Unlocks', color: 'var(--accent)' },
+                { v: yearPts.toLocaleString(), l: 'Points', color: 'var(--gold)' },
+                { v: year.best ? year.best.count : '–', l: 'Best day', sub: year.best ? fmtDayLong(year.best.key) : null },
+              ]}
+              streak={streak} heatmapData={heatmapData}
+              cellLabel={key => heatmapData[key]?.count ?? ''} describe={describeDay}
+              selectedDay={selectedDay} onSelectDay={setSelectedDay}
+              heatmap={heatmap} />
+
+            <div>
+              <div className="flex items-center gap-2 border-b border-line pb-1.5 mt-2 mb-1">
+                <span className="sec-mark" />
+                <span className="sec-t flex items-center gap-2"><Trophy size={15} className="text-gold" /> Recent unlocks</span>
+                {selectedDay && (
+                  <button type="button" onClick={() => setSelectedDay(null)} className="ml-auto fchip on anim-fade" style={{ height: 22 }}>{fmtDayLong(selectedDay)} ✕</button>
+                )}
               </div>
 
-              {/* Grid — flex so columns stretch to fill width */}
-              <div className="flex flex-1 gap-[2px]">
-                {weeks.map((week, wi) => (
-                  <div key={wi} className="flex flex-col gap-[2px] flex-1" style={{ minWidth: '10px' }}>
-                    {week.map(({ key }) => (
-                      <div
-                        key={key}
-                        onClick={() => setSelectedDay(selectedDay === key ? null : key)}
-                        title={`${key}${heatmapData[key] ? ` · ${heatmapData[key].count} achievements · ${heatmapData[key].points} pts` : ''}`}
-                        style={{ height: '12px', borderRadius: '1px', background: getColor(key), cursor: heatmapData[key] ? 'pointer' : 'default', outline: selectedDay === key ? '2px solid var(--accent)' : 'none', transition: 'background-color 0.4s ease' }}
-                      />
-                    ))}
+              {timelineGroups.length === 0 ? (
+                <div key={selectedDay ?? 'all'} className="text-ink-2 text-[11px] py-4 italic text-center anim-fade">
+                  {selectedDay ? 'No achievements on this day.' : 'No achievements unlocked in the last year.'}
+                </div>
+              ) : (
+                <div key={selectedDay ?? 'all'} className="flex flex-col gap-4">
+                  {timelineGroups.slice(0, visibleSessionCount).map(({ day, dayPts, achCount, sessions }) => (
+                    <section key={day} className="anim-fade">
+                      <DayHead day={day}>
+                        <b className="num">{achCount}</b> unlock{achCount !== 1 ? 's' : ''} · <b className="text-gold num">+{dayPts}</b> pts
+                      </DayHead>
+                      <div className="flex flex-col gap-2">
+                        {sessions.map(session => {
+                          const p = parseTitle(session.gameTitle);
+                          const t0 = fmtClock(session.startTime), t1 = fmtClock(session.endTime);
+                          return (
+                            <RunCard key={`${session.gameId}-${session.startTime}`}
+                              accent="var(--gold)" href={`../game/?id=${session.gameId}`} icon={session.gameIcon}
+                              art={[gameArt[session.gameId]]}
+                              title={<><span className="truncate">{p.baseTitle}</span>{p.isSubset && <span className="subset-tag">Subset</span>}{!p.isSubset && renderTildeTags(p.tags)}</>}
+                              subset={p.isSubset ? p.subsetName : null}
+                              sub={<>
+                                {session.consoleName && <span className="shrink">{session.consoleName}</span>}
+                                <span className="num">{t0 === t1 ? t0 : `${t0}–${t1}`}</span>
+                                <RunCount n={session.achievements.length} />
+                              </>}
+                              rows={[...session.achievements].sort((a, b) => b.date.localeCompare(a.date)).map(ach => {
+                                const ratio = ach.trueRatio && ach.points ? ach.trueRatio / ach.points : null;
+                                const typeIcon = ach.type === 'progression' ? <Trophy size={11} className="text-gold shrink-0"><title>Progression: required to complete the game</title></Trophy>
+                                  : ach.type === 'win_condition' ? <Crown size={11} className="text-hc shrink-0"><title>Win condition: triggers game completion</title></Crown>
+                                  : ach.type === 'missable' ? <AlertTriangle size={11} className="text-warn shrink-0"><title>Missable</title></AlertTriangle> : null;
+                                return (
+                                  <UnlockRow key={`${ach.achievementId}-${ach.date}`}
+                                    href={`../achievement/?id=${ach.achievementId}`}
+                                    icon={`${MEDIA_URL}/Badge/${ach.badgeName}.png`}
+                                    title={ach.title} titleStyle={{ color: ach.hardcoreMode ? 'var(--gold)' : 'var(--ink)' }}
+                                    marks={typeIcon}
+                                    desc={ach.description}
+                                    time={<span className="num">{fmtClock(ach.date)}</span>}
+                                    value={<em className="num">
+                                      <span className="text-gold">{ach.points} pts</span>
+                                      {ratio > 0 && <span style={{ color: ratio >= 30 ? 'var(--hc)' : ratio >= 20 ? 'var(--gold)' : ratio >= 10 ? 'var(--accent)' : 'var(--ink-2)' }}> ×{ratio.toFixed(1)}</span>}
+                                    </em>} />
+                                );
+                              })} />
+                          );
+                        })}
+                      </div>
+                    </section>
+                  ))}
+                  {timelineGroups.length > visibleSessionCount && (
+                    <button type="button" onClick={() => setVisibleSessionCount(n => n + 100)} className="smore">Show more days</button>
+                  )}
+                </div>
+              )}
+
+              {!selectedDay && (
+                loadingMore ? (
+                  <div className="flex flex-col gap-2 mt-4">
+                    {[...Array(2)].map((_, i) => <div key={i} className="shimmer h-[86px] rounded-[3px]" />)}
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Legend */}
-            <div className="flex items-center gap-1 mt-2" style={{ paddingLeft: '28px' }}>
-              <span className="text-[8px] text-ink-3">Less</span>
-              {['var(--well)','var(--heat-1)','var(--heat-2)','var(--accent)','var(--gold)'].map(c => (
-                <div key={c} style={{ width: '10px', height: '10px', borderRadius: '1px', background: c, flexShrink: 0 }} />
-              ))}
-              <span className="text-[8px] text-ink-3">More</span>
-              <span className="text-[8px] text-gold ml-2">● peak</span>
-              {selectedDay && (
-                <button onClick={() => setSelectedDay(null)} className="ml-auto text-[8px] text-accent hover:text-ink uppercase tracking-wider">
-                  Clear filter ×
-                </button>
+                ) : allLoaded && achievements.length > 0 ? (
+                  <div className="flex justify-center py-3 mt-2 border-t border-line-faint anim-fade">
+                    <span className="crit"><Trophy /><b className="num">{achievements.length.toLocaleString()}</b> unlocks · the whole year</span>
+                  </div>
+                ) : null
               )}
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* ── Timeline ── */}
-      <div>
-        <div className="flex items-center gap-2 border-b border-line pb-1.5 mb-3">
-          <span className="sec-mark" />
-          <span className="sec-t flex items-center gap-2"><Trophy size={15} className="text-gold" /> Recent Unlocks</span>
-          <span className="text-[10px] text-ink-3 ml-auto flex items-center gap-1.5">
-            {selectedDay ? (<>
-              <span>{fmtDay(selectedDay)}</span>
-              <span className="text-line">·</span>
-              <span>{dayMap[selectedDay]?.count || 0} achievements</span>
-              <span className="text-line">·</span>
-              <span>{dayMap[selectedDay]?.points || 0} pts</span>
-              {(dayMap[selectedDay]?.retro || 0) > (dayMap[selectedDay]?.points || 0) && <><span className="text-line">·</span><span>{dayMap[selectedDay].retro} RP</span></>}
-            </>) : (<>
-              <span>{achievements.length} {allLoaded ? 'total' : 'loaded'}</span>
-              <span className="text-line">·</span>
-              <span>{totalPts} pts</span>
-              {totalRetro > totalPts && <><span className="text-line">·</span><span>{totalRetro} RP</span></>}
-            </>)}
-          </span>
-        </div>
-
-        {selectedDay && heatmapData[selectedDay] && !dayMap[selectedDay] ? (
-          <div className="flex flex-col gap-2 py-2">
-            {[...Array(2)].map((_, i) => (
-              <div key={i} className="flex items-center gap-2 p-2 rounded-[2px] border border-line bg-box">
-                <div className="shimmer w-8 h-8 rounded-[2px] flex-shrink-0" />
-                <div className="flex-1 flex flex-col gap-1.5">
-                  <div className="shimmer h-2.5 w-3/4 rounded" />
-                  <div className="shimmer h-2 w-1/2 rounded" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : timelineGroups.length === 0 ? (
-          <div className="text-ink-2 text-[11px] py-4 italic text-center">No achievements unlocked in the last 180 days.</div>
-        ) : (
-          <div className="flex flex-col gap-0">
-            {timelineGroups.map(({ day, dayPts, dayRetro, achCount, sessions }) => {
-              const isCollapsed = collapsedDays.has(day);
-              return (
-              <div key={day} className="mb-4 feed-item">
-                {/* Day header — clickable to collapse */}
-                <button onClick={() => toggleDay(day)} className="w-full flex items-center gap-2 mb-2 group outline-none">
-                  <div className="w-2 h-2 rounded-full bg-line border border-accent shrink-0"></div>
-                  <span className="text-[10px] text-accent font-semibold group-hover:text-ink transition-colors">{fmtDay(day)}</span>
-                  <div className="flex-1 h-px bg-line opacity-40"></div>
-                  <span className="text-[9px] text-ink-3">{achCount} achievement{achCount !== 1 ? 's' : ''} · +{dayPts} pts{dayRetro > dayPts ? ` · ${dayRetro} RP` : ''}</span>
-                  <ChevronDown size={11} className={`text-ink-3 transition-transform duration-200 shrink-0 ${isCollapsed ? '' : 'rotate-180'}`} />
-                </button>
-
-                {/* Sessions — hidden when collapsed */}
-                {!isCollapsed && sessions.map((session, si) => {
-                  const sessPts   = session.achievements.reduce((s, a) => s + (a.points    || 0), 0);
-                  const sessRetro = session.achievements.reduce((s, a) => s + (a.trueRatio || 0), 0);
-                  return (
-                  <div key={si} className="ml-4 border-l border-line pl-3 mb-3">
-                    {/* Session label */}
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <a href={`../game/?id=${session.gameId}${compareParam}`} className="w-4 h-4 rounded-[1px] overflow-hidden border border-well bg-black block hover:scale-110 transition-transform shrink-0">
-                        <img src={session.gameIcon} alt="" className="w-full h-full object-cover" />
-                      </a>
-                      <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                        {(() => { const p = parseTitle(session.gameTitle); return (<>
-                          <a href={`../game/?id=${session.gameId}${compareParam}`} className="text-[9px] text-ink hover:text-accent transition-colors uppercase tracking-wider font-medium truncate">
-                            {p.baseTitle}
-                          </a>
-                          {p.isSubset && (
-                            <>
-                              <span className="text-[7px] font-bold uppercase tracking-[0.07em] px-1 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">Subset</span>
-                              <span className="text-[8px] text-gold-dim truncate">{p.subsetName}</span>
-                            </>
-                          )}
-                          {!p.isSubset && renderTildeTags(p.tags)}
-                        </>); })()}
-                        <span className="text-[8px] text-ink-3 shrink-0">· {session.consoleName}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 shrink-0 ml-auto">
-                        <span className="text-[8px] text-ink-3">+{sessPts} pts</span>
-                        {sessRetro > sessPts && <><span className="text-[8px] text-line">·</span><span className="text-[8px] text-ink-3">{sessRetro} RP</span></>}
-                        <span className="text-[8px] text-line">·</span>
-                        <span className="text-[8px] text-ink-3">{fmtTime(session.startTime)}{session.startTime !== session.endTime ? `–${fmtTime(session.endTime)}` : ''}</span>
-                      </div>
-                    </div>
-
-                    {/* Achievements in session */}
-                    <div className="flex flex-col gap-1">
-                      {[...session.achievements].sort((a,b) => b.date.localeCompare(a.date)).map((ach, ai) => {
-                        const ratio = ach.trueRatio && ach.points ? ach.trueRatio / ach.points : null;
-                        return (
-                          <div key={ai} className={`flex items-center gap-2 p-2 rounded-[2px] border border-line border-l-[2px] ${ach.hardcoreMode ? 'border-l-gold bg-box-hi' : 'border-l-ink-2 bg-box'} hover:bg-line transition-colors`}>
-                            <a href={`../achievement/?id=${ach.achievementId}`} className="shrink-0 w-8 h-8 rounded-[2px] overflow-hidden border border-well bg-black block hover:scale-105 transition-transform">
-                              <img src={`${MEDIA_URL}/Badge/${ach.badgeName}.png`} alt={ach.title} className="w-full h-full object-cover" />
-                            </a>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                                <a href={`../achievement/?id=${ach.achievementId}`} className={`text-[11px] font-medium transition-colors truncate ${ach.hardcoreMode ? 'text-gold hover:text-gold-hi' : 'text-ink hover:text-accent'}`}>
-                                  {ach.title}
-                                </a>
-                                <span className="text-[9px] font-bold text-gold num bg-well border border-line-2 px-1.5 py-[1px] rounded-sm shrink-0">{ach.points} pts</span>
-                                {ratio > 0 && <span className="text-[9px] shrink-0" style={{ color: ratio >= 30 ? 'var(--hc)' : ratio >= 20 ? 'var(--gold)' : ratio >= 10 ? 'var(--accent)' : 'var(--ink-2)' }}>×{ratio.toFixed(1)}</span>}
-                                {ach.type === 'progression' && (
-                                  <span className="pop-wrap">
-                                    <Trophy size={11} className="text-gold" />
-                                    <span className="pop-box">
-                                      <div className="pop-name" style={{color:'var(--gold)'}}>Progression</div>
-                                      <div className="pop-sub">Required to complete the game</div>
-                                    </span>
-                                  </span>
-                                )}
-                                {ach.type === 'win_condition' && (
-                                  <span className="pop-wrap">
-                                    <Crown size={11} className="text-hc" />
-                                    <span className="pop-box">
-                                      <div className="pop-name" style={{color:'var(--hc)'}}>Win Condition</div>
-                                      <div className="pop-sub">Triggers game completion</div>
-                                    </span>
-                                  </span>
-                                )}
-                                {ach.type === 'missable' && (
-                                  <span className="pop-wrap">
-                                    <AlertTriangle size={11} className="text-warn" />
-                                    <span className="pop-box">
-                                      <div className="pop-name" style={{color:'var(--warn)'}}>Missable</div>
-                                      <div className="pop-sub">Can be permanently missed</div>
-                                    </span>
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-[9px] text-ink-2 truncate">{ach.description}</p>
-                            </div>
-                            <span className="text-[9px] text-ink-3 shrink-0">{fmtTime(ach.date)}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ); })}
-              </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* ── Loading / done indicator ── */}
-        {!selectedDay && (
-          loadingMore ? (
-            <div className="flex flex-col gap-2 mt-4">
-              {[...Array(2)].map((_, i) => (
-                <div key={i} className="flex items-center gap-2 p-2 rounded-[2px] border border-line bg-box">
-                  <div className="shimmer w-8 h-8 rounded-[2px] flex-shrink-0" />
-                  <div className="flex-1 flex flex-col gap-1.5">
-                    <div className="shimmer h-2.5 w-3/4 rounded" />
-                    <div className="shimmer h-2 w-1/2 rounded" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : allLoaded && achievements.length > 0 ? (
-            <div className="text-center py-3 mt-2 border-t border-line-faint text-[9px] text-ink-3 uppercase tracking-wider">
-              {achievements.length} achievements · last 12 months loaded
-            </div>
-          ) : null
-        )}
-      </div>
-      </>}
+        );
+      })()}
     </div>
   );
 };
@@ -1427,266 +1553,8 @@ const ProfileLoadingSkeleton = () => (
   </div>
 );
 
-const GameCardSkeleton = () => (
-  <div className="bg-box-hi border border-line-2 border-l-[3px] border-l-line-2 rounded-[3px] p-3 flex gap-4">
-    <div className="shimmer w-16 h-16 md:w-20 md:h-20 rounded-[2px] flex-shrink-0" />
-    <div className="flex-1 flex flex-col gap-2 justify-center">
-      <Sk w="w-3/4" h="h-3.5" /><Sk w="w-1/2" h="h-2.5" />
-      <div className="flex gap-2 mt-1"><Sk w="w-20" h="h-2" /><Sk w="w-16" h="h-2" /></div>
-    </div>
-  </div>
-);
 
-const ActivitySkeleton = () => (
-  <div className="flex flex-col gap-6">
-    {/* Heatmap */}
-    <div>
-      <div className="flex items-center gap-2 border-b border-line pb-1.5 mb-3">
-        <div className="shimmer w-[3px] h-[14px] rounded-[1px]" />
-        <Sk w="w-24" h="h-3.5" /><Sk w="w-48" h="h-2.5" cls="ml-auto" />
-      </div>
-      <div className="shimmer w-full h-[96px] rounded-[2px]" />
-    </div>
-    {/* Timeline */}
-    <div>
-      <div className="flex items-center gap-2 border-b border-line pb-1.5 mb-3">
-        <div className="shimmer w-[3px] h-[14px] rounded-[1px]" />
-        <Sk w="w-32" h="h-3.5" />
-      </div>
-      {[...Array(3)].map((_, i) => (
-        <div key={i} className="mb-4">
-          <div className="flex items-center gap-2 mb-2"><div className="shimmer w-2 h-2 rounded-full" /><Sk w="w-32" h="h-2.5" /></div>
-          <div className="ml-4 border-l border-line pl-3 flex flex-col gap-1.5">
-            {[...Array(2)].map((_, j) => (
-              <div key={j} className="flex items-center gap-2 p-2 bg-box border border-line rounded-[2px]">
-                <div className="shimmer w-8 h-8 rounded-[2px] flex-shrink-0" />
-                <div className="flex-1 flex flex-col gap-1.5"><Sk w="w-3/4" h="h-2.5" /><Sk w="w-1/2" h="h-2" /></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SeriesProgressTab
-// ─────────────────────────────────────────────────────────────────────────────
-
-function SeriesProgressTab({ seriesData, gamesData, backlogData }) {
-  const cards = useMemo(() => {
-    const visible = seriesData.filter(s => s.showProgress);
-
-    // Build a flat icon lookup from any source we have: detailedGameProgress + backlog
-    const gameProgress = gamesData?.detailedGameProgress ?? {};
-    const wlMap = Object.fromEntries((backlogData?.results ?? []).map(g => [g.id, g]));
-    const getGameInfo = (id) => gameProgress[id] ?? wlMap[id] ?? null;
-
-    return visible.map(series => {
-      const total = series.gameIds.length;
-
-      let tracked = 0, inProgress = 0, mastered = 0;
-      let pointsEarned = 0, pointsTotal = 0;
-      let achEarned = 0, achTotal = 0;
-      let latestAch = null; // { title, gameTitle, date }
-      const icons = [];
-
-      const iconsNoAch = [];
-      series.gameIds.forEach(id => {
-        const g  = gameProgress[id];
-        const wl = wlMap[id];
-
-        const numAchs = g?.numAchievements ?? wl?.achievementsPublished ?? 0;
-        const hasAch  = numAchs > 0;
-
-        if (hasAch) {
-          tracked++;
-          // Points total: sum from achievement data if available, else backlog pointsTotal
-          if (g?.achievements) {
-            Object.values(g.achievements).forEach(a => {
-              pointsTotal += a.points ?? 0;
-              achTotal++;
-              if (a.dateEarned) {
-                pointsEarned += a.points ?? 0;
-                achEarned++;
-                const t = new Date(a.dateEarned);
-                if (!latestAch || t > new Date(latestAch.date)) {
-                  latestAch = { title: a.title, badgeName: a.badgeName, achId: a.id, gameTitle: g.title, gameId: id, date: a.dateEarned };
-                }
-              }
-            });
-          } else if (wl) {
-            if (wl.pointsTotal)           pointsTotal += wl.pointsTotal;
-            if (wl.achievementsPublished) achTotal    += wl.achievementsPublished;
-          }
-
-          if (g) {
-            const numAwarded = g.numAwardedToUser ?? 0;
-            if (numAwarded === g.numAchievements) mastered++;
-            else if (numAwarded > 0)              inProgress++;
-          }
-        }
-
-        const imageIcon    = g?.imageIcon ?? wl?.imageIcon ?? null;
-        const title        = g?.title ?? wl?.title ?? String(id);
-        const isMastered   = hasAch && g && g.numAwardedToUser === g.numAchievements && g.numAchievements > 0;
-        const isInProgress = hasAch && g && g.numAwardedToUser > 0 && !isMastered;
-        const lastUnlockDate = (isMastered || isInProgress) && g?.achievements
-          ? Math.max(...Object.values(g.achievements).filter(a => a.dateEarned).map(a => new Date(a.dateEarned).getTime()))
-          : 0;
-        const sortBucket = isMastered ? 0 : isInProgress ? 1 : hasAch ? 2 : 3;
-        if (imageIcon) {
-          const entry = { id, icon: getMediaUrl(imageIcon), title, hasAch, isMastered, lastUnlockDate, sortBucket };
-          if (hasAch) icons.push(entry);
-          else        iconsNoAch.push(entry);
-        }
-      });
-      const allIcons = [...icons, ...iconsNoAch].sort((a, b) => {
-        if (a.sortBucket !== b.sortBucket) return a.sortBucket - b.sortBucket;
-        if (a.sortBucket <= 1) return b.lastUnlockDate - a.lastUnlockDate;
-        return a.title.localeCompare(b.title);
-      });
-
-      // Cover game: explicitly set, or fall back to first game in series
-      // Check both detailedGameProgress and backlog so unplayed games still resolve
-      const coverId   = series.coverGameId ?? series.gameIds[0];
-      const coverGame = getGameInfo(coverId);
-      const coverBg   = coverGame
-        ? getMediaUrl(coverGame.imageIngame || coverGame.imageTitle || coverGame.imageIcon)
-        : null;
-      const coverIcon = coverGame ? getMediaUrl(coverGame.imageIcon) : null;
-
-      return { series, total, tracked, inProgress, mastered, pointsEarned, pointsTotal, achEarned, achTotal, latestAch, icons: allIcons, coverBg, coverIcon, coverId };
-    }).sort((a, b) => {
-      const key = n => /^[a-zA-Z]/.test(n) ? '2' + n.toLowerCase() : /^\d/.test(n) ? '1' + n.toLowerCase() : '0' + n.toLowerCase();
-      return key(a.series.name).localeCompare(key(b.series.name));
-    });
-  }, [seriesData, gamesData, backlogData]);
-
-  if (cards.length === 0) {
-    return (
-      <div className="text-center py-12 text-ink-3 text-[12px]">
-        No series flagged for progress tracking yet.<br />
-        <span className="text-[11px]">Enable <strong className="text-ink-2">📊 Progress</strong> on a series in the admin panel.</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-3">
-      {cards.map(({ series, total, tracked, inProgress, mastered, pointsEarned, pointsTotal, achEarned, achTotal, latestAch, icons, coverBg, coverIcon, coverId }) => {
-        const achPct = achTotal > 0 ? (achEarned / achTotal) * 100 : 0;
-        const ICON_LIMIT   = 8;
-        const shownIcons   = icons.slice(0, ICON_LIMIT);
-        const extraIcons   = icons.length - ICON_LIMIT;
-        const latestAchTimeAgo = latestAch ? formatTimeAgo(latestAch.date) : null;
-
-        return (
-          <div key={series.id} className="flex flex-col bg-box-hi rounded-[3px] border-l-[3px] border border-line-2 shadow-md overflow-hidden" style={{ borderLeftColor: 'var(--gold)' }}>
-
-            {/* Top section: bg image + cover icon + title (mirrors GameCard header) */}
-            <div className="relative flex flex-row p-3 gap-3 md:gap-4 items-center min-h-[90px] overflow-hidden rounded-t-[3px]">
-              {/* Background image */}
-              {coverBg && (
-                <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden rounded-t-[3px]">
-                  <img src={coverBg} alt="" className="absolute right-0 top-0 h-full w-full md:w-1/2 object-cover opacity-[0.55] object-center mix-blend-screen mask-fade" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-box-hi via-box-hi/95 to-transparent" />
-                </div>
-              )}
-
-              {/* Cover icon */}
-              <a href={`../game/?id=${coverId}${compareParam}`}
-                className="relative z-10 shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-[2px] shadow-sm border border-well overflow-hidden bg-well hover:scale-105 transition-transform">
-                {coverIcon
-                  ? <img src={coverIcon} alt={series.name} className="w-full h-full object-cover" />
-                  : <div className="w-full h-full bg-head flex items-center justify-center text-ink-3 text-[20px]">🗂</div>
-                }
-              </a>
-
-              {/* Title + points */}
-              <div className="relative z-10 flex-1 flex flex-col justify-center min-w-0 gap-1">
-                <span className="text-[15px] md:text-base text-white font-medium tracking-wide drop-shadow-sm truncate">{series.name}</span>
-                {pointsTotal > 0 && (
-                  <span className="text-[11px] text-gold font-medium tabular-nums drop-shadow-sm">
-                    {pointsEarned.toLocaleString()} <span className="text-ink-2 font-normal">/ {pointsTotal.toLocaleString()} pts</span>
-                  </span>
-                )}
-                {latestAch && (
-                  <div className="flex items-center gap-1 min-w-0">
-                    <span className="shrink-0 w-3.5 h-3.5 rounded-[1px] overflow-hidden border border-well bg-black block">
-                      <img src={`${MEDIA_URL}/Badge/${latestAch.badgeName}.png`} alt="" className="w-full h-full object-cover" />
-                    </span>
-                    <a href={`../achievement/?id=${latestAch.achId}`}
-                      className="text-[9px] text-ink-2 hover:text-ink truncate transition-colors">{latestAch.title}</a>
-                    <span className="text-[9px] text-ink-3 shrink-0">in</span>
-                    <a href={`../game/?id=${latestAch.gameId}${compareParam}`}
-                      className="text-[9px] text-accent hover:text-ink truncate transition-colors">{parseTitle(latestAch.gameTitle).baseTitle}</a>
-                    <span className="text-[9px] text-ink-3 shrink-0">at {latestAchTimeAgo}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Progress bar */}
-            <div className="px-3 pb-3 pt-2 border-t border-line">
-              <div className="flex items-center gap-2 mb-2.5">
-                <div className="flex items-center gap-1.5 flex-1 flex-wrap">
-                  <span className="text-[9px] font-semibold uppercase tracking-wider text-ink-2 border border-line-2 bg-well/60 px-1.5 py-[1px] rounded-sm">{total} games</span>
-                  <span className="text-[9px] font-semibold uppercase tracking-wider text-ink border border-line-2 bg-well/60 px-1.5 py-[1px] rounded-sm">{tracked} tracked</span>
-                  {inProgress > 0 && <span className="text-[9px] font-semibold uppercase tracking-wider text-accent border border-accent/30 bg-well/60 px-1.5 py-[1px] rounded-sm">{inProgress} in progress</span>}
-                  {mastered > 0 && <span className="text-[9px] font-bold uppercase tracking-wider text-well bg-gold px-1.5 py-[1px] rounded-sm">{mastered} mastered</span>}
-                </div>
-                <span className="text-[10px] text-ink-2 tabular-nums shrink-0">{achEarned.toLocaleString()} / {achTotal.toLocaleString()}</span>
-                <span className="text-[10px] font-semibold tabular-nums shrink-0" style={{ color: achPct > 0 ? 'var(--gold)' : 'var(--ink-3)' }}>
-                  {achPct.toFixed(2)}%
-                </span>
-              </div>
-              <div className="h-[7px] bg-well rounded-full overflow-hidden border border-well-edge">
-                <div style={{ width: `${achPct}%`, background: achPct === 100 ? 'linear-gradient(90deg,var(--gold),var(--gold-hi))' : 'var(--gold)' }}
-                  className="h-full rounded-full transition-all" />
-              </div>
-            </div>
-
-            {/* Icon strip */}
-            {shownIcons.length > 0 && (
-              <div className="flex items-center gap-1 px-3 pb-2.5 flex-wrap border-t border-line pt-2.5">
-                {shownIcons.map(g => (
-                  <a key={g.id} href={`../game/?id=${g.id}${compareParam}`}
-                    className={`shrink-0 w-8 h-8 rounded-[2px] overflow-hidden bg-black hover:scale-110 transition-transform block ${g.isMastered ? 'border-2 border-gold' : 'border border-well'}`}>
-                    <img src={g.icon} alt={g.title} className={`w-full h-full object-cover ${g.hasAch ? '' : 'brightness-[0.35] grayscale'}`} />
-                  </a>
-                ))}
-                {extraIcons > 0 && (
-                  <span className="text-[10px] text-ink-3 ml-1 shrink-0">+{extraIcons}</span>
-                )}
-              </div>
-            )}
-
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ── Social Tab ────────────────────────────────────────────────────────────────
-
-// ── Stats tab ─────────────────────────────────────────────
-// Every number here is derived from data already in memory — the profile fetch
-// (games, awards) and the achievement chunks the Activity tab loads. No extra API calls.
-
-// Rarity has its own palette rather than the generic accents or a single-hue ramp.
-// The three warm tiers are neighbours on the hue wheel, so they are separated by
-// LIGHTNESS — mid orange, pale yellow, deep red. At equal saturation they measure
-// ΔE 8–11 against each other and collapse entirely under red-green CVD; spread
-// across lightness they clear it. The shades are also pulled away from meanings the
-// app already owns: --very-rare is far from the --gold that means *mastered*, and
-// --ultra-rare is far from the --hc red that means *error*.
-// Nothing here encodes the order — the labels, counts and percentages do that.
-// Checked with the dataviz skill's validate_palette.js against the --box surface:
-// CVD ΔE 12.4 (deutan), contrast all ≥ 3:1. The one sub-floor pair is grey↔blue at
-// ΔE 13.9, the same pair already accepted on the Consoles card.
 const RARITY_BANDS = [
   { key: 'common',    label: 'Common',     max: 1.5,      color: 'var(--ink-2)' },
   { key: 'uncommon',  label: 'Uncommon',   max: 3,        color: 'var(--accent)' },
@@ -2736,24 +2604,22 @@ export default function App() {
   const isVisitorMode = !!targetUser;
 
   const VALID_TABS = isVisitorMode
-    ? ['recent', 'progress', 'series']
-    : ['recent', 'progress', 'series', 'activity', 'backlog', 'social', 'stats'];
+    ? ['dex', 'overview', 'recent', 'progress']
+    : ['dex', 'overview', 'recent', 'progress', 'activity', 'backlog', 'social', 'stats'];
   const initialTab = (() => {
     const p = new URLSearchParams(window.location.search).get('tab');
-    return VALID_TABS.includes(p) ? p : 'recent';
+    return VALID_TABS.includes(p) ? p : 'dex';
   })();
 
   const [activeTab, setActiveTab] = useState(initialTab);
   const [progressSearch,  setProgressSearch]  = useState('');
   const [progressFilter,  setProgressFilter]  = useState('all');   // all | nearly | inprogress | abandoned
   const [showMastered,    setShowMastered]    = useState(false);
-  const [showAllRecent,   setShowAllRecent]   = useState(false);
+  const [recentSearch,    setRecentSearch]    = useState('');
+  const [dexFilter,       setDexFilter]       = useState('all');
+  const [progressSort,    setProgressSort]    = useState('overall');
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [showFloatingTabs, setShowFloatingTabs] = useState(false);
-  const [pillLeaving, setPillLeaving] = useState(false);
-  const pillLeaveTimer = useRef(null);
   const [statsExpanded, setStatsExpanded] = useState(false);
-  const [awardsExpanded, setAwardsExpanded] = useState(false);
   const tabBarRef = useRef(null);
   const tabContentRef = useRef(null);
   const [gameView, setGameView] = useGameView();
@@ -2761,10 +2627,7 @@ export default function App() {
   const [backlogStatusFilter, setBacklogStatusFilter] = useState('all');
   const [backlogGrouping, setBacklogGrouping] = useState('none');
   const [collapsedGroups, setCollapsedGroups] = useState(new Set());
-  const [backlogPage, setBacklogPage] = useState(1);
-  const [backlogPageSize, setBacklogPageSize] = useState(50);
   const [selectedGame, setSelectedGame] = useState(null);
-  const [seriesData, setSeriesData] = useState([]);
 
   const [socialView,            setSocialView]            = useState(() => {
     const v = new URLSearchParams(window.location.search).get('view');
@@ -2932,6 +2795,7 @@ export default function App() {
 
   const setTab = (tab) => {
     setActiveTab(tab);
+    scrollToTabs(tabBarRef);
     const url = new URL(window.location);
     url.searchParams.set('tab', tab);
     if (tab !== 'activity') url.searchParams.delete('view');
@@ -2939,15 +2803,17 @@ export default function App() {
   };
 
   // Tabs in display order: the desktop TabBar and the phone swipe both follow it
+  const tabIcon = Icon => <Icon size={15} />;
   const profileTabs = [
-    { id: 'recent',   label: 'Recent Games' },
-    { id: 'progress', label: 'Completion Progress' },
-    ...(seriesData.some(s => s.showProgress) ? [{ id: 'series', label: 'Series Progress' }] : []),
+    { id: 'dex',      label: 'Dex',      icon: tabIcon(BookMarked) },
+    { id: 'overview', label: 'Overview', icon: tabIcon(User) },
+    { id: 'recent',   label: 'Recent',   icon: tabIcon(Clock) },
+    { id: 'progress', label: 'Progress', icon: tabIcon(BarChart2) },
     ...(!isVisitorMode ? [
-      { id: 'activity', label: 'Activity' },
-      { id: 'backlog',  label: 'Backlog' },
-      { id: 'social',   label: 'Social' },
-      { id: 'stats',    label: 'Stats' },
+      { id: 'activity', label: 'Activity', icon: tabIcon(Activity) },
+      { id: 'backlog',  label: 'Backlog',  icon: tabIcon(Star) },
+      { id: 'social',   label: 'Social',   icon: tabIcon(Users) },
+      { id: 'stats',    label: 'Stats',    icon: tabIcon(PieChart) },
     ] : []),
   ];
   useSwipeTabs(tabContentRef, profileTabs.map(t => t.id), activeTab, setTab, !loadingProfile && !error);
@@ -3071,9 +2937,10 @@ export default function App() {
     })();
   }, [activeTab, socialError]);
 
-  // ── Load achievements when the Activity or Stats tab opens ──
+  // ── Load achievements when the Activity or Stats tab opens (and the wide Overview, for its unlock rows) ──
   useEffect(() => {
-    if (isVisitorMode || (activeTab !== 'activity' && activeTab !== 'stats')) return;
+    const wideOverview = activeTab === 'overview' && window.matchMedia('(min-width: 1024px)').matches;
+    if (isVisitorMode || (activeTab !== 'activity' && activeTab !== 'stats' && !wideOverview)) return;
     if (achievements === null && !achievementsLoadingMore) loadAchievements();
   }, [activeTab]);
 
@@ -3105,29 +2972,30 @@ export default function App() {
 
   const { profile: PROFILE_DATA, games: ALL_GAMES, backlog: BACKLOG } = useMemo(() => transformData(rawData), [rawData]);
 
+  // Screenshot per game id, for the art band of the Activity run cards
+  const gameArt = useMemo(() => Object.fromEntries(ALL_GAMES.filter(g => g.background && g.background !== g.icon).map(g => [g.id, g.background])), [ALL_GAMES]);
+
+  // Game awards for the Overview's CompletionsPanel (assets/completions.js): art from the game's screenshot
+  const awardItems = useMemo(() => (PROFILE_DATA?.gameAwards ?? []).map(a => {
+    const g = a.gameId ? ALL_GAMES.find(x => x.id === Number(a.gameId)) : null;
+    return {
+      key: `${a.gameId ?? a.id}-${a.type}`,
+      tier: a.type === 'Mastery/Completion' ? 'gold' : 'silver',
+      name: a.baseTitle || a.title,
+      tags: a.isSubset ? <span className="subset-tag ml-1.5">Subset</span> : renderTildeTags(a.tags),
+      title: a.title,
+      at: a.awardedAt,
+      sub: a.console,
+      cover: a.icon, tile: a.icon, pixel: true,
+      art: g?.background && g.background !== a.icon ? g.background : null,
+      href: a.gameId ? `../game/?id=${a.gameId}${compareParam}` : undefined,
+    };
+  }), [PROFILE_DATA, ALL_GAMES]);
+
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
       setShowScrollTop(y > 400);
-      if (isVisitorMode && window.innerWidth < 768) {
-        if (y > 150) {
-          if (pillLeaveTimer.current) { clearTimeout(pillLeaveTimer.current); pillLeaveTimer.current = null; }
-          setPillLeaving(false);
-          setShowFloatingTabs(true);
-        } else {
-          setShowFloatingTabs(prev => {
-            if (prev && !pillLeaveTimer.current) {
-              setPillLeaving(true);
-              pillLeaveTimer.current = setTimeout(() => {
-                setShowFloatingTabs(false);
-                setPillLeaving(false);
-                pillLeaveTimer.current = null;
-              }, 210);
-            }
-            return prev;
-          });
-        }
-      }
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
@@ -3142,47 +3010,30 @@ export default function App() {
     </div>
   );
 
+  // The dex counter (header on phones, identity rail on desktop); tapping a cell opens the Dex on it
+  const dex = dexCounts(ALL_GAMES);
+  const pickDex = key => { setDexFilter(key); setTab('dex'); };
+
   let displayedGames = [...ALL_GAMES];
+  let progressCounts = null;
   if (activeTab === 'recent') {
-    displayedGames.sort((a, b) => new Date(b.lastPlayedStr || 0) - new Date(a.lastPlayedStr || 0));
-    displayedGames = displayedGames.slice(0, 15);
+    // Recent: the latest 15; a search looks through every game, newest played first (up to 50)
+    if (recentSearch) {
+      const q = fold(recentSearch);
+      displayedGames = displayedGames.filter(g => fold(g.baseTitle || g.title).includes(q) || fold(g.subsetName).includes(q));
+    }
+    displayedGames.sort((a, b) => raDateMs(b.lastPlayedStr) - raDateMs(a.lastPlayedStr));
+    displayedGames = displayedGames.slice(0, recentSearch ? 50 : 15);
   } else if (activeTab === 'progress') {
-    // Progression buckets. Applied to started-but-unfinished games, first match wins:
-    // nearly there → in progress → abandoned. "Nearly there" is deliberately
-    // recency-neutral — a game you dropped at 80% is the one most worth resurrecting,
-    // so it should not disappear into the abandoned pile.
-    const NEARLY_PCT = 75;
-    const STALE_MS   = 30 * 24 * 60 * 60 * 1000;
-    const nowMs = Date.now();
-
-    const isNearly = g => !g.isMastered && g.rawProgress >= NEARLY_PCT;
-    const isStale  = g => !g.lastPlayedStr || (nowMs - new Date(g.lastPlayedStr).getTime()) > STALE_MS;
-    const byRecency = (a, b) => new Date(b.lastPlayedStr || 0) - new Date(a.lastPlayedStr || 0);
-
     displayedGames = displayedGames.filter(g =>
       g.achievementsUnlocked > 0 && g.achievementsTotal > 0
-      && (!progressSearch || (g.baseTitle || g.title || '').toLowerCase().includes(progressSearch.toLowerCase())));
-
-    if (progressFilter === 'nearly') {
-      displayedGames = displayedGames
-        .filter(isNearly)
-        // Fewest achievements left first — a set at 81% with 18 to go is not a tonight job.
-        .sort((a, b) =>
-          ((a.achievementsTotal - a.achievementsUnlocked) - (b.achievementsTotal - b.achievementsUnlocked))
-          || (b.rawProgress - a.rawProgress));
-    } else if (progressFilter === 'inprogress') {
-      displayedGames = displayedGames
-        .filter(g => !g.isMastered && !isNearly(g) && !isStale(g))
-        .sort(byRecency);
-    } else if (progressFilter === 'abandoned') {
-      displayedGames = displayedGames
-        .filter(g => !g.isMastered && !isNearly(g) && isStale(g))
-        .sort(byRecency);
-    } else {
-      displayedGames = displayedGames
-        .filter(g => showMastered || !g.isMastered)
-        .sort((a, b) => b.rawProgress - a.rawProgress);
-    }
+      && (!progressSearch || fold(g.baseTitle || g.title).includes(fold(progressSearch))));
+    progressCounts = progressViewCounts(displayedGames, showMastered);
+    displayedGames = applyProgressView(displayedGames, progressFilter) ?? displayedGames
+      .filter(g => showMastered || !g.isMastered)
+      .sort(progressSort === 'recent'
+        ? (a, b) => raDateMs(b.lastPlayedStr) - raDateMs(a.lastPlayedStr)
+        : (a, b) => b.rawProgress - a.rawProgress);
   }
 
   return (
@@ -3206,12 +3057,9 @@ export default function App() {
         const games = ALL_GAMES || [];
         const recentId = PROFILE_DATA.mostRecentGame?.id;
         const art = (games.find(g => g.id === recentId) || games[0])?.background;
-        const mastered = games.filter(g => g.isMastered).length;
-        const beaten = games.filter(g => g.isBeaten && !g.isMastered).length;
-        const started = games.filter(g => g.achievementsUnlocked > 0 && !g.isMastered && !g.isBeaten).length;
         const softOnly = PROFILE_DATA.totalPoints === 0;
         return (
-        <header className={`phead${(!isVisitorMode && activeTab !== 'recent') ? ' hidden md:block' : ''}`}>
+        <header className="phead lg:hidden">
           <ArtBg urls={[art]} variant="art-header" />
           <div className="phead-in">
             <div className="phead-main">
@@ -3258,11 +3106,7 @@ export default function App() {
                   <span>Site rank</span>
                 </div>
               </div>
-              <div className="pstatus" role="list" aria-label="Game status">
-                <div role="listitem" className="pstatus-cell" style={{ '--c': 'var(--c-gold)' }}><Trophy size={12} /><b className="num">{mastered}</b> mastered</div>
-                <div role="listitem" className="pstatus-cell" style={{ '--c': 'var(--c-silver)' }}><Medal size={12} /><b className="num">{beaten}</b> beaten</div>
-                <div role="listitem" className="pstatus-cell" style={{ '--c': 'var(--c-accent)' }}><Gamepad2 size={12} /><b className="num">{started}</b> in progress</div>
-              </div>
+              <DexCounter counts={dex} onPick={pickDex} />
               <div className="phead-meta">Member since <b>{PROFILE_DATA.memberSince}</b></div>
             </div>
           </div>
@@ -3270,237 +3114,176 @@ export default function App() {
         );
       })()}
 
-      <main className="max-w-5xl mx-auto px-4 md:px-8 py-6 flex-1 w-full">
-        
-        <div className={`grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 lg:gap-8 mb-8${(!isVisitorMode && activeTab !== 'recent') ? ' hidden md:grid' : ''}`}>
-          
-          <div className="flex flex-col gap-6">
-            
-            <div>
-              <h2 className="sec-t border-b border-line pb-1.5 flex items-center gap-2 mb-3">
-                <span className="sec-mark" />
-                <Activity size={15} className="text-accent"/> Most Recently Played
-              </h2>
-              
-              <div className="flex flex-col gap-2">
-                {PROFILE_DATA.mostRecentGame ? (
-                  <div className="bg-box/80 border border-line-2 border-l-[3px] border-l-accent rounded-[3px] p-3 flex gap-4 hover:bg-box-hi transition-colors shadow-sm">
-                    <a href={`../game/?id=${PROFILE_DATA.mostRecentGame.id}${compareParam}`} className="w-14 h-14 shrink-0 rounded-[2px] overflow-hidden border border-well bg-black block hover:scale-105 transition-transform">
-                      <img src={PROFILE_DATA.mostRecentGame.icon} alt="Icon" className="w-full h-full object-cover"/>
-                    </a>
-                    <div className="flex-1 min-w-0 flex flex-col justify-center">
-                      <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                        <a href={`../game/?id=${PROFILE_DATA.mostRecentGame.id}${compareParam}`} className="text-ink hover:text-accent font-medium text-[14px] truncate leading-tight">
-                          {PROFILE_DATA.mostRecentGame.baseTitle}
-                        </a>
-                        {PROFILE_DATA.mostRecentGame.isSubset && (
-                          <span className="text-[7px] font-bold uppercase tracking-[0.07em] px-1 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">Subset</span>
-                        )}
-                        {renderTildeTags(PROFILE_DATA.mostRecentGame.tags)}
-                      </div>
-                      {PROFILE_DATA.mostRecentGame.isSubset && (
-                        <div className="text-[10px] text-gold-dim mb-0.5 truncate">{PROFILE_DATA.mostRecentGame.subsetName}</div>
-                      )}
-                      <div className="text-[10px] mb-1 flex items-center gap-1.5">
-                         <span className="text-accent">{PROFILE_DATA.mostRecentGame.console}</span>
-                         <span className="text-ink-3">•</span>
-                         <span className="text-ink-2">{PROFILE_DATA.mostRecentGame.timeAgo}</span>
-                      </div>
-                      
-                      {PROFILE_DATA.richPresenceMsg && (
-                         <p className="text-ink text-[11px] leading-snug italic border-l-2 border-line-2 pl-2 mt-1">
-                           {PROFILE_DATA.richPresenceMsg}
-                         </p>
-                      )}
-                    </div>
+      <main className="max-w-5xl lg:max-w-[80rem] mx-auto px-4 md:px-8 py-6 flex-1 w-full">
+        {/* Desktop (≥1024px): the identity rail pinned on the left, tabs and content on the right */}
+        <div className="lg:grid lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-8 lg:items-start">
+        {(() => {
+          const lp = profileData?.mostRecentGame?.lastPlayed;
+          const lpTs = lp ? new Date(lp.includes('T') ? lp : lp.replace(' ', 'T') + 'Z').getTime() : null;
+          const dot = lpTs && (Date.now() - lpTs) < 60 * 60 * 1000 ? 'var(--online)'
+            : PROFILE_DATA.status === 'Online' ? 'var(--aqua)'
+            : PROFILE_DATA.status === 'Playing' ? 'var(--ok)'
+            : PROFILE_DATA.status === 'Offline' ? 'var(--ink-3)' : null;
+          const recentId = PROFILE_DATA.mostRecentGame?.id;
+          const art = (ALL_GAMES.find(g => g.id === recentId) || ALL_GAMES[0])?.background;
+          const softOnly = PROFILE_DATA.totalPoints === 0;
+          return (
+            <aside className="idrail" aria-label="Player">
+              <div className="idr-card">
+                <ArtBg urls={[art]} variant="art-header" />
+                <div className="idr-in">
+                  <div className="phead-av">
+                    <img src={PROFILE_DATA.avatar} alt={PROFILE_DATA.username} />
+                    {dot && <span className="dot" style={{ background: dot }} />}
                   </div>
-                ) : (
-                  <div className="text-ink-2 text-[11px] py-2">No recent games found.</div>
-                )}
-              </div>
-            </div>
-
-            {/* Most Recently Unlocked Achievement */}
-            <div>
-              <h2 className="sec-t border-b border-line pb-1.5 flex items-center gap-2 mb-3">
-                <span className="sec-mark" />
-                <Trophy size={15} className="text-gold"/> Most Recently Unlocked
-              </h2>
-              {PROFILE_DATA.mostRecentAchievement ? (
-                <div className="bg-box/80 border border-line-2 border-l-[3px] border-l-gold rounded-[3px] p-3 flex gap-3 hover:bg-box-hi transition-colors shadow-sm">
-                  <a href={`../achievement/?id=${PROFILE_DATA.mostRecentAchievement.id}`} className="shrink-0 w-12 h-12 rounded-[2px] overflow-hidden border border-well bg-black block hover:scale-105 transition-transform">
-                    <img src={`${MEDIA_URL}/Badge/${PROFILE_DATA.mostRecentAchievement.badgeName}.png`} alt={PROFILE_DATA.mostRecentAchievement.title} className="w-full h-full object-cover" />
-                  </a>
-                  <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                      <a href={`../achievement/?id=${PROFILE_DATA.mostRecentAchievement.id}`} className="text-[13px] font-medium text-gold hover:text-gold-hi transition-colors truncate leading-tight">
-                        {PROFILE_DATA.mostRecentAchievement.title}
+                  <div>
+                    <div className="idr-name">
+                      <h1 className="art-shadow">{PROFILE_DATA.username}</h1>
+                      <a href={`${SITE_URL}/user/${PROFILE_DATA.username}`} target="_blank" rel="noreferrer" title="View on RetroAchievements" className="phead-link">
+                        <img src="https://static.retroachievements.org/assets/images/favicon.webp" alt="RA" />
                       </a>
-                      <span className="text-[9px] font-bold text-gold num bg-well border border-line-2 px-1.5 py-[1px] rounded-sm shrink-0">{PROFILE_DATA.mostRecentAchievement.points} pts</span>
-                      {PROFILE_DATA.mostRecentAchievement.trueRatio > 0 && PROFILE_DATA.mostRecentAchievement.points > 0 && (() => {
-                        const ratio = PROFILE_DATA.mostRecentAchievement.trueRatio / PROFILE_DATA.mostRecentAchievement.points;
-                        return <span className="text-[9px] shrink-0" style={{ color: ratio >= 30 ? 'var(--hc)' : ratio >= 20 ? 'var(--gold)' : ratio >= 10 ? 'var(--accent)' : 'var(--ink-2)' }}>×{ratio.toFixed(1)}</span>;
-                      })()}
                     </div>
-                    <p className="text-[10px] text-ink-2 leading-snug mb-1 truncate">{PROFILE_DATA.mostRecentAchievement.description}</p>
-                    <div className="flex items-center gap-1.5 text-[10px] min-w-0">
-                      <a href={`../game/?id=${PROFILE_DATA.mostRecentAchievement.gameId}${compareParam}`} className="flex items-center gap-1 group min-w-0 shrink truncate">
-                        <img src={PROFILE_DATA.mostRecentAchievement.gameIcon} alt="" className="w-3.5 h-3.5 rounded-[1px] border border-well shrink-0" />
-                        <span className="text-accent group-hover:text-ink transition-colors truncate">{PROFILE_DATA.mostRecentAchievement.baseTitle || PROFILE_DATA.mostRecentAchievement.gameTitle}</span>
-                        {PROFILE_DATA.mostRecentAchievement.isSubset && (
-                          <>
-                            <span className="text-[7px] font-bold uppercase tracking-[0.07em] px-1 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">Subset</span>
-                            <span className="text-[8px] text-gold-dim truncate">{PROFILE_DATA.mostRecentAchievement.subsetName}</span>
-                          </>
-                        )}
-                        {!PROFILE_DATA.mostRecentAchievement.isSubset && renderTildeTags(PROFILE_DATA.mostRecentAchievement.tags)}
-                      </a>
-                      <span className="text-ink-3 shrink-0">•</span>
-                      <span className="text-ink-2 truncate shrink">{PROFILE_DATA.mostRecentAchievement.consoleName}</span>
-                      <span className="text-ink-3 shrink-0">•</span>
-                      <span className="text-ink-3 shrink-0 whitespace-nowrap">{PROFILE_DATA.mostRecentAchievement.timeAgo}</span>
+                    <div className="idr-sub">
+                      Rank <b className="text-accent num">#{PROFILE_DATA.rank}</b>
+                      {PROFILE_DATA.topPercentage !== '--%' && <> · Top <b className="text-accent num">{PROFILE_DATA.topPercentage}</b></>}
+                      <br />Last active <b className="text-ink">{PROFILE_DATA.lastActivity}</b>
                     </div>
                   </div>
+                  {PROFILE_DATA.bio && <p className="idr-motto">"{PROFILE_DATA.bio}"</p>}
                 </div>
-              ) : (
-                <div className="text-ink-2 text-[11px] py-2 italic">No achievements unlocked in the last 1 year.</div>
-              )}
-            </div>
-
-            <div>
-              <h2 className="sec-t border-b border-line pb-1.5 flex items-center gap-2 mb-2">
-                <span className="sec-mark" />
-                <BarChart2 size={15} className="text-accent"/> User Stats
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 md:gap-x-8 px-1">
-
-                <div className="flex flex-col">
-                  {PROFILE_DATA.statsLeft.map((stat, i) => (
-                    <div key={`left-${i}`} className="flex items-end text-[11px] py-[3px] group hover:bg-box-hi/40 rounded-sm px-1 transition-colors">
-                      <span className="text-ink-2 font-medium leading-tight whitespace-nowrap">{stat.label}</span>
-                      <div className="flex-1 border-b-[1.5px] border-dotted border-line-2 mx-2 relative top-[-4px] opacity-60 group-hover:border-ink-3"></div>
-                      <span className={`${stat.dim ? 'text-ink-3 italic' : 'text-ink num'} font-medium whitespace-nowrap leading-tight text-right`}>{stat.value}</span>
-                    </div>
-                  ))}
+                <div className="idr-nums">
+                  <div><b style={{ color: softOnly ? 'var(--ink-2)' : 'var(--gold)' }}>{(softOnly ? PROFILE_DATA.totalSoftcorePoints : PROFILE_DATA.totalPoints).toLocaleString()}</b><span>{softOnly ? 'SC points' : 'Points'}</span></div>
+                  <div><b className="text-ink">{PROFILE_DATA.totalUnlocked.toLocaleString()}</b><span>Achievements</span></div>
+                  <div><b className="text-accent">#{PROFILE_DATA.rank}</b><span>Site rank</span></div>
                 </div>
-
-                {/* Right column: always visible on sm+, hidden on mobile until expanded */}
-                <div className={`flex flex-col ${statsExpanded ? '' : 'hidden sm:flex'}`}>
-                  {PROFILE_DATA.statsRight.map((stat, i) => (
-                    <div key={`right-${i}`} className="flex items-end text-[11px] py-[3px] group hover:bg-box-hi/40 rounded-sm px-1 transition-colors">
-                      <span className="text-ink-2 font-medium leading-tight whitespace-nowrap">{stat.label}</span>
-                      <div className="flex-1 border-b-[1.5px] border-dotted border-line-2 mx-2 relative top-[-4px] opacity-60 group-hover:border-ink-3"></div>
-                      <span className={`${stat.dim ? 'text-ink-3 italic' : 'text-ink num'} font-medium whitespace-nowrap leading-tight text-right`}>{stat.value}</span>
-                    </div>
-                  ))}
-                </div>
-
               </div>
-
-              {/* Mobile-only expand/collapse toggle */}
-              <button
-                onClick={() => setStatsExpanded(v => !v)}
-                className="sm:hidden mt-2 w-full flex items-center justify-center gap-1.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-ink-3 hover:text-ink-2 transition-colors border-t border-line-soft"
-              >
-                <ChevronDown size={13} className={`transition-transform duration-200 ${statsExpanded ? 'rotate-180' : ''}`} />
-                {statsExpanded ? 'Show less' : 'Show more'}
-              </button>
-            </div>
-
-          </div>
-
-          <div className="flex flex-col gap-5">
-
-            {(() => {
-              const collapseLimit = window.innerWidth >= 640 ? 20 : 10;
-              const visibleAwards = awardsExpanded ? PROFILE_DATA.gameAwards : PROFILE_DATA.gameAwards.slice(0, collapseLimit);
-              const hasMore = PROFILE_DATA.gameAwards.length > collapseLimit;
-              return (
-            <div className="bg-box border border-line rounded-[3px] shadow-sm h-fit">
-              <div className="p-2.5 bg-head border-b border-line rounded-t-[2px] text-ink flex items-center gap-2">
-                <span className="sec-mark sm" />
-                <span className="card-t flex items-center gap-2">
-                  <Star size={13} /> Game Awards
-                </span>
-                {PROFILE_DATA.gameAwards.length > 0 && (() => {
-                  const mastered = PROFILE_DATA.gameAwards.filter(a => a.type === 'Mastery/Completion').length;
-                  const beaten   = PROFILE_DATA.gameAwards.length - mastered;
-                  return (
-                    <div className="ml-auto flex items-center gap-2">
-                      {mastered > 0 && <span className="flex items-center gap-0.5 text-[9px] font-semibold" style={{ color: 'var(--gold)' }}><Trophy size={9} />{mastered}</span>}
-                      {beaten   > 0 && <span className="flex items-center gap-0.5 text-[9px] font-semibold" style={{ color: 'var(--silver)' }}><Medal size={9} />{beaten}</span>}
-                    </div>
-                  );
-                })()}
+              <div>
+                <div className="idr-h">Dex</div>
+                <DexCounter counts={dex} onPick={pickDex} />
               </div>
-              <div className="p-3 grid grid-cols-5 gap-2 min-h-[60px]">
-                {PROFILE_DATA.gameAwards.length > 0 ? visibleAwards.map(award => (
-                  <div key={award.id} className="relative group cursor-help">
-                    <img
-                      src={award.icon}
-                      alt={award.title}
-                      className={`w-full aspect-square rounded-[2px] border transition-all duration-200 bg-black relative z-10 group-hover:scale-110 ${award.type === 'Mastery/Completion' ? 'border-2 border-gold' : 'border border-silver'}`}
-                    />
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[200px] bg-box border border-line rounded-[2px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-[100] shadow-xl pointer-events-none overflow-hidden">
-                      <div className="h-[2px] bg-gradient-to-r from-gold to-gold/20"></div>
-                      <div className="flex items-center gap-2 px-2.5 py-2 border-b border-line bg-head">
-                        <img src={award.icon} alt="" className="w-8 h-8 rounded-[2px] border border-gold/30 bg-black shrink-0" />
-                        <div className="flex flex-col gap-0.5 min-w-0">
-                          <div className="flex items-center gap-1 flex-wrap">
-                            <span className="text-[11px] text-white font-semibold leading-tight">{award.baseTitle || award.title}</span>
-                            {award.isSubset && <span className="text-[8px] font-bold uppercase tracking-[0.07em] px-1.5 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">Subset</span>}
-                            {!award.isSubset && renderTildeTags(award.tags)}
-                          </div>
-                          {award.isSubset && award.subsetName && <span className="text-[9px] text-gold-dim truncate">{award.subsetName}</span>}
-                        </div>
-                      </div>
-                      <div className="px-2.5 py-2 flex flex-col gap-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[9px] text-ink-3 uppercase tracking-[0.08em]">Console</span>
-                          <span className="text-[9px] text-accent font-medium">{award.console}</span>
-                        </div>
-                        <div className="h-px bg-line"></div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[9px] text-ink-3 uppercase tracking-[0.08em]">Award</span>
-                          {award.type === 'Mastery/Completion'
-                            ? <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-[1px] rounded-[2px] bg-gold text-well">Mastered</span>
-                            : <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-[1px] rounded-[2px] bg-chip text-ink border border-silver/40">Beaten</span>
-                          }
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[9px] text-ink-3 uppercase tracking-[0.08em]">Earned</span>
-                          <span className="text-[9px] text-ink">{award.date}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )) : (
-                  <div className="col-span-full text-center text-ink-3 text-[10px] py-2">No game awards yet.</div>
-                )}
-              </div>
-              {hasMore && (
-                <button
-                  onClick={() => setAwardsExpanded(v => !v)}
-                  className="w-full flex items-center justify-center gap-1 py-1.5 border-t border-line-soft text-[10px] text-ink-3 hover:text-ink-2 transition-colors"
-                >
-                  <ChevronDown size={11} className={`transition-transform duration-200 ${awardsExpanded ? 'rotate-180' : ''}`} />
-                  {awardsExpanded ? 'Show less' : `${PROFILE_DATA.gameAwards.length - collapseLimit} more`}
+              <div>
+                <div className="idr-h">Stats</div>
+                <StatTiles items={PROFILE_DATA.statsLeft.filter(st => !['Achievements unlocked', 'Points', 'Site rank'].includes(st.label)).map(st => ({ ...st, label: STAT_LABELS[st.label] ?? st.label }))} />
+                {statsExpanded && <div className="mt-2 anim-fade"><StatTiles items={PROFILE_DATA.statsRight} /></div>}
+                <button type="button" onClick={() => setStatsExpanded(v => !v)} className="smore" aria-expanded={statsExpanded}>
+                  {statsExpanded ? 'Fewer stats' : 'More stats'}
+                  <ChevronDown size={13} className={`transition-transform duration-200 ${statsExpanded ? 'rotate-180' : ''}`} />
                 </button>
-              )}
-            </div>
-              );
-            })()}
-
-          </div>
-        </div>
-
-        {/* ── Tab bar (assets/tabs.js): desktop only; phones use the floating pill and swipe ── */}
-        <TabBar barRef={tabBarRef} className="hidden md:block md:top-[37px] -mx-4 md:-mx-8 mb-4 px-2 md:px-6"
+              </div>
+              <div className="idr-foot">Member since <b>{PROFILE_DATA.memberSince}</b></div>
+            </aside>
+          );
+        })()}
+        <div className="min-w-0">
+        
+        <div className="ptabs-anchor" />
+        <TabBar barRef={tabBarRef} className="md:top-[37px] -mx-4 md:-mx-8 lg:mx-0 mb-4 px-2 md:px-6 lg:px-0"
           tabs={profileTabs} active={activeTab} onChange={setTab} />
 
         <div ref={tabContentRef} className="flex flex-col gap-3">
-          {activeTab === 'social' ? (
+          {activeTab === 'dex' ? (
+            <DexTab games={ALL_GAMES} filter={dexFilter} onFilter={setDexFilter} />
+          ) : activeTab === 'overview' ? (
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-6 lg:gap-8">
+              <div className="flex flex-col gap-6 min-w-0">
+                {/* Last played: the same row as Recent / Progress, with the rich presence inside it */}
+                <div>
+                  <h2 className="sec-t border-b border-line pb-1.5 flex items-center gap-2 mb-3">
+                    <span className="sec-mark" />
+                    <Activity size={15} className="text-accent"/> Last played
+                  </h2>
+                  {(() => {
+                    const g = PROFILE_DATA.mostRecentGame && ALL_GAMES.find(x => x.id === PROFILE_DATA.mostRecentGame.id);
+                    if (!g) return <div className="text-ink-2 text-[11px] py-2">No recent games found.</div>;
+                    return (
+                      <GameListRow game={g}
+                        extra={PROFILE_DATA.richPresenceMsg && <span className="grow-extra rp" title="Rich presence: what the game reports you're doing"><Radio size={11} className="text-aqua" />{PROFILE_DATA.richPresenceMsg}</span>} />
+                    );
+                  })()}
+                </div>
+
+                {/* Recent unlocks: the newest as a card; wide screens add the next five as compact rows */}
+                <div>
+                  <h2 className="sec-t border-b border-line pb-1.5 flex items-center gap-2 mb-3">
+                    <span className="sec-mark" />
+                    <Trophy size={15} className="text-gold"/> Recent unlocks
+                  </h2>
+                  {PROFILE_DATA.mostRecentAchievement ? (
+                    <div className="bg-box/80 border border-line-2 border-l-[3px] border-l-gold rounded-[3px] p-3 flex gap-3 hover:bg-box-hi transition-colors shadow-sm">
+                      <a href={`../achievement/?id=${PROFILE_DATA.mostRecentAchievement.id}`} className="shrink-0 w-12 h-12 rounded-[2px] overflow-hidden border border-well bg-black block hover:scale-105 transition-transform">
+                        <img src={`${MEDIA_URL}/Badge/${PROFILE_DATA.mostRecentAchievement.badgeName}.png`} alt={PROFILE_DATA.mostRecentAchievement.title} className="w-full h-full object-cover" />
+                      </a>
+                      <div className="flex-1 min-w-0 flex flex-col justify-center">
+                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                          <a href={`../achievement/?id=${PROFILE_DATA.mostRecentAchievement.id}`} className="text-[13px] font-medium text-gold hover:text-gold-hi transition-colors truncate leading-tight">
+                            {PROFILE_DATA.mostRecentAchievement.title}
+                          </a>
+                          <span className="text-[9px] font-bold text-gold num bg-well border border-line-2 px-1.5 py-[1px] rounded-sm shrink-0">{PROFILE_DATA.mostRecentAchievement.points} pts</span>
+                          {PROFILE_DATA.mostRecentAchievement.trueRatio > 0 && PROFILE_DATA.mostRecentAchievement.points > 0 && (() => {
+                            const ratio = PROFILE_DATA.mostRecentAchievement.trueRatio / PROFILE_DATA.mostRecentAchievement.points;
+                            return <span className="text-[9px] shrink-0" style={{ color: ratio >= 30 ? 'var(--hc)' : ratio >= 20 ? 'var(--gold)' : ratio >= 10 ? 'var(--accent)' : 'var(--ink-2)' }}>×{ratio.toFixed(1)}</span>;
+                          })()}
+                        </div>
+                        <p className="text-[10px] text-ink-2 leading-snug mb-1 truncate">{PROFILE_DATA.mostRecentAchievement.description}</p>
+                        <div className="flex items-center gap-1.5 text-[10px] min-w-0">
+                          <a href={`../game/?id=${PROFILE_DATA.mostRecentAchievement.gameId}${compareParam}`} className="flex items-center gap-1 group min-w-0 shrink truncate">
+                            <img src={PROFILE_DATA.mostRecentAchievement.gameIcon} alt="" className="w-3.5 h-3.5 rounded-[1px] border border-well shrink-0" />
+                            <span className="text-accent group-hover:text-ink transition-colors truncate">{PROFILE_DATA.mostRecentAchievement.baseTitle || PROFILE_DATA.mostRecentAchievement.gameTitle}</span>
+                            {PROFILE_DATA.mostRecentAchievement.isSubset && (
+                              <>
+                                <span className="text-[7px] font-bold uppercase tracking-[0.07em] px-1 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">Subset</span>
+                                <span className="text-[8px] text-gold-dim truncate">{PROFILE_DATA.mostRecentAchievement.subsetName}</span>
+                              </>
+                            )}
+                            {!PROFILE_DATA.mostRecentAchievement.isSubset && renderTildeTags(PROFILE_DATA.mostRecentAchievement.tags)}
+                          </a>
+                          <span className="text-ink-3 shrink-0">•</span>
+                          <span className="text-ink-2 truncate shrink">{PROFILE_DATA.mostRecentAchievement.consoleName}</span>
+                          <span className="text-ink-3 shrink-0">•</span>
+                          <span className="text-ink-3 shrink-0 whitespace-nowrap">{PROFILE_DATA.mostRecentAchievement.timeAgo}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-ink-2 text-[11px] py-2 italic">No achievements unlocked in the last 1 year.</div>
+                  )}
+                  {allLoadedAchievements.some(a => a.achievementId !== PROFILE_DATA.mostRecentAchievement?.id) && (
+                    <div className="ulist anim-fade">
+                      {[...allLoadedAchievements].sort((x, y) => new Date(y.date) - new Date(x.date))
+                        .filter(a => a.achievementId !== PROFILE_DATA.mostRecentAchievement?.id).slice(0, 5).map(a => (
+                        <a key={`${a.achievementId}-${a.date}`} href={`../achievement/?id=${a.achievementId}`} className="urow">
+                          <img src={`${MEDIA_URL}/Badge/${a.badgeName}.png`} alt="" loading="lazy" />
+                          <div className="urow-main">
+                            <span className="urow-title">{a.title}</span>
+                            <span className="urow-sub"><span className="text-accent">{parseTitle(a.gameTitle).baseTitle || a.gameTitle}</span> · {formatTimeAgo(a.date)}</span>
+                          </div>
+                          <span className="urow-end num">{a.points} pts</span>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Rail (wide screens): user stats, then game awards. Phones: below, same order */}
+              <div className="prail flex flex-col gap-5 min-w-0">
+                <div className="lg:hidden">
+                  <h2 className="sec-t border-b border-line pb-1.5 flex items-center gap-2 mb-3">
+                    <span className="sec-mark" />
+                    <BarChart2 size={15} className="text-accent"/> User stats
+                  </h2>
+                  {/* The header already shows points, achievements and rank */}
+                  <StatTiles items={PROFILE_DATA.statsLeft.filter(st => st.label !== 'Achievements unlocked').map(st => ({ ...st, label: STAT_LABELS[st.label] ?? st.label }))} />
+                  {statsExpanded && <div className="mt-2 anim-fade"><StatTiles items={PROFILE_DATA.statsRight} /></div>}
+                  <button type="button" onClick={() => setStatsExpanded(v => !v)} className="smore" aria-expanded={statsExpanded}>
+                    {statsExpanded ? 'Fewer stats' : 'More stats'}
+                    <ChevronDown size={13} className={`transition-transform duration-200 ${statsExpanded ? 'rotate-180' : ''}`} />
+                  </button>
+                </div>
+                <CompletionsPanel title="Game awards" labels={{ gold: 'Mastered', silver: 'Beaten' }} shape="sq" items={awardItems} empty="No game awards yet" />
+              </div>
+            </div>
+          ) : activeTab === 'social' ? (
             <div>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -3539,8 +3322,6 @@ export default function App() {
               gameAwards={PROFILE_DATA.gameAwards}
               heatmapData={heatmapData}
             />
-          ) : activeTab === 'series' ? (
-            <SeriesProgressTab seriesData={seriesData} gamesData={gamesData} backlogData={backlogData} />
           ) : activeTab === 'activity' ? (
             achievements === null && achievementsLoadingMore
               ? <ActivitySkeleton />
@@ -3548,6 +3329,7 @@ export default function App() {
                   achievements={allLoadedAchievements}
                   refTime={rawData?.metadata?.extractionTimestamp}
                   heatmapData={heatmapData}
+                  gameArt={gameArt}
                   loadingMore={achievementsLoadingMore}
                   allLoaded={achievements !== null && !achievementsLoadingMore}
                   socialView={socialView}
@@ -3578,7 +3360,7 @@ export default function App() {
                 ))}
               </div>
             ) : <>{(() => {
-              // ── helpers ──────────────────────────────────────────────
+              // ── Savepoint's watchlist (.wlist / .wrow / .wstack in assets/ui.css) ──
               const getStatus = g => {
                 if (g.achievementsTotal === 0) return 'noach';
                 if (g.achievementsTotal > 0 && g.numAwarded === g.achievementsTotal) return 'mastered';
@@ -3587,367 +3369,245 @@ export default function App() {
               };
 
               const filtered = BACKLOG.games.filter(g => {
-                const status = getStatus(g);
                 if (backlogSearch) {
-                  const q = backlogSearch.toLowerCase();
-                  const searchable = [
-                    g.baseTitle || g.title,
-                    g.isSubset ? 'subset' : null,
-                    g.subsetName,
-                    ...(g.tags || []),
-                  ].filter(Boolean).join(' ').toLowerCase();
-                  if (!searchable.includes(q)) return false;
+                  const searchable = [g.baseTitle || g.title, g.isSubset ? 'subset' : null, g.subsetName, ...(g.tags || [])].filter(Boolean).join(' ');
+                  if (!fold(searchable).includes(fold(backlogSearch))) return false;
                 }
-                if (backlogStatusFilter !== 'all' && status !== backlogStatusFilter) return false;
-                return true;
+                return backlogStatusFilter === 'all' || getStatus(g) === backlogStatusFilter;
               });
 
               const statusMeta = {
-                mastered:   { dot: 'var(--gold)', label: 'Mastered',        defaultOpen: true  },
-                inprogress: { dot: 'var(--accent)', label: 'In Progress',     defaultOpen: true  },
-                notstarted: { dot: 'var(--ink-3)', label: 'Not Started',     defaultOpen: false },
-                noach:      { dot: 'var(--line-faint)', label: 'No Achievements', defaultOpen: false },
+                mastered:   { dot: 'var(--gold)',       label: 'Mastered',        defaultOpen: true  },
+                inprogress: { dot: 'var(--accent)',     label: 'In progress',     defaultOpen: true  },
+                notstarted: { dot: 'var(--ink-3)',      label: 'Not started',     defaultOpen: false },
+                noach:      { dot: 'var(--line-faint)', label: 'No achievements', defaultOpen: false },
               };
 
-              // Build groups
+              // Subsets sit under their base game (same title and console) when both are in the list;
+              // a combined base like "A | B" counts as each of its names. A subset whose base isn't listed stays a row
+              const stackSubsets = games => {
+                const keyOf = (title, consoleName) => `${title.toLowerCase()}|${consoleName}`;
+                const baseFor = new Map();
+                games.forEach(g => {
+                  if (g.isSubset) return;
+                  const title = g.baseTitle || g.title;
+                  [title, ...title.split(' | ')].forEach(n => { const k = keyOf(n.trim(), g.console); if (!baseFor.has(k)) baseFor.set(k, g.id); });
+                });
+                const subsOf = new Map();
+                const out = [];
+                games.forEach(g => {
+                  const baseId = g.isSubset ? baseFor.get(keyOf(g.baseTitle || g.title, g.console)) : undefined;
+                  if (baseId != null) { if (!subsOf.has(baseId)) subsOf.set(baseId, []); subsOf.get(baseId).push(g); }
+                  else out.push(g);
+                });
+                return out.map(g => ({ game: g, subsets: subsOf.get(g.id) ?? [] }));
+              };
+
               let groups = [];
               if (backlogGrouping === 'console') {
                 const map = {};
-                filtered.forEach(g => { if (!map[g.console]) map[g.console] = []; map[g.console].push(g); });
-                groups = Object.entries(map).sort(([a],[b]) => a.localeCompare(b))
+                filtered.forEach(g => { (map[g.console] ??= []).push(g); });
+                groups = Object.entries(map).sort(([x], [y]) => x.localeCompare(y))
                   .map(([key, games]) => ({ key, label: key, dot: 'var(--accent)', games, defaultOpen: games.length <= 5 }));
               } else if (backlogGrouping === 'status') {
-                ['mastered','inprogress','notstarted','noach'].forEach(s => {
-                  const games = filtered.filter(g => getStatus(g) === s);
-                  if (games.length > 0) groups.push({ key: s, label: statusMeta[s].label, dot: statusMeta[s].dot, games, defaultOpen: statusMeta[s].defaultOpen });
+                ['mastered', 'inprogress', 'notstarted', 'noach'].forEach(st => {
+                  const games = filtered.filter(g => getStatus(g) === st);
+                  if (games.length) groups.push({ key: st, label: statusMeta[st].label, dot: statusMeta[st].dot, games, defaultOpen: statusMeta[st].defaultOpen });
                 });
+              } else if (backlogGrouping === 'subsets') {
+                const entries = stackSubsets(filtered);
+                const withSubs = entries.filter(e => e.subsets.length || e.game.isSubset);
+                const without  = entries.filter(e => !e.subsets.length && !e.game.isSubset);
+                groups = [
+                  { key: 'with', label: 'With subsets', dot: 'var(--gold-dim)', count: withSubs.length, games: withSubs.flatMap(e => [e.game, ...e.subsets]), defaultOpen: true },
+                  { key: 'without', label: 'Without subsets', dot: 'var(--ink-3)', count: without.length, games: without.map(e => e.game), defaultOpen: false },
+                ].filter(g => g.games.length);
               }
 
-              // ── Pagination ──────────────────────────────────────────
-              let pagedFiltered = filtered;
-              let pagedGroups = groups;
-              let totalPages = 1;
+              // Same edge ladder as the game rows: gold → silver (beaten) → blue → grey → near-black
+              const stripeOf = g => {
+                const st = getStatus(g);
+                return st === 'mastered' ? 'var(--gold)' : g.isBeaten ? 'var(--silver)' : st === 'inprogress' ? 'var(--accent)' : st === 'noach' ? 'var(--line-faint)' : 'var(--line-2)';
+              };
+              const statusEnd = (game, status, pct) => <>
+                {status === 'inprogress' && <>
+                  <span className="gcount num">{game.numAwarded}<span>/{game.achievementsTotal}</span></span>
+                  <div className="gbar"><i style={{ width: `${pct}%`, background: 'var(--accent)' }} /></div>
+                </>}
+                {status === 'mastered' && <span className="text-[9px] font-bold uppercase tracking-[0.07em] px-1.5 py-[1px] rounded-[2px] bg-gold text-well flex items-center gap-1"><Trophy size={9} />Mastered</span>}
+                {status === 'notstarted' && <span className="text-[11px] text-ink-2 flex items-center gap-1 num" title={`${game.achievementsTotal} achievements`}><Trophy size={11} className="text-ink-3" />{game.achievementsTotal}</span>}
+                {status === 'noach' && <span className="text-[11px] text-ink-3 text-right leading-tight">No achievements</span>}
+              </>;
 
-              if (backlogGrouping === 'none') {
-                totalPages = Math.max(1, Math.ceil(filtered.length / backlogPageSize));
-                const safePage = Math.min(backlogPage, totalPages);
-                pagedFiltered = filtered.slice((safePage - 1) * backlogPageSize, safePage * backlogPageSize);
-              } else if (groups.length > 0) {
-                // snap to group boundary: accumulate until pageSize reached
-                const pages = [];
-                let start = 0, count = 0;
-                for (let i = 0; i < groups.length; i++) {
-                  count += groups[i].games.length;
-                  if (count >= backlogPageSize || i === groups.length - 1) {
-                    pages.push([start, i]);
-                    start = i + 1;
-                    count = 0;
-                  }
-                }
-                totalPages = Math.max(1, pages.length);
-                const safePage = Math.min(backlogPage, totalPages);
-                const [s, e] = pages[safePage - 1] || [0, groups.length - 1];
-                pagedGroups = groups.slice(s, e + 1);
-              }
-
-              // Table columns — responsive via CSS classes, not inline styles
-              const showConsole  = backlogGrouping === 'none';
-              const colClass = showConsole ? 'wl-row-full' : 'wl-row-noconsole';
-              const headers = [
-                { label: '', cls: '' },
-                { label: 'Title', cls: '' },
-                ...(showConsole ? [{ label: 'Console', cls: '' }] : []),
-                { label: 'Pts', cls: 'wl-hide-mobile text-right' },
-                { label: 'Progress', cls: 'text-right' },
-              ];
-
-              const GameRow = ({ game }) => {
+              // Rows are render functions, not components: defined inside App's render, as components
+              // React would remount every row on each re-render and replay their fade
+              const gameRow = game => {
                 const status = getStatus(game);
-                const isMastered   = status === 'mastered';
-                const isInProgress = status === 'inprogress';
-                const hasNoAch     = status === 'noach';
-                const stripe = isMastered ? 'border-l-gold' : isInProgress ? 'border-l-accent' : hasNoAch ? 'border-l-line-faint' : 'border-l-ink-3';
+                const pct = game.achievementsTotal > 0 ? (game.numAwarded / game.achievementsTotal) * 100 : 0;
                 return (
-                  <div key={game.id} className={`backlog-item grid gap-2 px-3 py-[5px] border-b border-box last:border-b-0 items-center hover:bg-box transition-colors border-l-[2px] ${stripe} ${hasNoAch ? 'opacity-50' : ''} ${colClass}`}>
-                    <a href={`../game/?id=${game.id}${compareParam}`} className="shrink-0 w-6 h-6 rounded-[2px] overflow-hidden border border-well bg-black block hover:scale-110 transition-transform">
-                      <img src={game.icon} alt={game.title} className="w-full h-full object-cover" />
-                    </a>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <a href={`../game/?id=${game.id}${compareParam}`} className="text-[11px] text-ink font-medium hover:text-accent transition-colors truncate leading-tight">{game.baseTitle || game.title}</a>
-                        {game.isSubset && <span className="text-[7px] font-bold uppercase tracking-[0.07em] px-1 py-[1px] rounded-[2px] border border-gold/30 bg-gold/10 text-gold-dim shrink-0">Subset</span>}
+                  <a key={game.id} href={`../game/?id=${game.id}${compareParam}`} className={`wrow ${status === 'noach' ? 'dim' : ''}`} style={{ borderLeftColor: stripeOf(game) }}>
+                    <img src={game.icon} alt="" loading="lazy" className="wrow-icon" />
+                    <div className="wrow-main">
+                      <div className="wrow-title">
+                        <span title={game.title}>{game.baseTitle || game.title}</span>
+                        {game.isSubset && <span className="subset-tag">Subset</span>}
                         {renderTildeTags(game.tags)}
                       </div>
-                      {game.isSubset && game.subsetName && <span className="text-[9px] text-gold-dim truncate block">{game.subsetName}</span>}
-                      {backlogGrouping === 'status'
-                        ? <span className="text-[9px] text-accent truncate block">{game.console}</span>
-                        : <>
-                          {isMastered   && <span className="text-[8px] text-gold flex items-center gap-1"><Trophy size={8}/> Mastered</span>}
-                          {isInProgress && <span className="text-[8px] text-accent flex items-center gap-1"><Activity size={8}/> In Progress</span>}
-                          {status === 'notstarted' && <span className="text-[8px] text-ink-3 flex items-center gap-1"><CircleDashed size={8}/> Not Started</span>}
-                          {hasNoAch && <span className="text-[8px] text-line-2 flex items-center gap-1"><ShieldOff size={8}/> No Achievements</span>}
-                        </>
-                      }
+                      <div className="wrow-sub">
+                        {backlogGrouping !== 'console' && <span className="text-accent">{game.console}</span>}
+                        {game.pointsTotal > 0 && <>{backlogGrouping !== 'console' && <i>·</i>}<span className="num">{game.pointsTotal.toLocaleString()} pts</span></>}
+                        {game.isSubset && game.subsetName && <><i>·</i><span className="text-gold-dim shrink">{game.subsetName}</span></>}
+                      </div>
                     </div>
-                    {showConsole && <span className="text-[10px] text-accent truncate">{game.console}</span>}
-                    <span className="wl-hide-mobile text-[10px] text-ink-2 text-right">{game.pointsTotal > 0 ? game.pointsTotal.toLocaleString() : <span className="text-line-2">—</span>}</span>
-                    <div className="flex items-center justify-end">
-                      {hasNoAch ? <span className="text-[10px] text-line-2">—</span>
-                        : isMastered   ? <span className="text-[7px] font-bold uppercase tracking-wider px-1.5 py-[1px] rounded-[2px] bg-gold text-well">{game.numAwarded}/{game.achievementsTotal}</span>
-                        : isInProgress ? <span className="text-[7px] font-bold uppercase tracking-wider px-1.5 py-[1px] rounded-[2px] bg-accent text-well">{game.numAwarded}/{game.achievementsTotal}</span>
-                        : <span className="text-[10px] text-ink-2">{game.achievementsTotal}</span>}
-                    </div>
-                  </div>
+                    <div className="wrow-end">{statusEnd(game, status, pct)}</div>
+                  </a>
                 );
               };
+              // One set inside a game's card: its icon, "Base set" or the subset name, points, status
+              const setRow = (game, base = false) => {
+                const status = getStatus(game);
+                const pct = game.achievementsTotal > 0 ? (game.numAwarded / game.achievementsTotal) * 100 : 0;
+                return (
+                  <a key={game.id} href={`../game/?id=${game.id}${compareParam}`} title={game.title}
+                    className={`wsub ${base ? '' : 'subset'} ${status === 'noach' ? 'dim' : ''}`} style={{ borderLeftColor: stripeOf(game) }}>
+                    <img src={game.icon} alt="" loading="lazy" className="icon" />
+                    <span className="name">{base ? 'Base set' : game.subsetName}</span>
+                    {game.pointsTotal > 0 && <span className="pts num">· {game.pointsTotal.toLocaleString()} pts</span>}
+                    <span className="end">{statusEnd(game, status, pct)}</span>
+                  </a>
+                );
+              };
+              const stackCard = (game, subsets) => (
+                <div key={game.id} className="wstack">
+                  <a href={`../game/?id=${game.id}${compareParam}`} className="whead">
+                    <span className="t"><span>{game.baseTitle || game.title}</span>{renderTildeTags(game.tags)}</span>
+                    {backlogGrouping !== 'console' && <span className="c">{game.console}</span>}
+                  </a>
+                  {setRow(game, true)}
+                  {subsets.map(sg => setRow(sg))}
+                </div>
+              );
+              const rows = games => stackSubsets(games).map(({ game, subsets }) => subsets.length ? stackCard(game, subsets) : gameRow(game));
+              const toggleGroup = key => setCollapsedGroups(prev => { const next = new Set(prev); next.has(key) ? next.delete(key) : next.add(key); return next; });
 
               return (
                 <>
-                  {/* ── Header row ── */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="sec-mark" />
-                      <span className="sec-t">Backlog</span>
-                      <span className="text-[10px] text-ink-3">{BACKLOG.games.length.toLocaleString()} games</span>
+                  {/* Search + grouping, then the status chips with their counts, then a meta line with the sync */}
+                  <div className="flex flex-col gap-2.5 mb-3">
+                    <div className="fbar">
+                      <div className="fsearch">
+                        <Search size={14} />
+                        <input type="text" inputMode="search" placeholder={`Search ${BACKLOG.games.length.toLocaleString()} games`} aria-label="Search backlog" value={backlogSearch} onChange={e => setBacklogSearch(e.target.value)} />
+                        {backlogSearch && <button type="button" onClick={() => setBacklogSearch('')} aria-label="Clear search"><X size={13} /></button>}
+                      </div>
+                      <span className="fselect-w">
+                        <select value={backlogGrouping} onChange={e => { setBacklogGrouping(e.target.value); setCollapsedGroups(new Set()); }} className="fselect" aria-label="Group">
+                          <option value="none">No grouping</option>
+                          <option value="console">Group: Console</option>
+                          <option value="status">Group: Status</option>
+                          <option value="subsets">Group: Subsets</option>
+                        </select>
+                      </span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      {backlogTs && (
-                        <span className="text-[9px] text-ink-3">Synced {timeAgo(backlogTs)}</span>
-                      )}
-                      <button type="button" onClick={refreshBacklog} disabled={backlogRefreshing}
-                        className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider text-ink-3 hover:text-accent transition-colors disabled:opacity-40">
-                        <RefreshCw size={11} className={backlogRefreshing ? 'animate-spin' : ''} />
-                        Refresh
-                      </button>
-                    </div>
-                  </div>
-                  {/* ── Filter + Group bar ── */}
-                  <div className="flex flex-col gap-2 mb-2 md:flex-row md:flex-wrap md:items-center md:gap-2">
-                    {/* Search */}
-                    <div className="relative">
-                      <input type="text" placeholder="Search games…" value={backlogSearch} onChange={e => { setBacklogSearch(e.target.value); setBacklogPage(1); }}
-                        className="bg-well border border-line-2 hover:border-ink-3 focus:border-accent outline-none text-[10px] text-ink placeholder-ink-3 px-2 py-[4px] rounded-[2px] w-full md:w-44 transition-colors" />
-                      {backlogSearch && <button onClick={() => setBacklogSearch('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink text-[10px]">×</button>}
-                    </div>
-
-                    {/* Status filters */}
-                    <div className="flex items-center gap-1.5 overflow-x-auto">
-                      <span className="text-[9px] text-ink-3 uppercase tracking-wider shrink-0">Status</span>
-                      <span className="text-line text-[10px] select-none shrink-0 hidden md:inline">|</span>
+                    <div className="frow" role="group" aria-label="Status">
                       {[
-                        { value: 'all',        label: 'All',             cls: 'bg-ink-3 text-well border-ink-3' },
-                        { value: 'noach',      label: 'No Ach',          cls: 'bg-line-2 text-ink-2 border-line-2' },
-                        { value: 'notstarted', label: 'Not Started',     cls: 'bg-ink-3 text-well border-ink-3' },
-                        { value: 'inprogress', label: 'In Progress',     cls: 'bg-accent text-well border-accent' },
-                        { value: 'mastered',   label: 'Mastered',        cls: 'bg-gold text-well border-gold' },
-                      ].map(opt => (
-                        <button key={opt.value} onClick={() => { setBacklogStatusFilter(opt.value); setBacklogPage(1); }}
-                          className={`shrink-0 text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-[2px] border transition-colors ${backlogStatusFilter === opt.value ? opt.cls : 'bg-well text-ink-2 border-line-2 hover:text-ink hover:border-ink-3'}`}>
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Group filters */}
-                    <div className="flex items-center gap-1.5 overflow-x-auto">
-                      <span className="text-[9px] text-ink-3 uppercase tracking-wider shrink-0">Group</span>
-                      <span className="text-line text-[10px] select-none shrink-0 hidden md:inline">|</span>
-                      {[
-                        { value: 'none',    label: 'None'    },
-                        { value: 'console', label: 'Console' },
-                        { value: 'status',  label: 'Status'  },
-                      ].map(opt => (
-                        <button key={opt.value} onClick={() => { setBacklogGrouping(opt.value); setCollapsedGroups(new Set()); setBacklogPage(1); }}
-                          className={`shrink-0 text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-[2px] border transition-colors ${backlogGrouping === opt.value ? 'bg-box text-ink border-line' : 'bg-well text-ink-3 border-line-2 hover:text-ink hover:border-ink-3'}`}>
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-
-                    {(backlogSearch || backlogStatusFilter !== 'all') && (
-                      <button onClick={() => { setBacklogSearch(''); setBacklogStatusFilter('all'); setBacklogPage(1); }} className="md:ml-auto text-[9px] text-ink-3 hover:text-accent uppercase tracking-wider transition-colors self-start md:self-auto">Clear ×</button>
-                    )}
-                  </div>
-
-                  {/* Stats line */}
-                  <p className="text-[10px] text-ink-3 px-1 mb-1">
-                    <span className="text-ink-2">{BACKLOG.total.toLocaleString()}</span> games in backlog
-                    {backlogLoadingMore && <Loader2 size={11} className="text-ink-3 animate-spin inline-block ml-1.5" />}
-                    <span className="mx-2 text-line">|</span>
-                    <span className="text-ink">{BACKLOG.games.filter(g => g.achievementsTotal > 0).length}</span> with achievements
-                    <span className="mx-1.5 text-line">·</span>
-                    <span className="text-ink-3">{BACKLOG.games.filter(g => g.achievementsTotal === 0).length}</span> without
-                    <span className="mx-2 text-line">|</span>
-                    <span className="text-accent">{BACKLOG.games.filter(g => g.inProgress && g.numAwarded !== g.achievementsTotal).length}</span> in progress
-                    <span className="mx-1.5 text-line">·</span>
-                    <span className="text-gold">{BACKLOG.games.filter(g => g.achievementsTotal > 0 && g.numAwarded === g.achievementsTotal).length}</span> mastered
-                    {filtered.length !== BACKLOG.games.length && <><span className="mx-2 text-line">|</span><span className="text-ink-2">{filtered.length}</span> shown</>}
-                  </p>
-
-                  {/* Table */}
-                  <div className="border border-line rounded-[2px] overflow-hidden">
-                    {/* Header */}
-                    <div className={`grid gap-2 px-3 py-2 bg-head border-b border-line items-center ${colClass}`}>
-                      {headers.map((h, i) => (
-                        <span key={i} className={`text-[9px] font-bold uppercase tracking-[0.1em] text-ink-2 whitespace-nowrap ${h.cls}`}>{h.label}</span>
-                      ))}
-                    </div>
-
-                    {filtered.length === 0 ? (
-                      <div className="text-center py-6 text-ink-3 text-[11px]">No games match the current filters.</div>
-                    ) : backlogGrouping === 'none' ? (
-                      pagedFiltered.map(game => GameRow({ game }))
-                    ) : (
-                      pagedGroups.map(group => {
-                        const isOpen = collapsedGroups.has(group.key)
-                          ? !group.defaultOpen  // toggled: flip from default
-                          : (group.defaultOpen ?? true); // not toggled: use default
+                        { value: 'all',        label: 'All'             },
+                        { value: 'notstarted', label: 'Not started'     },
+                        { value: 'inprogress', label: 'In progress'     },
+                        { value: 'mastered',   label: 'Mastered'        },
+                        { value: 'noach',      label: 'No achievements' },
+                      ].map(opt => {
+                        const n = opt.value === 'all' ? BACKLOG.games.length : BACKLOG.games.filter(g => getStatus(g) === opt.value).length;
                         return (
-                          <div key={group.key}>
-                            <button onClick={() => toggleGroup(group.key)} className="w-full flex items-center gap-2 px-3 py-[6px] bg-box border-b border-line hover:bg-box-hi transition-colors group outline-none">
-                              <div className="w-2 h-2 rounded-[1px] shrink-0" style={{background: group.dot}}></div>
-                              <span className="text-[10px] text-white font-semibold flex-1 text-left">{group.label}</span>
-                              <span className="text-[9px] text-ink-3">{group.games.length} game{group.games.length !== 1 ? 's' : ''}</span>
-                              <ChevronDown size={11} className={`text-ink-3 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+                          <button type="button" key={opt.value} onClick={() => setBacklogStatusFilter(opt.value)} aria-pressed={backlogStatusFilter === opt.value}
+                            className={`fchip ${backlogStatusFilter === opt.value ? 'on' : ''}`}>
+                            {opt.label}<span className="n num">{n.toLocaleString()}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="fmeta flex items-center gap-3">
+                      <span className="min-w-0">
+                        {filtered.length !== BACKLOG.games.length && <><b>{filtered.length.toLocaleString()}</b> of {BACKLOG.games.length.toLocaleString()} shown</>}
+                        {backlogLoadingMore && <>{filtered.length !== BACKLOG.games.length && ' · '}Loading {BACKLOG.games.length.toLocaleString()} of {BACKLOG.total.toLocaleString()}…</>}
+                        {(backlogSearch || backlogStatusFilter !== 'all') && (
+                          <button type="button" onClick={() => { setBacklogSearch(''); setBacklogStatusFilter('all'); }} className="ml-2 text-accent hover:underline">Clear filters</button>
+                        )}
+                      </span>
+                      <span className="ml-auto flex items-center gap-2 shrink-0">
+                        {backlogTs && <span>Synced {timeAgo(backlogTs)}</span>}
+                        <button type="button" onClick={refreshBacklog} disabled={backlogRefreshing}
+                          className="flex items-center gap-1 text-ink-2 hover:text-accent transition-colors disabled:opacity-50">
+                          <RefreshCw size={11} className={backlogRefreshing ? 'animate-spin' : ''} />Refresh
+                        </button>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* List (two columns on desktop); groups get a header row that opens and closes */}
+                  <div key={`${backlogStatusFilter}-${backlogGrouping}`} className="wlist anim-fade">
+                    {filtered.length === 0 ? (
+                      <div className="text-center py-6 text-ink-3 text-[12px]" style={{ gridColumn: '1 / -1' }}>No games match the current filters.</div>
+                    ) : backlogGrouping === 'none' ? (
+                      rows(filtered)
+                    ) : (
+                      groups.map(group => {
+                        const isOpen = collapsedGroups.has(group.key) ? !group.defaultOpen : (group.defaultOpen ?? true);
+                        return (
+                          <React.Fragment key={group.key}>
+                            <button type="button" onClick={() => toggleGroup(group.key)} className="wgroup" aria-expanded={isOpen}>
+                              <span className="mark" style={{ background: group.dot }} />
+                              <span className="label">{group.label}</span>
+                              <span className="n num">{(group.count ?? group.games.length).toLocaleString()}</span>
+                              <ChevronDown size={14} className={`text-ink-3 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
                             </button>
-                            {isOpen && group.games.map(game => GameRow({ game }))}
-                          </div>
+                            {isOpen && <div className="wlist anim-fade" style={{ gridColumn: '1 / -1' }}>{rows(group.games)}</div>}
+                          </React.Fragment>
                         );
                       })
                     )}
-                  </div>
-
-                  {/* Pagination footer */}
-                  <div className="flex items-center justify-between mt-3 px-1 gap-2 pb-16 md:pb-0">
-                    <button
-                      onClick={() => setBacklogPage(p => Math.max(1, p - 1))}
-                      disabled={backlogPage <= 1 || totalPages <= 1}
-                      className="text-[9px] font-semibold uppercase tracking-wider px-2.5 py-[4px] rounded-[2px] border border-line-2 bg-well text-ink-2 hover:text-ink hover:border-ink-3 transition-colors disabled:opacity-30 disabled:pointer-events-none">
-                      ← Prev
-                    </button>
-                    <div className="flex items-center gap-2 flex-wrap justify-center">
-                      <span className="text-[9px] text-ink-3">
-                        Page <span className="text-ink">{Math.min(backlogPage, totalPages)}</span> of <span className="text-ink">{totalPages}</span>
-                      </span>
-                      <span className="text-line text-[10px] select-none hidden md:inline">|</span>
-                      <div className="flex items-center gap-1">
-                        <span className="text-[9px] text-ink-3 uppercase tracking-wider">Per page</span>
-                        {[50, 100, 150].map(n => (
-                          <button key={n} onClick={() => { setBacklogPageSize(n); setBacklogPage(1); }}
-                            className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-[2px] border transition-colors ${backlogPageSize === n ? 'bg-box text-ink border-line' : 'bg-well text-ink-3 border-line-2 hover:text-ink hover:border-ink-3'}`}>
-                            {n}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setBacklogPage(p => Math.min(totalPages, p + 1))}
-                      disabled={backlogPage >= totalPages || totalPages <= 1}
-                      className="text-[9px] font-semibold uppercase tracking-wider px-2.5 py-[4px] rounded-[2px] border border-line-2 bg-well text-ink-2 hover:text-ink hover:border-ink-3 transition-colors disabled:opacity-30 disabled:pointer-events-none">
-                      Next →
-                    </button>
                   </div>
                 </>
               );
             })()}</>
           ) : (
-            false
-              ? <>{[...Array(5)].map((_, i) => <GameCardSkeleton key={i} />)}</>
-              : <>
-              {/* Filter bar — only for Completion Progress */}
+              <>
               {activeTab === 'progress' && (
-                <>
-                  <div className="flex md:hidden items-center gap-2 pb-2 mb-3 border-b border-line">
-                    <span className="sec-mark" />
-                    <span className="sec-t">Completion Progress</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                    <span className="text-[9px] text-ink-3 uppercase tracking-wider shrink-0">View</span>
-                    {[
-                      { value: 'all',        label: 'All'          },
-                      { value: 'nearly',     label: 'Nearly there' },
-                      { value: 'inprogress', label: 'In progress'  },
-                      { value: 'abandoned',  label: 'Abandoned'    },
-                    ].map(opt => (
-                      <button
-                        key={opt.value}
-                        onClick={() => setProgressFilter(opt.value)}
-                        className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-[2px] border transition-colors ${
-                          progressFilter === opt.value
-                            ? 'bg-accent text-well border-accent'
-                            : 'bg-well text-ink-2 border-line-2 hover:text-ink hover:border-ink-3'
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-2 mb-3">
-                    {progressFilter === 'all' ? (
-                      <>
-                        <span className="text-[9px] text-ink-3 uppercase tracking-wider">Filter</span>
-                        <button
-                          onClick={() => setShowMastered(v => !v)}
-                          className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-[3px] rounded-[2px] border transition-colors ${
-                            showMastered
-                              ? 'bg-gold text-well border-gold'
-                              : 'bg-well text-ink-2 border-line-2 hover:text-ink hover:border-ink-3'
-                          }`}
-                        >
-                          Mastered
-                        </button>
-                      </>
-                    ) : (
-                      <span className="text-[9px] text-ink-3 leading-snug">
-                        {progressFilter === 'nearly'
-                          ? '75%+ done · fewest achievements left first'
-                          : progressFilter === 'inprogress'
-                          ? 'Active in the last 30 days · most recent first'
-                          : 'Started, unfinished, quiet for 30+ days'}
-                      </span>
-                    )}
-                    <span className="ml-auto text-[9px] text-ink-3 shrink-0">{displayedGames.length} games</span>
-                  </div>
-                  <div className="relative mb-4">
-                    <input
-                      type="text"
-                      value={progressSearch}
-                      onChange={e => setProgressSearch(e.target.value)}
-                      placeholder="Search games…"
-                      className="w-full bg-well border border-line-2 rounded-[2px] px-2.5 py-1.5 text-[11px] text-ink placeholder-ink-3 outline-none focus:border-ink-3"
-                    />
-                    {progressSearch && <button onClick={() => setProgressSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-3 hover:text-ink text-[10px]">×</button>}
-                  </div>
-                </>
+                <ProgressFilterBar
+                  view={progressFilter} onView={setProgressFilter}
+                  sort={progressSort} onSort={setProgressSort}
+                  showMastered={showMastered} onShowMastered={setShowMastered}
+                  counts={progressCounts}
+                  search={progressSearch} onSearch={setProgressSearch}
+                  viewToggle={<ViewToggle view={gameView} onChange={setGameView} />}
+                />
               )}
+              {/* Recent: a search over the whole library (newest played first) and the list / tiles switch */}
               {activeTab === 'recent' && (
-                <div className="flex md:hidden items-center gap-2 pb-2 mb-3 border-b border-line">
-                  <span className="sec-mark" />
-                  <span className="sec-t">Recently Played</span>
+                <div className="fbar">
+                  <SearchField value={recentSearch} onChange={setRecentSearch} />
+                  <ViewToggle view={gameView} onChange={setGameView} />
                 </div>
               )}
-              <div className="flex items-center justify-end gap-2 -mt-1">
-                <span className="text-[9px] uppercase tracking-[0.07em] text-ink-3">View</span>
-                <ViewToggle view={gameView} onChange={setGameView} />
-              </div>
-              {(() => {
-                const list = activeTab === 'recent' ? displayedGames.slice(0, showAllRecent ? displayedGames.length : (gameView === 'tiles' ? 8 : 5)) : displayedGames;
-                return gameView === 'tiles'
-                  ? <div className="gtiles">{list.map(game => <GameTile key={game.id} game={game} />)}</div>
-                  : list.map(game => <GameCard key={game.id} game={game} />);
-              })()}
-              {activeTab === 'recent' && displayedGames.length > (gameView === 'tiles' ? 8 : 5) && (
-                <button
-                  onClick={() => setShowAllRecent(v => !v)}
-                  className="w-full py-2 text-[10px] font-semibold uppercase tracking-wider text-ink-3 hover:text-ink border border-line hover:border-ink-3 rounded-[2px] bg-box transition-colors"
-                >
-                  {showAllRecent ? 'Show less' : 'Show more'}
-                </button>
+              {displayedGames.length === 0 && (
+                <div className="text-center py-12 text-ink-3 text-[12px]">
+                  {(activeTab === 'recent' ? recentSearch : progressSearch) ? 'No games match your search.' : 'No games in this view.'}
+                </div>
               )}
+              {/* Re-keyed on sort / view / filter changes so the new order fades in (not on search keystrokes) */}
+              <div key={`${progressSort}-${progressFilter}-${showMastered}-${gameView}`} className="anim-fade">
+                <div className={gameView === 'tiles' ? 'gtiles' : 'glist'}>
+                  {displayedGames.map(game => gameView === 'tiles'
+                    ? <GameTile key={game.id} game={game} />
+                    : <GameListRow key={game.id} game={game} />)}
+                </div>
+              </div>
             </>
           )}
         </div>
 
+        </div>
+        </div>
         {isVisitorMode && <div className="md:hidden h-14" />}
       </main>
 
@@ -3961,48 +3621,11 @@ export default function App() {
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           className="scroll-top-btn fixed right-4 z-[195] w-10 h-10 bg-bar border border-line hover:border-accent hover:text-accent text-ink-2 rounded-full flex items-center justify-center shadow-lg transition-all duration-200 active:scale-90"
-          style={{ bottom: showFloatingTabs ? 'calc(120px + env(safe-area-inset-bottom, 0px))' : '3.5rem' }}
+          style={{ bottom: '3.5rem' }}
           title="Scroll to top"
         >
           <ChevronDown size={16} className="rotate-180" />
         </button>
-      )}
-
-      {/* Floating tab pill — mobile only, appears after scrolling 150px */}
-      {(showFloatingTabs || pillLeaving) && (
-        <div
-          className="md:hidden fixed left-1/2 z-[210]"
-          style={{
-            bottom: 'calc(68px + env(safe-area-inset-bottom, 0px))',
-            transform: 'translateX(-50%)',
-            animation: pillLeaving
-              ? 'slideDownPill 0.21s ease forwards'
-              : 'slideUpPill 0.18s ease forwards',
-          }}
-        >
-          <div className="flex items-center gap-0.5 px-1.5 py-1.5 bg-bar border border-line rounded-[4px] shadow-xl">
-            {[
-              { id: 'recent',   Icon: Clock,     label: 'Recent',   color: 'var(--accent)' },
-              { id: 'progress', Icon: BarChart2,  label: 'Progress', color: 'var(--accent)' },
-              ...(seriesData.some(s => s.showProgress) ? [{ id: 'series', Icon: Layers, label: 'Series', color: 'var(--gold)' }] : []),
-              ...(!isVisitorMode ? [
-                { id: 'activity', Icon: Activity, label: 'Activity', color: 'var(--accent)' },
-                { id: 'backlog',  Icon: Star,     label: 'Backlog',  color: 'var(--accent)' },
-                { id: 'social',   Icon: Users,    label: 'Social',   color: 'var(--aqua)' },
-              ] : []),
-            ].map(({ id, Icon, label, color }) => (
-              <button
-                key={id}
-                onClick={() => setTab(id)}
-                className={`flex flex-col items-center gap-0.5 px-2.5 py-1 rounded-[3px] transition-colors ${activeTab === id ? 'bg-box' : 'hover:bg-box/50'}`}
-                style={{ color: activeTab === id ? color : 'var(--ink-3)' }}
-              >
-                <Icon size={13} />
-                <span className="text-[7px] font-bold uppercase tracking-wider leading-none">{label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
       )}
 
       <style>{`
@@ -4047,15 +3670,6 @@ export default function App() {
         .backlog-item { animation: feedIn 0.3s ease both; }
         .feed-group-container { animation: feedGroupFade 0.2s ease both; }
 
-        @keyframes slideUpPill {
-          from { opacity: 0; transform: translateX(-50%) translateY(12px); }
-          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-        @keyframes slideDownPill {
-          from { opacity: 1; transform: translateX(-50%) translateY(0); }
-          to   { opacity: 0; transform: translateX(-50%) translateY(12px); }
-        }
-
         /* Shimmer skeleton */
         @keyframes shimmer {
           0%   { background-position: -800px 0; }
@@ -4068,14 +3682,6 @@ export default function App() {
           border-radius: 2px;
         }
 
-        /* Watchlist responsive grid */
-        .wl-row-full    { grid-template-columns: 28px 1fr 90px 50px 80px; }
-        .wl-row-noconsole { grid-template-columns: 28px 1fr 50px 80px; }
-        @media (max-width: 639px) {
-          .wl-row-full      { grid-template-columns: 28px 1fr 70px 65px; }
-          .wl-row-noconsole { grid-template-columns: 28px 1fr 65px; }
-          .wl-hide-mobile   { display: none !important; }
-        }
 
 
       `}</style>

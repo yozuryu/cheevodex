@@ -308,7 +308,7 @@ export function Topbar({ crumbs = [], right }) {
         className: 'shimmer inline-block w-16 h-[8px] rounded align-middle',
       });
     } else if (isFirst) {
-      // The brand: Lens boy mark + "Cheevo" in ink, "dex" in RA blue (doc-012)
+      // The brand: codex mark + "Cheevo" in ink, "dex" in RA blue (doc-012)
       const brand = [
         React.createElement('img', { key: 'mark', src: '../assets/favicon.svg', alt: '', className: 'wm-mark' }),
         React.createElement('span', { key: 'wm', className: 'wm' }, 'Cheevo', React.createElement('em', null, 'dex')),

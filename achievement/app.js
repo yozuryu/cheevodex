@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Trophy, Crown, AlertTriangle, Lock, Flame, Feather, Gamepad2, Star, TrendingUp, User, Calendar, ExternalLink, Loader } from 'lucide-react';
+import { Trophy, Crown, AlertTriangle, Lock, Flame, Feather, Gamepad2, Star, TrendingUp, User, Calendar, ExternalLink, Loader, Users, MessageSquare, History, ChevronLeft, ChevronRight } from 'lucide-react';
 import { MEDIA_URL, SITE_URL } from '../profile/utils/constants.js';
 import { parseTitle, formatDate, formatTimeAgo, getMediaUrl } from '../profile/utils/helpers.js';
 import { getCredentials, clearCredentials, getAchievementUnlocks, getGameInfoAndUserProgress, getComments } from '../profile/utils/ra-api.js';
@@ -146,6 +146,14 @@ function AchievementApp() {
   const consoleId   = achData?.console?.id   || achData?.achievement?.consoleId || null;
   const consoleName = achData?.console?.title || userGame?.consoleName || null;
 
+  // Where this achievement sits in its set (display order), for "n of N" and previous / next
+  const setOrder = userGame?.achievements
+    ? Object.values(userGame.achievements).sort((a, b) => (a.displayOrder - b.displayOrder) || (a.id - b.id))
+    : [];
+  const setPos  = setOrder.findIndex(a => String(a.id) === String(achId));
+  const prevAch = setPos > 0 ? setOrder[setPos - 1] : null;
+  const nextAch = setPos >= 0 && setPos < setOrder.length - 1 ? setOrder[setPos + 1] : null;
+
   const badgeSrc = userAch?.badgeName
     ? `${MEDIA_URL}/Badge/${userAch.badgeName}.png`
     : ach?.badgeName
@@ -262,6 +270,21 @@ function AchievementApp() {
                     </span>
                 }
               </>}
+            </div>
+          )}
+
+          {/* Part of its game's dex: Dex No., position in the set, previous / next */}
+          {gameId && (
+            <div className="flex items-center gap-2 mb-3">
+              <span className="dex-no lg art-shadow">Dex No.<b>{gameId}</b>{setPos >= 0 && <> · <b>{setPos + 1}</b> of {setOrder.length}</>}</span>
+              {setPos >= 0 && (
+                <span className="ml-auto flex items-center gap-1.5">
+                  <a href={prevAch ? `?id=${prevAch.id}` : undefined} aria-disabled={!prevAch} title={prevAch ? `Previous: ${prevAch.title}` : 'First in the set'}
+                    className={`fchip !h-[28px] !px-2 ${prevAch ? '' : 'opacity-40 pointer-events-none'}`}><ChevronLeft size={13} />Prev</a>
+                  <a href={nextAch ? `?id=${nextAch.id}` : undefined} aria-disabled={!nextAch} title={nextAch ? `Next: ${nextAch.title}` : 'Last in the set'}
+                    className={`fchip !h-[28px] !px-2 ${nextAch ? '' : 'opacity-40 pointer-events-none'}`}>Next<ChevronRight size={13} /></a>
+                </span>
+              )}
             </div>
           )}
 
@@ -397,9 +420,9 @@ function AchievementApp() {
 
         {/* ── Tab bar (assets/tabs.js) ── */}
         <TabBar className="md:top-[26px] -mx-4 md:-mx-8 px-2 md:px-6 mb-1" active={activeTab} onChange={switchTab} tabs={[
-          { id: 'unlocks',   label: 'Recent Unlocks', count: achData?.unlocksCount != null ? achData.unlocksCount.toLocaleString() : null },
-          { id: 'comments',  label: 'Comments' },
-          { id: 'changelog', label: 'Changelog' },
+          { id: 'unlocks',   label: 'Recent Unlocks', icon: <Users size={15} />, count: achData?.unlocksCount != null ? achData.unlocksCount.toLocaleString() : null },
+          { id: 'comments',  label: 'Comments',  icon: <MessageSquare size={15} /> },
+          { id: 'changelog', label: 'Changelog', icon: <History size={15} /> },
         ]} />
 
         {/* ── Recent Unlocks tab ── */}

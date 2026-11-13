@@ -14,12 +14,22 @@
 - New `assets/ui.css` for shared component styles (base type, headings); `manifest.json` background/theme colours follow the new palette
 - New `assets/sheet.js` (Savepoint's `useSheet`, `useArtSrc`, plus an `ArtBg` helper) and sheet / blurred-art styles in `assets/ui.css`. The profile's per-game achievement modal uses it too, with the game's art blurred behind its header
 - Moved to **yozuryu.github.io/cheevodex/** with the repo rename. Old `/cheevo-tracker/…` links (any page, with query string) redirect to the same page at the new address via the root site's `404.html`; credentials survive because the origin is the same
+- **More of Savepoint's components.** Its game rows, stat tiles, filter chips, activity timeline, watchlist rows and game-sheet card are now shared styles in `assets/ui.css` (Savepoint's colours mapped onto the tokens), with `assets/completions.js` (game awards panel), `assets/activity-ui.js` (summary, day headings, run cards) and `assets/time.js` ported alongside. The sort / group select draws its icons as token-coloured masks instead of hex-coloured SVGs
 
 ### Profile
 
 - **List or tiles.** Recent Games and Completion Progress have a list / tiles switch. Tiles show the game's art with its icon, last played, hardcore/softcore, achievement count and status, with a status-coloured bottom edge (gold mastered, silver beaten, blue in progress); mastered tiles glow. The choice is remembered on this device (`assets/game-view.js`, from Savepoint) and falls back to the list where storage is blocked
 - **Segmented progress bars.** Game progress is drawn as up to 20 segments filling in the game's status colour, in both views; the count and percentage are in Geist Mono
 - **New profile header.** The most recently played game's art sits blurred behind the header with a gold glow top-left and a blue glow top-right; the avatar has a gold ring; Points, Achievements and Site rank are a numbers strip; a status row counts mastered, beaten and in-progress games. If the art doesn't load the header stays plain charcoal. Replaces the centred avatar with three text pills
+- **Overview tab**, the new default: Last played, Recent unlocks, User stats and Game awards moved from above the tabs into it, as on Savepoint. On desktop it has two columns, with stats and awards on the right and the next five unlocks under the newest one. User stats are tiles with More stats; Game awards show Mastered / Beaten counts, the latest award as a card with the game's art behind it, and the icons with a tiles / list switch
+- **Tabs on every screen.** The tab bar now shows on phones too, sticky under the status bar, with an icon on each tab and shorter names (Recent, Progress). The floating tab pill is gone, the header stays on every tab, and switching tabs scrolls the new tab to its top
+- **Compact game rows** on Recent and Progress: icon, title, console, mode and last played on two lines, the count and a short bar on the right, the game's screenshot faded in behind. Recent gets a search over the whole library; Progress gets one row of view chips with counts, search, a sort (Overall % or Last played) and the view's rules as small chips
+- **Activity timeline**: a folded 14-day summary that opens to the year's numbers, streaks and heatmap, then day headings that stick under the tab bar and one card per run of unlocks in a game, with its art band. The Mine / Friends switch uses the shared chips
+- **Backlog as watchlist rows**: compact rows with the status on the right and as the edge colour, subsets stacked under their base game as one card, search + grouping (including by subsets), status chips with counts. Paging is gone; the whole list shows
+- Removed the Series tab: it could only show a message about an admin panel Cheevodex doesn't have
+- **The Dex**, the new first tab: every game you've played is a dex, numbered by its RA game ID ("No.16244"), with its icon, title, console, count and a state in RA's words: played, beaten, mastered (games with no unlocks yet are dimmed). It reads as an index: dexes grouped by console under sticky headings, a jump list of consoles and a "96 dexes · 14 consoles" line; search (title or dex number), console, sort (Dex No., last played, progress, title) and All / Unbeaten / Beaten / Mastered chips. A Played / Beaten / Mastered counter sits in the header on phones; tapping it opens the Dex on that filter
+- **Identity rail on desktop.** From 1024px the profile is two columns: a pinned card on the left with the player (avatar, rank, motto, points, achievements, rank), the dex counter, the stat tiles and member since; tabs and content on the right, in place of the wide header
+- Game rows show their dex number
 
 ### Social
 
@@ -28,10 +38,15 @@
 ### Game Page
 
 - **Art-lit header.** The game's in-game/title art is blurred behind the header (was a flat 15% wash) with the same gold/blue glows as the profile; the icon gets a gold ring when mastered and a silver one when beaten; header numbers are in Geist Mono and the completion bar has square ends
+- **Completion card** under the title, as on Savepoint's game sheet: % complete large, Achievements, Points and Played beside it, a gold progression meter and the bar along the card's edge. The player count moved to the details line. Hardcore / Softcore shows as a tag
+- Achievement filters are one row of chips with counts (All, Unlocked, Locked, Progression, Missable), then the count, a sort select and a Compare chip; tabs have icons
+- **Each game reads as its dex**: "Dex No." above the title, the facts (developer, publisher, genre, release, players) as a labelled block on desktop and one line on phones, and in the default view the achievements in two chapters, Progression (needed to beat the game) and Everything else, each with its done count and missables. A See also section links a subset's base game and the other Professor Oak subsets
 
 ### Achievement Page
 
 - Same art-lit header as the game page (blurred art, gold/blue glows); an unlocked badge gets a 2px gold ring with a glow, locked stays greyscale. Tabs use the new sliding-underline tab bar
+- Tabs have icons, like the profile and game pages
+- Shows its place in the game's dex ("Dex No.16244 · 7 of 76") with Prev / Next to page through the set
 
 ### Navigation
 
@@ -41,6 +56,7 @@
 - **Cheevo Tracker is now Cheevodex.** New name in every page title, the top bar, footers, the install banner, the manifest and the README. The top bar shows the new Lens boy mark with the wordmark Cheevo**dex** ("dex" in blue); the login page shows the app icon and wordmark instead of the RetroAchievements logo
 - **New icon: Lens boy** — a pixel handheld whose screen is one big gold achievement-coin lens, with a d-pad and a gold button. Replaces the pixel trophy in `favicon.svg`, `favicon.ico` (16/32/48), `icon-192.png`, `icon-512.png` and `appicon.png`/`appicon.svg`
 - Every page says it is **unofficial and not affiliated with RetroAchievements**: in the footer on desktop, at the bottom of the phone menu sheet (phones hide the footer), and on the login page
+- The phone bottom nav goes to pages (Profile, Search, Consoles, Changelog, Menu) instead of profile tabs, which now live in the profile's own tab bar; the menu sheet keeps the account and cache actions
 
 ### Polish
 
@@ -50,6 +66,7 @@
 - The profile's floating tab pill on phones has 3px corners instead of fully round ends, matching the rest of the app
 - Changelog page renders **bold** text (it showed the asterisks)
 - Login tagline is now "Register every unlock"; the app's install description and the README now call it "A pocket companion for RetroAchievements"
+- **New logo**: a closed pixel book in RA blue with a gold trophy on the cover and a ribbon bookmark, replacing the Lens boy handheld, which read as a Pokédex crossed with a Game Boy. Favicon and app icons regenerated. The pixel face is now used only for dex numbers
 
 ## v26.09.27 — Not-found page + silver Beaten + POC fixes, FireRed & LeafGreen + new icon
 

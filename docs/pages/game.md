@@ -29,7 +29,19 @@ All in parallel:
 | Hashes | Supported ROM hashes |
 | Professor Oak | Only shown when `findPocSubset(gameId)` matches — i.e. when browsing a POC subset's own page — see below |
 
-The bar is `TabBar` from `assets/tabs.js` (uppercase labels, sliding blue underline, achievement count on the first tab). All tab sections sit in one wrapper (`tabContentRef`) so `useSwipeTabs` can switch tabs with a sideways swipe on phones, in `tabIds` order; `switchTab` keeps `?tab=` in sync.
+The bar is `TabBar` from `assets/tabs.js` (icon + uppercase label, sliding blue underline, achievement count on the first tab). All tab sections sit in one wrapper (`tabContentRef`) so `useSwipeTabs` can switch tabs with a sideways swipe on phones, in `tabIds` order; `switchTab` keeps `?tab=` in sync.
+
+## Reading as a dex (CHV-036)
+
+The game page is the game's **dex**: "Dex No.<RA game ID>" above the title (`.dex-no.lg`), the completion card, then a summary (`.dsum`: Developer, Publisher, Genre, Released, Players). In the default achievement view (All, all types, default order) the list is split into chapters (`.dchap`): **Progression** (progression + win-condition achievements, in set order) and **Everything else**, each with its done count and missables flagged. Any filter, type or sort shows the plain list. **See also** (`.seealso`) at the end of the Achievements tab links related dexes: the base game of a subset, and the other Professor Oak subsets.
+
+## Completion Card
+
+Under the title (Savepoint's game-sheet card, `.shd-*` in `assets/ui.css`): % complete large on the left in the status colour (blue, gold at 100%), then Achievements (earned/total), Points (earned/total) and Played (or Players when there's no playtime; with playtime the player count moves to the meta line), the RA progression as a gold segmented meter (one segment per progression / win-condition achievement up to 20, longer chains grouped, the group in progress lit partly), and the bar along the card's bottom edge. The card is tinted up to the % (`.wash`). A Hardcore / Softcore tag sits under the meta line once anything is unlocked.
+
+## Achievement Controls
+
+One `.frow` of chips with counts (`.fchip`, Savepoint's filter styles): All · Unlocked · Locked, then Progression and Missable (type chips toggle off when tapped again; a type with no achievements is hidden). Below, a `.fbar`: the shown count, the sort select (Default order · Points · Unlock date) and the **Compare** chip that opens the friend picker.
 
 ## Difficulty Curve
 
@@ -195,13 +207,13 @@ The hero is a `.phead` (`assets/ui.css`): the game's in-game or title art blurre
   <h1 className="text-[18px] md:text-[22px] ... art-shadow">
 ```
 
-### Stats bar
+### Completion card
 
-Uses `grid grid-flow-col auto-cols-fr` — equal-width columns at all sizes. Stat values scale: `text-[12px] md:text-[14px]`.
+Three stat cells beside the % at every width (`.shd-cells.n3`); padding grows from md.
 
 ### Tab bar
 
-`.ptabs` is sticky at the top (`md:top-[26px]` below the desktop Topbar). Labels only; the row scrolls sideways and keeps the active tab in view. Swipe on the content to change tab.
+`.ptabs` is sticky at the top (`md:top-[26px]` below the desktop Topbar). Icon + label; the row scrolls sideways and keeps the active tab in view. Swipe on the content to change tab.
 
 ### Content sections (Leaderboards, Comments)
 

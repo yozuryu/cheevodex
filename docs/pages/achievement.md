@@ -44,3 +44,7 @@ Sticky at `top-0 md:top-[26px]`. Full-width across `max-w-3xl` container.
 ### Content
 
 Full-width single-column list at all sizes. No layout shift between mobile and desktop.
+
+## Part of its dex (CHV-038)
+
+Above the badge: "Dex No.<game ID> · n of N" (position in the set by `displayOrder`, from the user's game progress already loaded) and Prev / Next chips that move through the set.

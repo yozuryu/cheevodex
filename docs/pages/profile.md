@@ -1,6 +1,6 @@
 # Profile Page
 
-**File:** `profile/app.js` (~4090 LOC)  
+**File:** `profile/app.js` (~3800 LOC)  
 **URL:** `/profile/` (own profile) · `/profile/?u=<username>` (visitor mode)  
 **Auth required:** Yes
 
@@ -8,19 +8,45 @@
 
 | Tab | Icon | URL param | Notes |
 |---|---|---|---|
-| Recent Games | Clock | `?tab=games` | Default |
-| Completion Progress | BarChart2 | `?tab=progress` | |
-| Series Progress | Layers | `?tab=series` | Hidden if no series with `showProgress` |
-| Activity | Activity | `?tab=activity` | Mine / Friends toggle; lazy-loads achievement chunks |
+| Dex | BookMarked | `?tab=dex` | Default. Every played game as a dex (see below) |
+| Overview | User | `?tab=overview` | Last played, Recent unlocks, User stats, Game awards |
+| Recent | Clock | `?tab=recent` | Search over the library; the latest 15, or up to 50 matches |
+| Progress | BarChart2 | `?tab=progress` | Views + Mastered toggle, search, sort |
+| Activity | Activity | `?tab=activity` | Mine / Friends chips; lazy-loads achievement chunks |
 | Backlog | Star | `?tab=backlog` | Want-to-play list; triggers `fetchBacklog` on first open |
 | Social | Users | `?tab=social` | Following / followers; triggers `fetchSocial` on first open |
-| Stats | PieChart | `?tab=stats` | Own profile only. Desktop tab bar + mobile menu sheet — deliberately **not** in the floating pill |
+| Stats | PieChart | `?tab=stats` | Own profile only |
 
-Tab state persists in URL query param. `profileTabs` (in `ProfilePage`) is the single ordered list: it feeds the desktop `TabBar` (`assets/tabs.js`: uppercase labels, sliding 3px blue underline, sideways scroll) and the phone swipe (`useSwipeTabs` on the tab content wrapper `tabContentRef`). Floating pill (mobile) appears when tab bar scrolls off screen; animated via `slideUpPill`/`slideDownPill` CSS keyframes.
+Tab state persists in the URL. `profileTabs` (in `App`) is the single ordered list: it feeds the shared `TabBar` (`assets/tabs.js`: icon + uppercase label, sliding blue underline, sideways scroll, sticky under the status bar on phones and under the top bar from md) and the phone swipe (`useSwipeTabs` on `tabContentRef`). A `.ptabs-anchor` marks the bar's natural spot; `setTab` calls `scrollToTabs(tabBarRef)` so a new tab starts at its top with the bar pinned. The layout follows Savepoint's RA profile (CHV-026–030); the phone bottom nav goes to pages, not tabs.
+
+## Dex (CHV-033, CHV-037)
+
+Cheevodex's centre: the player's cheevo codex. Each game in `ALL_GAMES` is a **dex**, numbered by its RA game ID (`.dex-no`, the only place the pixel face is used). `DexTab` / `DexEntry` / `DexCounter` in `profile/app.js`, styles `.dexc` / `.dgrid` / `.dent` / `.dvol` / `.dindex` in `assets/ui.css`.
+
+- **States, in RA's words:** played (every game), beaten (`isBeaten || isMastered`), mastered. A game with no unlocks shows its icon dimmed grey (`.dent.unstarted`). Never seen / caught: Cheevodex is a codex, not a Pokédex (doc-012).
+- **Entry:** Dex No., state icon (gold star mastered, silver medal beaten, blue dot in progress, empty circle not started), icon, title, console (or subset name), count and %; gold edge + glow when mastered, silver when beaten. Links to the game page.
+- **Controls:** search (title, subset or a dex number), console select, sort (Dex No. · Last played · Progress · Title), chips All / Unbeaten / Beaten / Mastered with counts, and a count line ("96 dexes · 12 consoles").
+- **Index:** in Dex No. order with no console or search picked, dexes are grouped by console (biggest first) under sticky `.dvol-h` headings with counts, and a jump list of console chips scrolls to each group.
+- **Dex counter** (`DexCounter`): Played / Beaten / Mastered with a bar each (started, beaten, mastered as a share of played). In the header on phones, in the identity rail on desktop; tapping a cell opens the Dex on that filter.
+
+## Identity rail (≥1024px, CHV-034)
+
+From 1024px the profile is two columns (`lg:grid-cols-[300px_minmax(0,1fr)]`, main `lg:max-w-[80rem]`): a sticky `.idrail` on the left (the player card over the last game's art: avatar, name + RA link, rank, last active, motto, Points / Achievements / Rank; then the dex counter; then the stat tiles with More stats; then Member since) and the tab bar + content on the right. The `.phead` header is `lg:hidden`, and the Overview's User stats block is `lg:hidden` (the rail has them).
+
+## Overview
+
+The header sits on top, then the tab bar; nothing between them. Overview is `grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px]`:
+
+- **Last played**: the regular `GameListRow` with the rich presence as a `.grow-extra` line.
+- **Recent unlocks**: the newest unlock as a card; on ≥1024px also the next five as `.urow` rows (`.ulist`, hidden on phones) from the achievement chunks, which the wide Overview loads.
+- **User stats** (`.prail`): `StatTiles` (`.stiles` / `.stile`, two across in the rail, value over label, `STAT_LABELS` shortens labels, "of N" after a rank shown as small text); `statsRight` behind **More stats**.
+- **Game awards**: `CompletionsPanel` (`assets/completions.js`, `.cmp-*`): Mastered / Beaten counts, the newest award as a card with the game's screenshot behind, then the icons with a tiles / list switch (`cheevodex:awardsView`). Items link to the game page (`gameId` from the award's `awardData`, added in `transform.js`).
 
 ## Game lists: list / tiles
 
-Recent Games and Completion Progress render either `GameCard` rows (list) or `GameTile`s in a `.gtiles` grid (2 / 3 / 4 columns), chosen with `ViewToggle` and remembered per device by `useGameView()` (`assets/game-view.js`, localStorage `cheevodex:gameView`, falls back to list). `gameStatus(game)` gives the status colour (gold mastered, silver beaten, blue in progress, `line-2` not started); `SegBar` draws progress as ≤20 segments in that colour, glowing only when mastered. Recent shows 5 rows or 8 tiles before "Show more".
+Recent and Progress render `GameListRow` (`.grow` in a `.glist`, two columns from md: icon, title, console + subset + tilde tags + mode icon, playtime · `shortAgo` last played, count and a short bar on the right, the screenshot faded in on the right, status colour on the left edge) or `GameTile`s in `.gtiles`, chosen with `ViewToggle` and remembered by `useGameView()` (`assets/game-view.js`, `cheevodex:gameView`). Rows and tiles link to the game page. `gameStatus(game)` gives the status colour (gold mastered, silver beaten, blue in progress, `line-2` not started).
+
+Filters use Savepoint's shared filter styles (`.frow` / `.fchip` / `.fsep` / `.fbar` / `.fsearch` / `.fselect-w` + `.fselect` / `.crits` in `assets/ui.css`): Recent has `SearchField` + `ViewToggle`; Progress has `ProgressFilterBar` (view chips with counts, the Mastered toggle in All, search, sort select in All: Overall % or Last played, view toggle, and the view's rules as `.crit` chips). Search uses `fold()` (no accents or case).
 
 ## Header
 
@@ -69,7 +95,11 @@ The Activity tab has a **Mine / Friends** toggle. Friends view shows a merged ti
 4. Otherwise set `friendsActivityStatus = 'loading'`; `fetchFriendsActivity` fetches one user at a time (1000ms gap between API calls), streams results via `onUser` callback
 5. On complete: `friendsActivityStatus = 'done'`; on unrecoverable error: `'error'`
 
-### Feed rendering (ActivityTab)
+### Mine view (ActivityTab)
+
+Savepoint's timeline from `assets/activity-ui.js` (styles: the "Activity timelines" block in `assets/ui.css`): `ActivitySummary` (folded on phones by default, remembered as `cheevodex:activitySummary`: the last 14 days' unlocks and games with one bar per day; open: past-year numbers, the 14 days with streak tiles, the year heatmap), sticky `DayHead`s under the tab bar (`.tl-tabs`), and one `RunCard` per run of unlocks in one game (art band from the game's screenshot via the `gameArt` prop, icon, title, time range, trophy count; runs over 5 fold) with `UnlockRow`s. Picking a day in the bars or the heatmap filters the timeline. Dates and times use `assets/time.js` (viewer's timezone).
+
+### Feed rendering (ActivityTab, Friends view)
 
 - `mergedFeed`: own `achievements` + all `friendsActivity` values, sorted newest-first
 - `feedGroups`: consecutive same-user+game runs within 1-hour window → session objects
@@ -94,9 +124,7 @@ Passed to `transformData()` → `{ profile, games, backlog }`.
 
 ## Completion Progress — Progression Buckets
 
-`progressFilter` state (`'all' | 'nearly' | 'inprogress' | 'abandoned'`) drives a segmented
-control above the Mastered toggle. All views run after the shared base filter (has unlocks, has
-an achievement set, matches `progressSearch`).
+`progressFilter` state (`'all' | 'nearly' | 'inprogress' | 'abandoned'`) is the view chip row of `ProgressFilterBar`; `applyProgressView()` buckets the games and `progressViewCounts()` gives each chip its count. All views run after the shared base filter (has unlocks, has an achievement set, matches `progressSearch`).
 
 The three progression buckets **partition** started-but-unfinished games — every such game lands
 in exactly one, and their counts sum to the unfinished total. Precedence is first-match-wins in
@@ -107,7 +135,7 @@ the order below.
 | `nearly` | `!isMastered && rawProgress >= 75` | achievements remaining asc, then `rawProgress` desc |
 | `inprogress` | not nearly, `lastPlayedStr` within 30 days | `lastPlayedStr` desc |
 | `abandoned` | not nearly, `lastPlayedStr` older than 30 days **or missing** | `lastPlayedStr` desc |
-| `all` | `showMastered \|\| !isMastered` | `rawProgress` desc |
+| `all` | `showMastered \|\| !isMastered` | `progressSort`: `rawProgress` desc (Overall %) or `lastPlayedStr` desc (Last played) |
 
 Two deliberate choices:
 
@@ -122,8 +150,7 @@ Two deliberate choices:
 `mostRecentAwardedDate` otherwise — so launching a game without unlocking anything still counts
 as in progress.
 
-The `Mastered` toggle only renders under `all`; the buckets exclude mastered games by definition.
-Under the other three a one-line hint replaces it.
+The `Mastered` toggle and the sort only render under `all`; the buckets exclude mastered games by definition and have a fixed order, shown as `.crit` rule chips.
 
 ## Stats Tab
 
@@ -258,9 +285,7 @@ Computed via `useMemo` from `achievementChunks`. Format: `{ "YYYY-MM-DD": { coun
 Triggered by `?u=<username>` query param. `isVisitorMode = !!targetUser`.
 
 - `fetchProfile(creds.username, creds.apiKey, targetUser)` fetches the target user's data.
-- Valid tabs restricted to `['recent', 'progress', 'series']` — backlog, activity, social are disabled.
-- Tab bar always visible on all screen sizes (no floating pill).
-- Header always visible regardless of active tab.
+- Valid tabs restricted to `['overview', 'recent', 'progress']` — backlog, activity, social and stats are disabled.
 - Topbar breadcrumb shows visited username instead of "Log out" button.
 - `document.title` updates to the visited user's username.
 
@@ -270,50 +295,23 @@ Link to visitor mode: `./profile/?u=<username>` (from within the app) or `../pro
 
 Right side: **Log out** button (own profile) or username breadcrumb (visitor mode).
 
-## Series Tab
-
-Renders only if `seriesData.some(s => s.showProgress)`. With no `series.json`, tab never appears.
-
 ## Mobile
 
 ### Tab bar
 
-On mobile (< 768px), the tab bar is **hidden** in authed mode (`hidden md:block`). It is replaced by the floating pill.
+The same sticky `TabBar` as desktop, pinned under the status bar (`top: env(safe-area-inset-top)`); swipe between tabs with `useSwipeTabs`. There is no floating pill and the header shows on every tab.
 
-In visitor mode the tab bar is always visible (`block`) and sticks at `top-0` (no desktop Topbar offset).
+### Bottom nav
 
-### Floating pill (authed mode, mobile only)
+`assets/mobile-nav.js` links pages: Profile, Search, Consoles, Changelog, Menu (refresh, purge, debug, log out).
 
-Appears when `tabBarRef.current.getBoundingClientRect().bottom < 0` AND `window.innerWidth < 768`.
+### User stats
 
-- State: `showFloatingTabs` / `pillLeaving`
-- Enter: `slideUpPill` keyframe animation
-- Exit: `slideDownPill` keyframe → 210ms delay → hide
-- Each tab button: icon (`block md:hidden`) + 9px short label (`block md:hidden`); full text hidden on mobile
+`statsRight` is behind **More stats** on every screen size (`statsExpanded`).
 
-Do not render a floating pill for visitor mode — use the always-visible tab bar instead.
+### Backlog
 
-### Header visibility
-
-When authed and **not** on the Recent tab, the header and the main two-column grid are hidden on mobile:
-
-```jsx
-className={`...${(!isVisitorMode && activeTab !== 'recent') ? ' hidden md:block' : ''}`}
-```
-
-The tab bar takes full-screen on non-Recent tabs on mobile.
-
-### Stats panel
-
-Right stats column hidden on mobile unless `statsExpanded`. Expand toggle button is `sm:hidden` (mobile only).
-
-### Backlog table
-
-Certain columns carry `wl-hide-mobile` class and are hidden on mobile via a `<style>` rule.
-
-### Heatmap
-
-Short hint (`sm:hidden`) vs full hint (`hidden sm:block`) shown depending on screen width.
+Savepoint's watchlist rows (`.wlist` / `.wrow`, two columns from md): icon, title + subset / tilde tags, console · points, the status once on the right, status colour on the left edge. Subsets stack under their base game as one `.wstack` card (`stackSubsets()`): "Base set" first, then each subset. Filters: search + grouping select (none · console · status · subsets), status chips with counts, a meta line with the sync time and Refresh. Rows are render functions, not components (as components React would remount every row on each re-render).
 
 ### Header layout
 

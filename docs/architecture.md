@@ -27,7 +27,10 @@ cheevodex/
 │   ├── motion.css      # Cross-page view transitions + .anim-* helpers (from Savepoint)
 │   ├── sheet.js        # useSheet / useArtSrc / ArtBg — bottom sheet below md, dialog from md
 │   ├── tabs.js         # TabBar (sliding underline) + useSwipeTabs (phone swipe between tabs)
-│   ├── game-view.js    # useGameView — list / tiles choice, remembered per device
+│   ├── game-view.js    # useGameView — list / tiles choice, remembered per device; shortAgo
+│   ├── completions.js  # CompletionsPanel — Overview game awards (from Savepoint)
+│   ├── activity-ui.js  # Activity summary, sticky day headings, run cards (from Savepoint)
+│   ├── time.js         # Timezone-aware date helpers: dayKey, addDays, fmtClock… (from Savepoint)
 │   ├── mobile-nav.js   # Shared bottom nav IIFE (mobile only, < 768px)
 │   ├── pwa-install.js  # Install banner
 │   └── ui.js           # Shared Topbar (with the Cheevodex brand) + Footer (React.createElement, no JSX)
@@ -64,7 +67,7 @@ import { getMediaUrl, parseTitle, formatDate, formatTimeAgo } from '../profile/u
 import { getCredentials, clearCredentials, fetchProfile, ... } from '../profile/utils/ra-api.js';
 ```
 
-`assets/ui.js` exports `Topbar` and `Footer`. It uses `React.createElement` (not JSX) because it is not transpiled by Babel. The same holds for `assets/sheet.js`, `assets/tabs.js` and `assets/game-view.js`: native ES modules that import `react` through the page's import map. The Topbar's first crumb always renders the brand (Lens boy mark + "Cheevo**dex**" wordmark); the Footer always carries the "Unofficial. Not affiliated with RetroAchievements." line.
+`assets/ui.js` exports `Topbar` and `Footer`. It uses `React.createElement` (not JSX) because it is not transpiled by Babel. The same holds for `assets/sheet.js`, `assets/tabs.js`, `assets/game-view.js`, `assets/completions.js`, `assets/activity-ui.js` and `assets/time.js`: native ES modules that import `react` through the page's import map. The Topbar's first crumb always renders the brand (codex mark + "Cheevo**dex**" wordmark); the Footer always carries the "Unofficial. Not affiliated with RetroAchievements." line.
 
 Every page `<head>` loads, in order: Tailwind CDN → `tw-config.js` → `tokens.css` → `ui.css` → `motion.css` → Geist / Geist Mono / Silkscreen from Google Fonts.
 
