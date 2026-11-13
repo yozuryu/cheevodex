@@ -797,23 +797,32 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 .cmp-ledger { margin-bottom: 10px; }
 .cmp-ledger .dl-k { display: inline-flex; align-items: center; gap: 6px; }
 
-/* Friends roster: who unlocked how much in the last 30 days, as index lines you can tap to narrow the feed */
-.roster { padding: 10px 12px 8px; }
-.roster .dledger { gap: 1px; }
-@media (min-width: 768px) { .roster .dledger { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; } }
-.rost { width: 100%; padding: 4px 6px; margin: 0 -6px; width: calc(100% + 12px); background: none; border: 0; border-radius: 2px; text-align: left; align-items: center; }
-.rost:hover { background: var(--box-hi); }
-.rost.on { background: rgb(var(--c-accent) / 0.12); box-shadow: inset 2px 0 0 var(--accent); }
-.rost .dl-k { display: inline-flex; align-items: center; gap: 7px; min-width: 0; max-width: 70%; }
-.rost .dl-k img { width: 18px; height: 18px; border-radius: 2px; flex-shrink: 0; }
-.rost .dl-k small { font-size: 10px; color: var(--ink-3); }
-.rost .dl-dots { transform: none; align-self: center; }
-.roster-more { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 0; font-size: 11.5px; color: var(--accent); background: none; border: 0; }
-.roster-more:hover { color: var(--ink); }
-/* Who made a friends run, at the head of its card's sub-line */
-.run-who { display: inline-flex; align-items: center; gap: 5px; min-width: 0; flex-shrink: 1 !important; overflow: hidden; }
-.run-who img { width: 16px; height: 16px; border-radius: 2px; flex-shrink: 0; }
-.run-who b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+/* Party (Friends view): one card per friend, the games they moved as +N chips, their runs behind a toggle */
+.party { background: var(--box); border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+.party-h { display: flex; align-items: center; gap: 11px; padding: 11px 12px 8px; }
+.party-av { flex-shrink: 0; width: 40px; height: 40px; padding: 1.5px; border-radius: 3px; background: var(--line-2); }
+.party-av img { width: 100%; height: 100%; object-fit: cover; border-radius: 2px; background: var(--well); display: block; }
+.party-id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.party-name { font-size: 14px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.party-name:hover { color: var(--accent-hi); }
+.party-sub { font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.party-n { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-family: var(--mono); }
+.party-n b { font-size: 18px; font-weight: 600; line-height: 1; color: var(--accent); }
+.party-n span { font-size: 10.5px; color: var(--ink-3); }
+.party-games { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 10px 63px; }
+@media (max-width: 480px) { .party-games { padding-left: 12px; } }
+.pgame { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; min-width: 0; height: 30px; padding: 0 8px 0 3px;
+  background: var(--inset); border: 1px solid var(--line-soft); border-radius: 2px; font-size: 11.5px; color: var(--ink-2); }
+.pgame:hover { border-color: var(--line-2); color: var(--ink); }
+.pgame img { width: 22px; height: 22px; border-radius: 2px; flex-shrink: 0; }
+.pgame-t { min-width: 0; max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pgame-t em { font-style: normal; color: var(--gold-hi); }
+.pgame b { flex-shrink: 0; font-family: var(--mono); font-size: 11.5px; font-weight: 600; color: var(--accent); }
+.pgame.more { padding: 0 9px; color: var(--accent); background: none; }
+.party-t { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; padding: 7px; font-size: 11.5px; color: var(--accent);
+  background: none; border: 0; border-top: 1px solid var(--line-soft); }
+.party-t:hover { color: var(--ink); background: var(--box-hi); }
+.party-runs { display: flex; flex-direction: column; gap: 8px; padding: 8px; background: var(--inset); border-top: 1px solid var(--line-soft); }
 
 /* Changelog: releases as volumes, sections as index lines */
 .clog-sum { max-width: 320px; }
@@ -874,7 +883,8 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 .mrow-e > b { font-size: 17px; font-weight: 600; line-height: 1; }
 .mrow-e > span { font-size: 11px; color: var(--ink-2); white-space: nowrap; }
 .mrow-e small { color: var(--ink-3); font-size: 10.5px; }
-.mdex-all { margin: 2px 8px 4px; }
+.mdex-all { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; margin: 2px 8px 4px; padding: 0; font-size: 11.5px; color: var(--accent); background: none; border: 0; }
+.mdex-all:hover { color: var(--ink); }
 .mdex-none { padding: 6px 14px 10px; font-size: 12px; color: var(--ink-3); }
 .mdex-open { display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; padding: 8px; font-size: 11.5px; color: var(--accent);
   background: none; border: 0; border-top: 1px solid var(--line-soft); }
@@ -882,3 +892,6 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 .mdex > .anim-fade { border-top: 1px solid var(--line-soft); }
 .mdex .astreak { margin-top: 0; }
 .mrow-s .dex-no { font-size: 8px; color: var(--ink-2); }
+.partys { display: flex; flex-direction: column; gap: 10px; }
+@media (min-width: 768px) { .partys { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } .partys > .smore { grid-column: 1 / -1; } }
+@media (min-width: 768px) { .party-games { padding-left: 12px; } .party.open { grid-column: 1 / -1; } }

@@ -75,7 +75,7 @@ Filters use Savepoint's shared filter styles (`.frow` / `.fchip` / `.fsep` / `.f
 
 ## Social Timeline (Activity Tab — Friends View)
 
-The Activity tab has a **Mine / Friends** toggle. Friends view shows a merged timeline of the authed user's own achievements + all followed users' achievements, grouped by day → run (user + game within a 1-hour window) → individual achievements, under a roster of who unlocked most.
+The Activity tab has a **Mine / Friends** toggle. Friends view shows a merged timeline of the authed user's own achievements + all followed users' achievements, as one card per friend (Party), each opening to that friend's runs (user + game within a 1-hour window) → individual achievements.
 
 ### State (main app)
 
@@ -103,10 +103,9 @@ Savepoint's timeline from `assets/activity-ui.js` (styles: the "Activity timelin
 
 - `mergedFeed`: own `achievements` + all `friendsActivity` values, sorted newest-first
 - `feedGroups`: consecutive same-user+game runs within 1-hour window → session objects
-- `roster`: everyone in `feedGroups` with unlocks in the last 30 days (the friends' fetch window), ranked by unlocks then points; shown as index lines (avatar, name, dotted leader, unlocks, points), six at first then all. Tapping a name sets `rosterUser`, which narrows the feed to their runs and shows a Profile link and an Everyone chip
-- `feedDays`: the (filtered) runs, first `visibleSessionCount` (100 more per Show more days), grouped by day under `DayHead` (unlocks · players)
-- Each run is a `RunCard` (same as Mine) with the game's icon, the friend's avatar and name at the head of the sub-line (own runs gold-edged with your art, friends' blue-edged), console from `sm`, time range, unlock count and points; it folds after two unlocks (`fold={3}`). Rows come from the same `unlockRow` builder as Mine. Friends' cards link to the game page in compare mode
-- Sync time, Refresh and Reset (icon chips) sit beside the Mine / Friends chips; friends whose fetch failed are listed in one quiet line under the roster
+- `party`: friends (not you) with runs in the last 30 days (the fetch window): per friend the unlocks, points, last active, their runs, and the games they moved (`+N`, newest first). Sorted by `partySort`: `recent` (last active) or `most` (unlocks). 12 cards, then 12 more per Show more
+- `PartyCard`: avatar and name (to `../profile/?u=`), "active 2h ago · N games", +N and points; game chips (`.pgame`: icon, title, +N; three, then "+N more") link to the game in compare mode. "N unlocks in N runs" opens their `RunCard`s (fold after two, rows from the shared `unlockRow`). Cards are two columns from `md`; an opened card spans both. No progress rings here: `API_GetAchievementsEarnedBetween` carries no per-game totals
+- Sync time, Refresh and Reset (icon chips) sit beside the Mine / Friends chips; friends whose fetch failed are listed in one quiet line under the Party heading
 
 ## `rawData` Memo
 

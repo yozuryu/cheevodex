@@ -705,6 +705,66 @@ const RAchievementModal = ({ game, onClose, loadingDetails }) => {
   );
 };
 
+// ── PartyCard — one friend in the Friends view: who, when, the games they moved (+N), their runs on tap ──
+const PartyCard = ({ f, pic, unlockRow, runTitle }) => {
+  const [open, setOpen] = useState(false);
+  const [allGames, setAllGames] = useState(false);
+  const games = allGames ? f.games : f.games.slice(0, 3);
+  return (
+    <section className={`party ${open ? 'open' : ''}`}>
+      <div className="party-h">
+        <a href={`../profile/?u=${f.username}`} className="party-av"><img src={pic} alt="" loading="lazy" /></a>
+        <div className="party-id">
+          <a href={`../profile/?u=${f.username}`} className="party-name">{f.username}</a>
+          <span className="party-sub">active {shortAgo(raDateMs(f.last))} ago · {f.games.length} game{f.games.length !== 1 ? 's' : ''}</span>
+        </div>
+        <div className="party-n">
+          <b>+{f.n}</b>
+          <span>{f.pts.toLocaleString()} pts</span>
+        </div>
+      </div>
+      <div className="party-games">
+        {games.map(g => {
+          const { p } = runTitle(g.gameTitle);
+          return (
+            <a key={g.gameId} href={`../game/?id=${g.gameId}&compare=${f.username}`} className="pgame" title={`${g.gameTitle}${g.consoleName ? ` · ${g.consoleName}` : ''}`}>
+              <img src={getMediaUrl(g.gameIcon)} alt="" loading="lazy" />
+              <span className="pgame-t">{p.baseTitle}{p.isSubset && <em> · {p.subsetName}</em>}</span>
+              <b>+{g.n}</b>
+            </a>
+          );
+        })}
+        {f.games.length > 3 && (
+          <button type="button" onClick={() => setAllGames(o => !o)} className="pgame more">{allGames ? 'fewer' : `+${f.games.length - 3} more`}</button>
+        )}
+      </div>
+      <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="party-t">
+        {open ? 'Hide unlocks' : `${f.n} unlock${f.n !== 1 ? 's' : ''} in ${f.runs.length} run${f.runs.length !== 1 ? 's' : ''}`}
+        <ChevronDown size={12} className={open ? 'rotate-180' : ''} />
+      </button>
+      {open && (
+        <div className="party-runs anim-fade">
+          {f.runs.map(run => {
+            const { p, node } = runTitle(run.gameTitle);
+            const t0 = fmtClock(run.achievements[run.achievements.length - 1].date), t1 = fmtClock(run.achievements[0].date);
+            return (
+              <RunCard key={`${run.gameId}-${run.latestDate}`} accent="var(--accent)"
+                href={`../game/?id=${run.gameId}&compare=${f.username}`} icon={getMediaUrl(run.gameIcon)} art={[]}
+                title={node} subset={p.isSubset ? p.subsetName : null}
+                sub={<>
+                  <span className="num">{fmtDayKey(toLocalDay(run.latestDate), { weekday: 'short', day: '2-digit', month: 'short' })}</span>
+                  <span className="num">{t0 === t1 ? t0 : `${t0}–${t1}`}</span>
+                  <RunCount n={run.achievements.length} />
+                </>}
+                rows={run.achievements.map(unlockRow)} fold={3} />
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+};
+
 // ── ActivityTab Component ──────────────────────────────────────────────────
 
 const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, games = [], loadingMore, allLoaded, socialView, setSocialView, friendsActivityStatus, setFriendsActivityStatus, friendsActivity, friendsFetchProgress, failedFriends, onRefreshFriends, onResetFriends, friendsActivityTs, ownUsername, socialProfileMap = new Map() }) => {
@@ -886,31 +946,28 @@ const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, games =
     return sessions.sort((a, b) => b.latestDate.localeCompare(a.latestDate));
   }, [mergedFeed]);
 
-  // Friends roster: everyone in the feed ranked by unlocks over the last 30 days (the friends' fetch window);
-  // tapping a name narrows the feed to their runs
-  const [rosterUser, setRosterUser] = useState(null);
-  const [rosterAll, setRosterAll] = useState(false);
-  const roster = useMemo(() => {
+  // Party: one card per friend over the last 30 days (the friends' fetch window), with the games they moved
+  // (+N each), their runs behind a toggle. Most recently active first, or most unlocks
+  const [partySort, setPartySort] = useState('recent');
+  const party = useMemo(() => {
     const from = addDays(dayKey(new Date()), -29);
     const m = new Map();
-    feedGroups.forEach(sess => {
-      if (toLocalDay(sess.latestDate) < from) return;
-      const r = m.get(sess.username) ?? { username: sess.username, isOwn: sess.isOwn, n: 0, pts: 0 };
-      r.n += sess.achievements.length;
-      r.pts += sess.achievements.reduce((t, a) => t + (a.points || 0), 0);
-      m.set(sess.username, r);
+    feedGroups.forEach(run => {
+      if (run.isOwn || toLocalDay(run.latestDate) < from) return;
+      const f = m.get(run.username) ?? { username: run.username, n: 0, pts: 0, last: run.latestDate, runs: [], games: new Map() };
+      const pts = run.achievements.reduce((t, a) => t + (a.points || 0), 0);
+      f.n += run.achievements.length; f.pts += pts; f.runs.push(run);
+      if (run.latestDate > f.last) f.last = run.latestDate;
+      const g = f.games.get(run.gameId) ?? { gameId: run.gameId, gameTitle: run.gameTitle, gameIcon: run.gameIcon, consoleName: run.consoleName, n: 0, last: run.latestDate };
+      g.n += run.achievements.length;
+      if (run.latestDate > g.last) g.last = run.latestDate;
+      f.games.set(run.gameId, g);
+      m.set(run.username, f);
     });
-    return [...m.values()].sort((a, b) => b.n - a.n || b.pts - a.pts);
-  }, [feedGroups]);
-  const shownFeed = useMemo(() => rosterUser ? feedGroups.filter(g => g.username === rosterUser) : feedGroups, [feedGroups, rosterUser]);
-  const feedDays = useMemo(() => {
-    const byDay = {};
-    shownFeed.slice(0, visibleSessionCount).forEach(item => {
-      const day = toLocalDay(item.latestDate);
-      (byDay[day] ??= []).push(item);
-    });
-    return Object.entries(byDay).sort(([a], [b]) => b.localeCompare(a));
-  }, [shownFeed, visibleSessionCount]);
+    const list = [...m.values()].map(f => ({ ...f, games: [...f.games.values()].sort((a, b) => b.last.localeCompare(a.last)) }));
+    return list.sort(partySort === 'most' ? (a, b) => b.n - a.n || b.last.localeCompare(a.last) : (a, b) => b.last.localeCompare(a.last));
+  }, [feedGroups, partySort]);
+  const [partyShown, setPartyShown] = useState(12);
   const userPic = u => socialProfileMap.get(u)?.userPic ? getMediaUrl(socialProfileMap.get(u).userPic) : `${MEDIA_URL}/UserPic/${u}.png`;
 
 
@@ -987,98 +1044,37 @@ const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, games =
           {friendsActivityStatus === 'loading' && Object.keys(friendsActivity).length === 0 && <TimelineSkeleton />}
 
           {Object.keys(friendsActivity).length > 0 && (<>
-            {/* ── Roster: index lines, busiest first ── */}
-            {roster.length > 0 && (
-              <section className="sledger roster">
-                <div className="asum-h">
-                  <span className="sec-mark sm" />
-                  <span>Roster</span>
-                  <em>Last 30 days</em>
-                </div>
-                <div className="dledger">
-                  {(rosterAll ? roster : roster.slice(0, 6)).map(r => (
-                    <button type="button" key={r.username} onClick={() => setRosterUser(u => u === r.username ? null : r.username)}
-                      aria-pressed={rosterUser === r.username} className={`dl-row rost ${rosterUser === r.username ? 'on' : ''}`}>
-                      <span className="dl-k">
-                        <img src={userPic(r.username)} alt="" loading="lazy" />
-                        <span className="truncate" style={{ color: r.isOwn ? 'var(--gold)' : undefined }}>{r.username}</span>
-                        {r.isOwn && <small>you</small>}
-                      </span>
-                      <span className="dl-dots" />
-                      <span className="dl-v">{r.n}<small>{r.pts} pts</small></span>
-                    </button>
-                  ))}
-                </div>
-                {roster.length > 6 && (
-                  <button type="button" onClick={() => setRosterAll(o => !o)} className="roster-more">
-                    {rosterAll ? 'Show fewer' : `All ${roster.length} players`}
-                    <ChevronDown size={12} className={rosterAll ? 'rotate-180' : ''} />
-                  </button>
-                )}
-              </section>
-            )}
+            {/* ── Party: one card per friend ── */}
+            <div className="flex items-center gap-2 border-b border-line pb-1.5">
+              <span className="sec-mark" />
+              <span className="sec-t flex items-center gap-2"><Users size={15} className="text-accent" /> Party</span>
+              <span className="text-[11.5px] text-ink-3 truncate"><b className="num text-ink-2">{party.length}</b> active · last 30 days</span>
+              <div className="ml-auto flex gap-1 shrink-0">
+                {[['recent', 'Recent'], ['most', 'Most unlocks']].map(([v, l]) => (
+                  <button type="button" key={v} onClick={() => setPartySort(v)} aria-pressed={partySort === v} className={`fchip ${partySort === v ? 'on' : ''}`} style={{ height: 24 }}>{l}</button>
+                ))}
+              </div>
+            </div>
 
             {failedFriends.length > 0 && (
-              <p className="flex items-start gap-2 text-[11.5px] text-ink-3 -mt-1">
+              <p className="flex items-start gap-2 text-[11.5px] text-ink-3 -mt-2">
                 <AlertCircle size={13} className="text-gold shrink-0 mt-[2px]" />
                 <span>No activity came back for <span className="text-ink-2">{failedFriends.join(', ')}</span>.</span>
               </p>
             )}
 
-            <div>
-              <div className="flex items-center gap-2 border-b border-line pb-1.5 mb-1">
-                <span className="sec-mark" />
-                <span className="sec-t flex items-center gap-2 min-w-0"><Users size={15} className="text-accent shrink-0" /> <span className="truncate">{rosterUser ? `${rosterUser}'s unlocks` : 'Friends unlocks'}</span></span>
-                {rosterUser && (<>
-                  <a href={`../profile/?u=${rosterUser}`} className="ml-auto text-[11.5px] text-accent hover:text-ink shrink-0">Profile ›</a>
-                  <button type="button" onClick={() => setRosterUser(null)} className="fchip on shrink-0" style={{ height: 22 }}>Everyone ✕</button>
-                </>)}
+            {party.length === 0 ? (
+              <div className="text-ink-2 text-[11px] py-4 italic text-center">None of your friends unlocked anything in the last 30 days.</div>
+            ) : (
+              <div className="partys">
+                {party.slice(0, partyShown).map(f => (
+                  <PartyCard key={f.username} f={f} pic={userPic(f.username)} unlockRow={unlockRow} runTitle={runTitle} />
+                ))}
+                {party.length > partyShown && (
+                  <button type="button" onClick={() => setPartyShown(n => n + 12)} className="smore">Show {Math.min(12, party.length - partyShown)} more friends</button>
+                )}
               </div>
-
-              {feedDays.length === 0 ? (
-                <div className="text-ink-2 text-[11px] py-4 italic text-center">No unlocks in the last 30 days.</div>
-              ) : (
-                <div key={rosterUser ?? 'all'} className="flex flex-col gap-4">
-                  {feedDays.map(([day, runs]) => {
-                    const n = runs.reduce((t, r) => t + r.achievements.length, 0);
-                    const people = new Set(runs.map(r => r.username)).size;
-                    return (
-                      <section key={day} className="anim-fade">
-                        <DayHead day={day}>
-                          <b className="num">{n}</b> unlock{n !== 1 ? 's' : ''}{!rosterUser && <> · <b className="num">{people}</b> player{people !== 1 ? 's' : ''}</>}
-                        </DayHead>
-                        <div className="flex flex-col gap-2">
-                          {runs.map(run => {
-                            const { p, node } = runTitle(run.gameTitle);
-                            const t0 = fmtClock(run.achievements[run.achievements.length - 1].date), t1 = fmtClock(run.achievements[0].date);
-                            const pts = run.achievements.reduce((t, a) => t + (a.points || 0), 0);
-                            return (
-                              <RunCard key={`${run.username}-${run.gameId}-${run.latestDate}`}
-                                accent={run.isOwn ? 'var(--gold)' : 'var(--accent)'}
-                                href={run.isOwn ? `../game/?id=${run.gameId}` : `../game/?id=${run.gameId}&compare=${run.username}`}
-                                icon={getMediaUrl(run.gameIcon)}
-                                art={[run.isOwn ? gameArt[run.gameId] : null]}
-                                title={node}
-                                subset={p.isSubset ? p.subsetName : null}
-                                sub={<>
-                                  <span className="run-who"><img src={userPic(run.username)} alt="" loading="lazy" /><b style={{ color: run.isOwn ? 'var(--gold)' : 'var(--accent-hi)' }}>{run.username}</b></span>
-                                  {run.consoleName && <span className="shrink hidden sm:inline">{run.consoleName}</span>}
-                                  <span className="num">{t0 === t1 ? t0 : `${t0}–${t1}`}</span>
-                                  <RunCount n={run.achievements.length} extra={<span className="text-ink-3 font-normal"> · {pts} pts</span>} />
-                                </>}
-                                rows={run.achievements.map(unlockRow)} fold={3} />
-                            );
-                          })}
-                        </div>
-                      </section>
-                    );
-                  })}
-                  {shownFeed.length > visibleSessionCount && (
-                    <button type="button" onClick={() => setVisibleSessionCount(c => c + 100)} className="smore">Show more days</button>
-                  )}
-                </div>
-              )}
-            </div>
+            )}
           </>)}
         </div>
       ) : (() => {
@@ -1165,7 +1161,7 @@ const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, games =
                     );
                   })}
                   {moved.length > 3 && (
-                    <button type="button" onClick={() => setMovedAll(o => !o)} className="roster-more mdex-all">
+                    <button type="button" onClick={() => setMovedAll(o => !o)} className="mdex-all">
                       {movedAll ? 'Show fewer' : `${moved.length - 3} more dex${moved.length - 3 !== 1 ? 'es' : ''}`}
                       <ChevronDown size={12} className={movedAll ? 'rotate-180' : ''} />
                     </button>

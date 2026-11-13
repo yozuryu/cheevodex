@@ -151,7 +151,7 @@ Use `TabBar` from `assets/tabs.js` for page tabs (an icon on every tab + upperca
 
 Cheevodex's own pieces, not Savepoint's (CHV-040; styles in `assets/ui.css`):
 - **Ring** (`.dring`, `--p` %, `--c` colour, `--s` size, `--w` width; optional `--b` % in `--cb` for an earlier part drawn dim) for completion: the game page record, the game rows, and the activity summary's dexes that moved (before dim, gained bright). Gold with a glow only when mastered.
-- **Index lines** (`.dledger` / `.dl-row`: `.dl-k` label, `.dl-dots` dotted leader, `.dl-v` value) for lists of numbers: the game record, user stats, award counts, the activity summary's year and streaks, the friends roster, changelog sections. Not boxed stat tiles.
+- **Index lines** (`.dledger` / `.dl-row`: `.dl-k` label, `.dl-dots` dotted leader, `.dl-v` value) for lists of numbers: the game record, user stats, award counts, the activity summary's year and streaks, changelog sections. Not boxed stat tiles.
 - **Diamond path** (`.dpath`) for progression: one diamond per progression achievement (grouped past 20), gold when done, on a line that fills up to the last done one.
 - **Volumes** (`.dvol` / `.dvol-h`) for long grouped lists: the Dex by console, the changelog by release.
 

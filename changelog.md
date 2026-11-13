@@ -38,7 +38,7 @@
 ### Social
 
 - **Compare opens as a sheet.** On phones the compare view slides up from the bottom over the nav bar and closes by dragging its header down, tapping outside, the close button or Escape; from tablet width it stays a centred dialog. Ported from Savepoint (`assets/sheet.js`), animations off under reduced motion
-- **Friends feed rebuilt.** The Friends view of Activity uses the same day headings and run cards as Mine, with the friend's avatar and name on each card and runs folded after two unlocks. A roster on top ranks everyone by unlocks over the last 30 days as index lines; tap a name to see only their runs (replaces the By Session / By User switch). Sync time, refresh and reset sit in one row beside Mine / Friends
+- **Friends as a party.** The Friends view of Activity is organised by friend instead of by day: one card per friend active in the last 30 days, with their avatar and name (to their profile), when they were last active, unlocks (+N) and points, and the games they moved as chips (icon, title, +N; three shown, the rest behind "+N more") that open the game in compare mode. "N unlocks in N runs" opens their run cards. Sort by Recent or Most unlocks; two columns on desktop. Sync time, refresh and reset sit in one row beside Mine / Friends. Replaces the old tiny-text tree and its By Session / By User switch
 
 ### Game Page
 
