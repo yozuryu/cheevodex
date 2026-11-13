@@ -726,7 +726,6 @@ const FriendRun = ({ run, user, unlockRow, runTitle }) => {
   return (
     <div className={`frun ${mode} ${open ? 'open' : ''}`}>
       <a href={`../game/?id=${run.gameId}&compare=${user}`} className="frun-h">
-        <span className="frun-art" aria-hidden="true"><img src={icon} alt="" loading="lazy" /></span>
         <img src={icon} alt="" loading="lazy" className="frun-icon" />
         <span className="frun-main">
           <span className="frun-t">
@@ -738,7 +737,7 @@ const FriendRun = ({ run, user, unlockRow, runTitle }) => {
           <span className="frun-m">
             {mode === 'sc'
               ? <Feather size={11} className="text-ink-2 shrink-0" aria-label="Softcore" />
-              : <Flame size={11} className={`shrink-0 ${mode === 'hc' ? 'text-hc' : 'text-ink-2'}`} aria-label={mode === 'hc' ? 'Hardcore' : 'Hardcore and softcore'} />}
+              : <Flame size={11} className={`shrink-0 ${mode === 'hc' ? 'text-gold' : 'text-ink-2'}`} aria-label={mode === 'hc' ? 'Hardcore' : 'Hardcore and softcore'} />}
             {run.consoleName && <span className="truncate">{run.consoleName}</span>}
             <span className="num shrink-0">{t0 === t1 ? t0 : `${t0}–${t1}`}</span>
           </span>

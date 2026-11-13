@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@claude'
 created_date: '2026-11-13 06:14'
-updated_date: '2026-11-13 09:16'
+updated_date: '2026-11-13 09:22'
 labels:
   - profile
   - design
@@ -38,4 +38,6 @@ Third pass, per review (keep the timeline): Party cards replaced by a friend str
 Colour pass: friend palette tokens --pal-1..6 (stable per username) on avatar ring, name and run edge; +N gold; hardcore badges underlined in gold instead of framed.
 
 Run strip pass: game icon blurred behind the strip, Subset/tilde tags, subset name, console, mode icon; run edge shows mode (red HC, grey SC, split mixed); friend colour kept to avatar ring and name.
+
+Per review: mode colours follow RA (gold hardcore, grey softcore) on the run edge, a faint wash on the strip, and the flame; the blurred icon background is gone.
 <!-- SECTION:FINAL_SUMMARY:END -->

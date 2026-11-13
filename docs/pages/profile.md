@@ -105,8 +105,8 @@ Savepoint's timeline from `assets/activity-ui.js` (styles: the "Activity timelin
 - `feedGroups`: consecutive same-user+game runs within 1-hour window → session objects
 - `party`: friends (not you) in the feed with their unlocks and last active, newest first: the strip on top (`.fstrip` / `.fpal`, Everyone first). Tapping one sets `friendSel`, narrowing the timeline and showing a Profile link
 - `friendDays`: friends' runs (filtered), first `visibleSessionCount` (100 more per Show more days), grouped by day; within a day, a friend's consecutive runs become one post. Each day has a `DayHead` (unlocks · friends) and a rail (`.fposts`) of `FriendPost`s: avatar node, name, time, and "+N in N games" when there's more than one run
-- Colours: each friend's avatar ring and name use `friendColor(username)` (tokens `--pal-1…6`, set as `--fc`); +N is gold; the run's left edge is its mode (`.frun.hc` red, `.sc` grey, `.mix` split, with hardcore badges underlined in red)
-- `FriendRun`: game strip (the icon blurred behind, icon, title with Subset / tilde tags, subset name, mode icon, console, time range; +N and points) linking to the game in compare mode, then a strip of badges (10 on desktop, 7 on phones, gold edge for hardcore) that opens to the full `unlockRow`s
+- Colours: each friend's avatar ring and name use `friendColor(username)` (tokens `--pal-1…6`, set as `--fc`); +N is gold; the run's left edge and the strip's faint wash are its mode (`.frun.hc` gold, `.sc` grey, `.mix` split, with hardcore badges underlined in gold)
+- `FriendRun`: game strip (icon, title with Subset / tilde tags, subset name, mode icon, console, time range; +N and points) linking to the game in compare mode, then a strip of badges (10 on desktop, 7 on phones, gold edge for hardcore) that opens to the full `unlockRow`s
 - Sync time, Refresh and Reset (icon chips) sit beside the Mine / Friends chips; friends whose fetch failed are listed in one quiet line under the strip
 
 ## `rawData` Memo
