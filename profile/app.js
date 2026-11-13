@@ -705,13 +705,16 @@ const RAchievementModal = ({ game, onClose, loadingDetails }) => {
   );
 };
 
-// A friend's colour, computed from their username (FNV-1a hash, scrambled → a hue in 70°–330°, skipping red, orange and gold,
-// which mean errors, hardcore and earned); saturation and lightness come from tokens. Same name, same colour, everywhere
+// A friend's colour, computed from their username: one hash (FNV-1a, scrambled) gives the hue (70°–330°, skipping
+// red, orange and gold, which mean errors, hardcore and earned), the saturation (55–90%) and the lightness (60–76%,
+// so it always reads on the dark page). About 9,800 colours; same name, same colour, everywhere
 const friendColor = (u) => {
   let h = 0x811c9dc5;
   for (const ch of String(u).toLowerCase()) h = Math.imul(h ^ ch.charCodeAt(0), 0x01000193) >>> 0;
   h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;  // spread short names
-  return `hsl(${70 + ((h >>> 0) % 261)} var(--pal-s) var(--pal-l))`;
+  h >>>= 0;
+  const hue = 70 + (h % 261), sat = 55 + ((h >>> 9) % 36), light = 60 + ((h >>> 17) % 17);
+  return `hsl(${hue} ${sat}% ${light}%)`;
 };
 
 // ── FriendRun / FriendPost — the Friends timeline: one post per friend per stretch of the day (their runs back

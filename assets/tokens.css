@@ -100,10 +100,6 @@
   --install:       rgb(var(--c-install));
   --install-hi:    rgb(var(--c-install-hi));
   --install-press: rgb(var(--c-install-press));
-  /* Friend colours: the hue is computed from the username (profile/app.js friendColor, 70°–330°, so never
-     red, orange or gold, which mean hardcore, errors and earned); these two keep every friend equally readable */
-  --pal-s:         70%;
-  --pal-l:         68%;
 
   /* type */
   --font: 'Geist', 'Segoe UI', system-ui, -apple-system, sans-serif;

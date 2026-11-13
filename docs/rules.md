@@ -155,7 +155,7 @@ Cheevodex's own pieces, not Savepoint's (CHV-040; styles in `assets/ui.css`):
 - **Diamond path** (`.dpath`) for progression: one diamond per progression achievement (grouped past 20), gold when done, on a line that fills up to the last done one.
 - **Volumes** (`.dvol` / `.dvol-h`) for long grouped lists: the Dex by console, the changelog by release.
 
-- **Friend colours** (`friendColor(username)` in `profile/app.js`: a hue from a hash of the username, 70°–330°, at `--pal-s` / `--pal-l` from `tokens.css`): one stable colour per friend for identity only (avatar ring, name). Run edges show the mode the RA way (gold hardcore, grey softcore); earned counts stay gold. The hue range skips red, orange and gold, so it never reads as a status.
+- **Friend colours** (`friendColor(username)` in `profile/app.js`: hue 70°–330°, saturation 55–90% and lightness 60–76%, all from one hash of the username; computed, so no tokens): one stable colour per friend for identity only (avatar ring, name). Run edges show the mode the RA way (gold hardcore, grey softcore); earned counts stay gold. The hue range skips red, orange and gold, so it never reads as a status.
 
 Shared with Savepoint on purpose: the tab bar, filter chips, sheets, the activity day headings and run cards (Mine and Friends), and watchlist rows.
 

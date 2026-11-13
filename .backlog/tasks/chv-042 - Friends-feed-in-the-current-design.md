@@ -5,7 +5,7 @@ status: Done
 assignee:
   - '@claude'
 created_date: '2026-11-13 06:14'
-updated_date: '2026-11-13 09:26'
+updated_date: '2026-11-13 09:36'
 labels:
   - profile
   - design
@@ -42,4 +42,6 @@ Run strip pass: game icon blurred behind the strip, Subset/tilde tags, subset na
 Per review: mode colours follow RA (gold hardcore, grey softcore) on the run edge, a faint wash on the strip, and the flame; the blurred icon background is gone.
 
 Friend colours computed from the username (FNV-1a + finaliser → hue 70°–330°, tokens --pal-s/--pal-l) instead of a 6-colour palette; the --pal-1..6 tokens are removed.
+
+Friend colours widened: hue 70–330°, saturation 55–90%, lightness 60–76%, all from one username hash (~9,800 colours); --pal-s/--pal-l tokens removed.
 <!-- SECTION:FINAL_SUMMARY:END -->
