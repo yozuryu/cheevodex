@@ -75,7 +75,7 @@ Filters use Savepoint's shared filter styles (`.frow` / `.fchip` / `.fsep` / `.f
 
 ## Social Timeline (Activity Tab — Friends View)
 
-The Activity tab has a **Mine / Friends** toggle. Friends view shows a merged timeline of the authed user's own achievements + all followed users' achievements, as one card per friend (Party), each opening to that friend's runs (user + game within a 1-hour window) → individual achievements.
+The Activity tab has a **Mine / Friends** toggle. Friends view shows a merged timeline of the authed user's own achievements + all followed users' achievements, as a timeline of friends' posts by day (runs: user + game within a 1-hour window; a friend's consecutive runs grouped), under a strip of active friends.
 
 ### State (main app)
 
@@ -103,9 +103,10 @@ Savepoint's timeline from `assets/activity-ui.js` (styles: the "Activity timelin
 
 - `mergedFeed`: own `achievements` + all `friendsActivity` values, sorted newest-first
 - `feedGroups`: consecutive same-user+game runs within 1-hour window → session objects
-- `party`: friends (not you) with runs in the last 30 days (the fetch window): per friend the unlocks, points, last active, their runs, and the games they moved (`+N`, newest first). Sorted by `partySort`: `recent` (last active) or `most` (unlocks). 12 cards, then 12 more per Show more
-- `PartyCard`: avatar and name (to `../profile/?u=`), "active 2h ago · N games", +N and points; game chips (`.pgame`: icon, title, +N; three, then "+N more") link to the game in compare mode. "N unlocks in N runs" opens their `RunCard`s (fold after two, rows from the shared `unlockRow`). Cards are two columns from `md`; an opened card spans both. No progress rings here: `API_GetAchievementsEarnedBetween` carries no per-game totals
-- Sync time, Refresh and Reset (icon chips) sit beside the Mine / Friends chips; friends whose fetch failed are listed in one quiet line under the Party heading
+- `party`: friends (not you) in the feed with their unlocks and last active, newest first: the strip on top (`.fstrip` / `.fpal`, Everyone first). Tapping one sets `friendSel`, narrowing the timeline and showing a Profile link
+- `friendDays`: friends' runs (filtered), first `visibleSessionCount` (100 more per Show more days), grouped by day; within a day, a friend's consecutive runs become one post. Each day has a `DayHead` (unlocks · friends) and a rail (`.fposts`) of `FriendPost`s: avatar node, name, time, and "+N in N games" when there's more than one run
+- `FriendRun`: game line (icon, title, subset, +N, points, time range) linking to the game in compare mode, then a strip of badges (10 on desktop, 7 on phones, gold edge for hardcore) that opens to the full `unlockRow`s
+- Sync time, Refresh and Reset (icon chips) sit beside the Mine / Friends chips; friends whose fetch failed are listed in one quiet line under the strip
 
 ## `rawData` Memo
 

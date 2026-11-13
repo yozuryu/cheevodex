@@ -705,63 +705,52 @@ const RAchievementModal = ({ game, onClose, loadingDetails }) => {
   );
 };
 
-// ── PartyCard — one friend in the Friends view: who, when, the games they moved (+N), their runs on tap ──
-const PartyCard = ({ f, pic, unlockRow, runTitle }) => {
+// ── FriendRun / FriendPost — the Friends timeline: one post per friend per stretch of the day (their runs back
+// to back), avatar on the day's rail; each run is a game line with +N, then its badges, opening to the full rows ──
+const FriendRun = ({ run, user, unlockRow, runTitle }) => {
   const [open, setOpen] = useState(false);
-  const [allGames, setAllGames] = useState(false);
-  const games = allGames ? f.games : f.games.slice(0, 3);
+  const { p } = runTitle(run.gameTitle);
+  const achs = run.achievements;
+  const t0 = fmtClock(achs[achs.length - 1].date), t1 = fmtClock(achs[0].date);
+  const pts = achs.reduce((t, a) => t + (a.points || 0), 0);
   return (
-    <section className={`party ${open ? 'open' : ''}`}>
-      <div className="party-h">
-        <a href={`../profile/?u=${f.username}`} className="party-av"><img src={pic} alt="" loading="lazy" /></a>
-        <div className="party-id">
-          <a href={`../profile/?u=${f.username}`} className="party-name">{f.username}</a>
-          <span className="party-sub">active {shortAgo(raDateMs(f.last))} ago · {f.games.length} game{f.games.length !== 1 ? 's' : ''}</span>
-        </div>
-        <div className="party-n">
-          <b>+{f.n}</b>
-          <span>{f.pts.toLocaleString()} pts</span>
-        </div>
+    <div className={`frun ${open ? 'open' : ''}`}>
+      <div className="frun-h">
+        <a href={`../game/?id=${run.gameId}&compare=${user}`} className="frun-g">
+          <img src={getMediaUrl(run.gameIcon)} alt="" loading="lazy" />
+          <span className="frun-t">{p.baseTitle}{p.isSubset && <em> · {p.subsetName}</em>}</span>
+        </a>
+        <b className="frun-n">+{achs.length}</b>
+        <span className="frun-m">{pts} pts · {t0 === t1 ? t0 : `${t0}–${t1}`}</span>
       </div>
-      <div className="party-games">
-        {games.map(g => {
-          const { p } = runTitle(g.gameTitle);
-          return (
-            <a key={g.gameId} href={`../game/?id=${g.gameId}&compare=${f.username}`} className="pgame" title={`${g.gameTitle}${g.consoleName ? ` · ${g.consoleName}` : ''}`}>
-              <img src={getMediaUrl(g.gameIcon)} alt="" loading="lazy" />
-              <span className="pgame-t">{p.baseTitle}{p.isSubset && <em> · {p.subsetName}</em>}</span>
-              <b>+{g.n}</b>
-            </a>
-          );
-        })}
-        {f.games.length > 3 && (
-          <button type="button" onClick={() => setAllGames(o => !o)} className="pgame more">{allGames ? 'fewer' : `+${f.games.length - 3} more`}</button>
-        )}
-      </div>
-      <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="party-t">
-        {open ? 'Hide unlocks' : `${f.n} unlock${f.n !== 1 ? 's' : ''} in ${f.runs.length} run${f.runs.length !== 1 ? 's' : ''}`}
-        <ChevronDown size={12} className={open ? 'rotate-180' : ''} />
+      <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="frun-b"
+        aria-label={open ? 'Hide the unlocks' : `Show the ${achs.length} unlocks`}>
+        {achs.slice(0, 10).map((a, i) => (
+          <img key={`${a.achievementId}-${i}`} src={`${MEDIA_URL}/Badge/${a.badgeName}.png`} alt="" title={a.title} loading="lazy" className={a.hardcoreMode ? 'hc' : ''} />
+        ))}
+        {achs.length > 7 && <span className="frun-more sm:hidden">+{achs.length - 7}</span>}
+        {achs.length > 10 && <span className="frun-more hidden sm:inline">+{achs.length - 10}</span>}
+        <ChevronDown size={13} className="frun-c" />
       </button>
-      {open && (
-        <div className="party-runs anim-fade">
-          {f.runs.map(run => {
-            const { p, node } = runTitle(run.gameTitle);
-            const t0 = fmtClock(run.achievements[run.achievements.length - 1].date), t1 = fmtClock(run.achievements[0].date);
-            return (
-              <RunCard key={`${run.gameId}-${run.latestDate}`} accent="var(--accent)"
-                href={`../game/?id=${run.gameId}&compare=${f.username}`} icon={getMediaUrl(run.gameIcon)} art={[]}
-                title={node} subset={p.isSubset ? p.subsetName : null}
-                sub={<>
-                  <span className="num">{fmtDayKey(toLocalDay(run.latestDate), { weekday: 'short', day: '2-digit', month: 'short' })}</span>
-                  <span className="num">{t0 === t1 ? t0 : `${t0}–${t1}`}</span>
-                  <RunCount n={run.achievements.length} />
-                </>}
-                rows={run.achievements.map(unlockRow)} fold={3} />
-            );
-          })}
+      {open && <div className="frun-rows anim-fade">{achs.map(unlockRow)}</div>}
+    </div>
+  );
+};
+
+const FriendPost = ({ post, pic, unlockRow, runTitle }) => {
+  const n = post.runs.reduce((t, r) => t + r.achievements.length, 0);
+  return (
+    <div className="fpost anim-fade">
+      <a href={`../profile/?u=${post.username}`} className="fpost-av"><img src={pic} alt="" loading="lazy" /></a>
+      <div className="fpost-main">
+        <div className="fpost-h">
+          <a href={`../profile/?u=${post.username}`} className="fpost-name">{post.username}</a>
+          <span className="fpost-time num">{fmtClock(post.runs[0].latestDate)}</span>
+          {post.runs.length > 1 && <span className="fpost-sum">+{n} in {post.runs.length} games</span>}
         </div>
-      )}
-    </section>
+        {post.runs.map(run => <FriendRun key={`${run.gameId}-${run.latestDate}`} run={run} user={post.username} unlockRow={unlockRow} runTitle={runTitle} />)}
+      </div>
+    </div>
   );
 };
 
@@ -946,28 +935,33 @@ const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, games =
     return sessions.sort((a, b) => b.latestDate.localeCompare(a.latestDate));
   }, [mergedFeed]);
 
-  // Party: one card per friend over the last 30 days (the friends' fetch window), with the games they moved
-  // (+N each), their runs behind a toggle. Most recently active first, or most unlocks
-  const [partySort, setPartySort] = useState('recent');
+  // Friends timeline. The strip: friends active in the last 30 days (the fetch window), most recent first, with
+  // their unlocks; tapping one narrows the timeline to them. The timeline: days → posts (a friend's runs back to back)
+  const [friendSel, setFriendSel] = useState(null);
   const party = useMemo(() => {
-    const from = addDays(dayKey(new Date()), -29);
     const m = new Map();
     feedGroups.forEach(run => {
-      if (run.isOwn || toLocalDay(run.latestDate) < from) return;
-      const f = m.get(run.username) ?? { username: run.username, n: 0, pts: 0, last: run.latestDate, runs: [], games: new Map() };
-      const pts = run.achievements.reduce((t, a) => t + (a.points || 0), 0);
-      f.n += run.achievements.length; f.pts += pts; f.runs.push(run);
+      if (run.isOwn) return;
+      const f = m.get(run.username) ?? { username: run.username, n: 0, last: run.latestDate };
+      f.n += run.achievements.length;
       if (run.latestDate > f.last) f.last = run.latestDate;
-      const g = f.games.get(run.gameId) ?? { gameId: run.gameId, gameTitle: run.gameTitle, gameIcon: run.gameIcon, consoleName: run.consoleName, n: 0, last: run.latestDate };
-      g.n += run.achievements.length;
-      if (run.latestDate > g.last) g.last = run.latestDate;
-      f.games.set(run.gameId, g);
       m.set(run.username, f);
     });
-    const list = [...m.values()].map(f => ({ ...f, games: [...f.games.values()].sort((a, b) => b.last.localeCompare(a.last)) }));
-    return list.sort(partySort === 'most' ? (a, b) => b.n - a.n || b.last.localeCompare(a.last) : (a, b) => b.last.localeCompare(a.last));
-  }, [feedGroups, partySort]);
-  const [partyShown, setPartyShown] = useState(12);
+    return [...m.values()].sort((a, b) => b.last.localeCompare(a.last));
+  }, [feedGroups]);
+  const friendRuns = useMemo(() => feedGroups.filter(r => !r.isOwn && (!friendSel || r.username === friendSel)), [feedGroups, friendSel]);
+  const friendDays = useMemo(() => {
+    const byDay = new Map();
+    friendRuns.slice(0, visibleSessionCount).forEach(run => {
+      const day = toLocalDay(run.latestDate);
+      if (!byDay.has(day)) byDay.set(day, []);
+      const posts = byDay.get(day);
+      const last = posts[posts.length - 1];
+      if (last && last.username === run.username) last.runs.push(run);
+      else posts.push({ username: run.username, runs: [run] });
+    });
+    return [...byDay.entries()].sort(([a], [b]) => b.localeCompare(a));
+  }, [friendRuns, visibleSessionCount]);
   const userPic = u => socialProfileMap.get(u)?.userPic ? getMediaUrl(socialProfileMap.get(u).userPic) : `${MEDIA_URL}/UserPic/${u}.png`;
 
 
@@ -1044,17 +1038,24 @@ const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, games =
           {friendsActivityStatus === 'loading' && Object.keys(friendsActivity).length === 0 && <TimelineSkeleton />}
 
           {Object.keys(friendsActivity).length > 0 && (<>
-            {/* ── Party: one card per friend ── */}
-            <div className="flex items-center gap-2 border-b border-line pb-1.5">
-              <span className="sec-mark" />
-              <span className="sec-t flex items-center gap-2"><Users size={15} className="text-accent" /> Party</span>
-              <span className="text-[11.5px] text-ink-3 truncate"><b className="num text-ink-2">{party.length}</b> active · last 30 days</span>
-              <div className="ml-auto flex gap-1 shrink-0">
-                {[['recent', 'Recent'], ['most', 'Most unlocks']].map(([v, l]) => (
-                  <button type="button" key={v} onClick={() => setPartySort(v)} aria-pressed={partySort === v} className={`fchip ${partySort === v ? 'on' : ''}`} style={{ height: 24 }}>{l}</button>
+            {/* ── Friend strip: who's been active, tap to narrow the timeline ── */}
+            {party.length > 0 && (
+              <div className="fstrip" role="group" aria-label="Show one friend">
+                <button type="button" onClick={() => setFriendSel(null)} aria-pressed={!friendSel} className={`fpal all ${!friendSel ? 'on' : ''}`}>
+                  <span className="fpal-av"><Users size={16} /></span>
+                  <span className="fpal-name">Everyone</span>
+                  <b>{party.length}</b>
+                </button>
+                {party.map(f => (
+                  <button type="button" key={f.username} onClick={() => setFriendSel(u => u === f.username ? null : f.username)}
+                    aria-pressed={friendSel === f.username} className={`fpal ${friendSel === f.username ? 'on' : ''}`} title={`${f.username} · ${f.n} unlocks`}>
+                    <span className="fpal-av"><img src={userPic(f.username)} alt="" loading="lazy" /></span>
+                    <span className="fpal-name">{f.username}</span>
+                    <b>+{f.n}</b>
+                  </button>
                 ))}
               </div>
-            </div>
+            )}
 
             {failedFriends.length > 0 && (
               <p className="flex items-start gap-2 text-[11.5px] text-ink-3 -mt-2">
@@ -1063,18 +1064,38 @@ const ActivityTab = ({ achievements, refTime, heatmapData, gameArt = {}, games =
               </p>
             )}
 
-            {party.length === 0 ? (
-              <div className="text-ink-2 text-[11px] py-4 italic text-center">None of your friends unlocked anything in the last 30 days.</div>
-            ) : (
-              <div className="partys">
-                {party.slice(0, partyShown).map(f => (
-                  <PartyCard key={f.username} f={f} pic={userPic(f.username)} unlockRow={unlockRow} runTitle={runTitle} />
-                ))}
-                {party.length > partyShown && (
-                  <button type="button" onClick={() => setPartyShown(n => n + 12)} className="smore">Show {Math.min(12, party.length - partyShown)} more friends</button>
-                )}
+            <div>
+              <div className="flex items-center gap-2 border-b border-line pb-1.5 mb-1">
+                <span className="sec-mark" />
+                <span className="sec-t flex items-center gap-2 min-w-0"><Users size={15} className="text-accent shrink-0" /> <span className="truncate">{friendSel ? `${friendSel}'s unlocks` : 'Friends unlocks'}</span></span>
+                {friendSel && <a href={`../profile/?u=${friendSel}`} className="ml-auto text-[11.5px] text-accent hover:text-ink shrink-0">Profile ›</a>}
               </div>
-            )}
+              {friendDays.length === 0 ? (
+                <div className="text-ink-2 text-[11px] py-4 italic text-center">No unlocks from friends in the last 30 days.</div>
+              ) : (
+                <div key={friendSel ?? 'all'} className="flex flex-col gap-3">
+                  {friendDays.map(([day, posts]) => {
+                    const n = posts.reduce((t, p) => t + p.runs.reduce((u, r) => u + r.achievements.length, 0), 0);
+                    const people = new Set(posts.map(p => p.username)).size;
+                    return (
+                      <section key={day}>
+                        <DayHead day={day}>
+                          <b className="num">{n}</b> unlock{n !== 1 ? 's' : ''}{!friendSel && <> · <b className="num">{people}</b> friend{people !== 1 ? 's' : ''}</>}
+                        </DayHead>
+                        <div className="fposts">
+                          {posts.map(post => (
+                            <FriendPost key={`${post.username}-${post.runs[0].latestDate}`} post={post} pic={userPic(post.username)} unlockRow={unlockRow} runTitle={runTitle} />
+                          ))}
+                        </div>
+                      </section>
+                    );
+                  })}
+                  {friendRuns.length > visibleSessionCount && (
+                    <button type="button" onClick={() => setVisibleSessionCount(c => c + 100)} className="smore">Show more days</button>
+                  )}
+                </div>
+              )}
+            </div>
           </>)}
         </div>
       ) : (() => {
