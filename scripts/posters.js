@@ -50,6 +50,7 @@ async function capture(browser) {
         ['overview', '/profile/?tab=overview', PHONE], ['d-dex', '/profile/?tab=dex', DESK], ['d-activity', '/profile/?tab=activity', DESK],
         ['d-stats', '/profile/?tab=stats', DESK], ['game', null, PHONE], ['d-game', null, DESK],
         ['friends', '/profile/?tab=activity&view=friends', PHONE], ['d-friends', '/profile/?tab=activity&view=friends', DESK],
+        ['stats', '/profile/?tab=stats', PHONE], ['d-backlog', '/profile/?tab=backlog', DESK], ['d-overview', '/profile/?tab=overview', DESK],
     ].filter(([name]) => !ONLY || ONLY.includes(name));
     fs.mkdirSync(SHOTS, { recursive: true });
     for (const [name, route, view] of shots) {
@@ -67,7 +68,7 @@ async function capture(browser) {
         await page.goto(url, { waitUntil: 'networkidle0', timeout: 120000 });
         await new Promise(r => setTimeout(r, 2500));
         if (name.endsWith('friends')) await page.waitForFunction(() => !document.querySelector('.animate-spin'), { timeout: 240000 });   // every friend loaded
-        if (name === 'activity' || name === 'backlog' || name === 'friends') {   // phones: start at the tab's content, under the profile header
+        if (name === 'activity' || name === 'backlog' || name === 'friends' || name === 'stats') {   // phones: start at the tab's content, under the profile header
             await page.evaluate(() => { const t = document.querySelector('[role=tablist]'); if (t) window.scrollTo(0, t.getBoundingClientRect().top + scrollY - 8); });
             await new Promise(r => setTimeout(r, 800));
         }
