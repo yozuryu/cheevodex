@@ -3138,26 +3138,60 @@ export default function App() {
               const volumes = (() => {
                 const m = new Map();
                 filtered.forEach(g => { if (!m.has(g.console)) m.set(g.console, []); m.get(g.console).push(g); });
-                return [...m.entries()].map(([name, games]) => ({ name, games: games.sort(byTitle), started: games.filter(g => getStatus(g) === 'inprogress').length }))
+                return [...m.entries()].map(([name, games]) => ({ name, games: games.sort(byTitle), started: games.filter(g => getStatus(g) === 'inprogress').length, mastered: games.filter(g => getStatus(g) === 'mastered').length }))
                   .sort((a, b) => b.games.length - a.games.length || a.name.localeCompare(b.name));
               })();
               const volId = name => `bl-${name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`;
 
-              // One index line. Lines are render functions, not components: defined inside App's render,
-              // as components React would remount every line on each re-render
+              // Index letters inside a volume, like the tabs of a book's index: # for titles that start with a number, then A to Z
+              const letterOf = g => {
+                const c = ((g.baseTitle || g.title).normalize('NFD').replace(/[^A-Za-z0-9]/g, '')[0] || '#').toUpperCase();
+                return /[A-Z]/.test(c) ? c : '#';
+              };
+              const byLetter = entries => {
+                const m = new Map();
+                entries.forEach(e => { const k = letterOf(e.game); if (!m.has(k)) m.set(k, []); m.get(k).push(e); });
+                return [...m.entries()].sort(([x], [y]) => (y === '#') - (x === '#') || x.localeCompare(y));   // numbers first, like a book's index
+              };
+
+              // One index line: icon (lit when started, gold-ringed when mastered, faded until then), title and a
+              // dotted leader, then the dex number and size of the set; on the right the count and a bar when started,
+              // the points on offer when not. Subsets are one-row lines hung under their game.
+              // Render functions, not components: as components React would remount every line on each re-render
               const line = (g, sub = false) => {
                 const st = getStatus(g);
-                return (
-                  <a key={g.id} href={`../game/?id=${g.id}${compareParam}`} className={`bline ${st} ${sub ? 'sub' : ''}`} title={g.title}>
-                    {!sub && <img src={g.icon} alt="" loading="lazy" className="bline-i" onError={e => { e.currentTarget.style.visibility = 'hidden'; }} />}
-                    <span className="bline-t">{sub ? `+ ${g.subsetName || 'Subset'}` : (g.baseTitle || g.title)}</span>
-                    {!sub && g.isSubset && <span className="subset-tag">Subset</span>}
-                    {!sub && renderTildeTags(g.tags)}
+                const pct = pctOf(g);
+                const end = <span className="bline-e">
+                  {st === 'inprogress' && <span className="bline-c num">{g.numAwarded}<span>/{g.achievementsTotal}</span></span>}
+                  {st === 'mastered' && <span className="bline-m"><Trophy size={10} />Mastered</span>}
+                  {st === 'notstarted' && g.pointsTotal > 0 && <span className="bline-pts num">{g.pointsTotal.toLocaleString()}<small>pts</small></span>}
+                  {st === 'noach' && <span className="bline-x">No set</span>}
+                </span>;
+                if (sub) return (
+                  <a key={g.id} href={`../game/?id=${g.id}${compareParam}`} className={`bline sub ${st}`} title={g.title}>
+                    <span className="bline-t">{g.subsetName || 'Subset'}</span>
                     <span className="bline-d" />
-                    {st === 'inprogress' && <span className="bline-p num">{g.numAwarded}<span>/{g.achievementsTotal}</span></span>}
-                    {st === 'mastered' && <Trophy size={11} className="text-gold shrink-0" aria-label="Mastered" />}
-                    {st === 'noach' && <span className="bline-x">No set</span>}
-                    <span className="dex-no bline-no">No.{g.id}</span>
+                    <span className="dex-no">No.{g.id}</span>
+                    {end}
+                  </a>
+                );
+                return (
+                  <a key={g.id} href={`../game/?id=${g.id}${compareParam}`} className={`bline ${st}`} title={g.title}>
+                    <span className="bline-pic"><img src={g.icon} alt="" loading="lazy" onError={e => { e.currentTarget.style.visibility = 'hidden'; }} /></span>
+                    <span className="bline-b">
+                      <span className="bline-r1">
+                        <span className="bline-t">{g.baseTitle || g.title}</span>
+                        {g.isSubset && <span className="subset-tag">Subset</span>}
+                        {renderTildeTags(g.tags)}
+                      </span>
+                      <span className="bline-r2">
+                        <span className="dex-no">No.{g.id}</span>
+                        {g.achievementsTotal > 0 && <span className="num">{g.achievementsTotal} achievements</span>}
+                        {g.isSubset && g.subsetName && <span className="text-gold-dim truncate">{g.subsetName}</span>}
+                      </span>
+                      {st === 'inprogress' && <span className="bline-bar" aria-hidden="true"><i style={{ width: `${Math.max(pct, 2)}%` }} /></span>}
+                    </span>
+                    {end}
                   </a>
                 );
               };
@@ -3244,11 +3278,26 @@ export default function App() {
                           <div className="dvol-h">
                             <span className="dvol-t">{v.name}</span>
                             <span className="dvol-n">{v.games.length}</span>
-                            {v.started > 0 && <span className="dvol-m"><span><b className="text-accent">{v.started}</b> started</span></span>}
+                            <span className="dvol-m">
+                              {v.started > 0 && <span><b className="text-accent">{v.started}</b> started</span>}
+                              {v.mastered > 0 && <span><b className="text-gold">{v.mastered}</b> mastered</span>}
+                            </span>
+                            {/* How much of this console's backlog is under way: started in blue, mastered in gold */}
+                            <span className="bvol-bar" aria-hidden="true">
+                              <i style={{ width: `${v.mastered / v.games.length * 100}%`, background: 'var(--gold)' }} />
+                              <i style={{ width: `${v.started / v.games.length * 100}%`, background: 'var(--accent)' }} />
+                            </span>
                           </div>
                           <div className="bvol">
-                            {stackSubsets(v.games).map(({ game, subsets }) => (
-                              <div key={game.id} className="bgrp">{line(game)}{subsets.map(sg => line(sg, true))}</div>
+                            {byLetter(stackSubsets(v.games)).map(([L, entries]) => (
+                              <div key={L} className="blet">
+                                <span className="blet-k" aria-hidden="true">{L}</span>
+                                <div className="blet-v">
+                                  {entries.map(({ game, subsets }) => (
+                                    <div key={game.id} className={`bgrp ${subsets.length ? 'has-subs' : ''}`}>{line(game)}{subsets.map(sg => line(sg, true))}</div>
+                                  ))}
+                                </div>
+                              </div>
                             ))}
                           </div>
                         </section>

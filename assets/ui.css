@@ -254,23 +254,50 @@ button.grow:hover { background: var(--box-hover); }
   border: 1px dashed var(--line-2); border-radius: 3px; transition: color 150ms, border-color 150ms; }
 .bnext-more b { font-family: var(--mono); font-size: 18px; color: var(--accent); }
 .bnext-more:hover { color: var(--ink); border-color: var(--accent); }
-.bvol { column-gap: 32px; }
+.bvol-bar { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; display: flex; gap: 2px; pointer-events: none; }
+.bvol-bar i { display: block; height: 100%; border-radius: 1px; }
+.bvol { column-gap: 36px; }
 @media (min-width: 768px) { .bvol { column-count: 2; } }
-.bgrp { break-inside: avoid; }
-.bline { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 34px; padding: 4px 4px; text-decoration: none; border-radius: 2px; transition: background-color 150ms; }
+/* A letter of the index: the letter in the gutter, its games beside it */
+.blet { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 6px; padding-top: 6px; }
+.blet + .blet { border-top: 1px solid var(--line-faint); margin-top: 6px; }
+.blet-k { font-family: var(--pixel); font-size: 19px; line-height: 1; color: var(--ink-2); padding-top: 13px; text-align: center; }
+.blet-v { min-width: 0; display: flex; flex-direction: column; }
+.bgrp { break-inside: avoid; position: relative; }
+.bline { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 6px 6px; text-decoration: none; border-radius: 3px; transition: background-color 150ms; }
 .bline:hover { background: var(--box); }
-.bline-i { width: 24px; height: 24px; flex-shrink: 0; border-radius: 2px; background: var(--well); object-fit: cover; image-rendering: pixelated; }
-.bline-t { min-width: 0; font-size: 13px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bline.notstarted .bline-t { color: var(--ink-2); }
-.bline.noach { opacity: 0.55; }
-.bline.sub { min-height: 28px; padding-left: 36px; }
-.bline.sub .bline-t { font-size: 12px; color: var(--gold-dim); }
-.bline-d { flex: 1; min-width: 14px; border-bottom: 1px dotted var(--line-2); transform: translateY(4px); }
-.bline-p { flex-shrink: 0; font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--accent); }
-.bline-p span { font-weight: 400; color: var(--ink-3); }
-.bline-x { flex-shrink: 0; font-size: 11px; color: var(--ink-3); }
-.bline-no { flex-shrink: 0; min-width: 62px; text-align: right; }
-.bline:hover .bline-t { color: var(--accent); }
+/* The icon: faded until the game is started, lit and ringed blue once it is, ringed gold when mastered */
+.bline-pic { position: relative; flex-shrink: 0; width: 34px; height: 34px; border-radius: 3px; background: var(--well); box-shadow: 0 0 0 1px var(--line); overflow: hidden; }
+.bline-pic img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; transition: filter 200ms, opacity 200ms; }
+.bline.notstarted .bline-pic img { filter: saturate(0.35) brightness(0.8); }
+.bline.noach .bline-pic img { filter: grayscale(1) brightness(0.6); }
+.bline:hover .bline-pic img { filter: none; }
+.bline.inprogress .bline-pic { box-shadow: 0 0 0 1.5px var(--accent); }
+.bline.mastered .bline-pic { box-shadow: 0 0 0 1.5px var(--gold), 0 0 10px rgb(var(--c-gold) / 0.35); }
+.bline-b { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.bline-r1 { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.bline-t { min-width: 0; font-size: 13.5px; font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 150ms; }
+.bline.notstarted .bline-t { color: var(--ink-2); font-weight: 400; }
+.bline.noach .bline-t { color: var(--ink-3); font-weight: 400; }
+.bline:hover .bline-t { color: var(--accent-hi); }
+.bline-r2 { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; }
+.bline-bar { display: block; height: 3px; border-radius: 2px; background: rgb(var(--c-ink) / 0.08); overflow: hidden; margin-top: 1px; }
+.bline-bar i { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
+.bline-e { flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end; min-width: 56px; }
+.bline-c { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--accent); }
+.bline-c span { font-weight: 400; color: var(--ink-3); }
+.bline-m { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 2px; font-size: 10px; font-weight: 600; color: var(--gold); background: rgb(var(--c-gold) / 0.12); }
+.bline-pts { font-family: var(--mono); font-size: 12px; color: var(--gold-dim); }
+.bline-pts small { font-size: 10px; color: var(--ink-3); margin-left: 3px; }
+.bline-x { font-size: 11px; color: var(--ink-4); }
+/* Subsets hang under their game: a thin line down from the icon, a tick into each set */
+.bline.sub { position: relative; padding: 4px 6px 4px 50px; gap: 8px; }
+.bline.sub::before { content: ''; position: absolute; left: 23px; top: 0; height: 100%; width: 12px; border-left: 1px solid var(--line-2); }
+.bline.sub:last-child::before { height: 50%; border-bottom: 1px solid var(--line-2); border-bottom-left-radius: 4px; }
+.bline.sub:not(:last-child)::after { content: ''; position: absolute; left: 23px; top: 50%; width: 12px; border-top: 1px solid var(--line-2); }
+.bline.sub .bline-t { font-size: 12.5px; font-weight: 500; color: var(--gold-dim); }
+.bline.sub .bline-d { flex: 1; min-width: 14px; border-bottom: 1px dotted var(--line-2); }
+.bgrp.has-subs > .bline:first-child { padding-bottom: 4px; }
 
 /* ── Profile Overview ───────────────────────────────────────────────────────────────
    Last played is the regular game row (.grow) with one extra line inside it (.grow-extra):
