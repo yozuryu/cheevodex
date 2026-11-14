@@ -26,7 +26,7 @@ Cheevodex reads your [RetroAchievements](https://retroachievements.org) account 
 - **Dex records.** Each game opens as a record: a completion ring (blue in progress, silver beaten, gold mastered), achievements, points and time played, and a progression path with one diamond per progression achievement. Then the achievements themselves, the leaderboards, the community and the supported hashes.
 - **Activity.** The games you moved in the last 14 days, every run of unlocks day by day, a year of streaks and a heatmap.
 - **Friends.** Everyone you follow on one timeline, each in a colour worked out from their name. Compare any shared game side by side.
-- **Backlog.** Your RetroAchievements want-to-play list as a watchlist, subsets stacked under their game.
+- **Backlog.** Your RetroAchievements want-to-play list as an index: the games you have started up next, then every game by console under A to Z, lit up once you start it, with the points on offer for the rest.
 - **Stats.** Streaks, points across the year, masteries by month, consoles and how rare your unlocks are.
 - **Search and consoles.** Find any game across every system RetroAchievements supports, or browse a console's whole library.
 - **Anyone's dex.** Open any RetroAchievements username to read their dex and progress.
