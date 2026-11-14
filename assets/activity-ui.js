@@ -4,7 +4,7 @@
 // assets/ui.css, the same classes the Activity page uses.
 //   computeStreak(heatmapData, minValue)  current / longest run and the last 14 days
 //   useSummaryOpen()                      folded on phones, open from md, remembered per device
-//   ActivitySummary                       the dexes that moved (page-built rows), opening to the year,
+//   ActivitySummary                       the dex entries that moved (page-built rows), opening to the year,
 //                                         streaks and heatmap
 //   DayHead                               sticky day heading
 //   UnlockRow                             one unlock
@@ -93,7 +93,7 @@ function StreakLines({ streak }) {
   ].filter(Boolean) });
 }
 
-// Cheevodex's summary is about dexes, not days: `children` are the page's rows for the games that moved in
+// Cheevodex's summary is about dex entries, not days: `children` are the page's rows for the games that moved in
 // the last 14 days, `totals` one line over them. The toggle opens the year: past-year index lines, streaks, heatmap
 export function ActivitySummary({ open, onToggle, title, totals, children, stats, streak, selectedDay, onSelectDay, heatmap }) {
   return h('section', { className: 'asum mdex' },

@@ -958,7 +958,7 @@ function GameApp() {
                 })()}
               </div>
 
-              {/* See also: related dexes (the parent game of a subset, the other Professor Oak subsets) */}
+              {/* See also: related dex entries (the parent game of a subset, the other Professor Oak subsets) */}
               {(() => {
                 const related = [
                   ...(parsed?.isSubset && parentGame ? [{ id: game.parentGameId, title: parseTitle(parentGame.title).baseTitle, icon: parentGame.imageIcon, kind: 'Base game' }] : []),

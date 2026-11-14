@@ -33,7 +33,7 @@ The bar is `TabBar` from `assets/tabs.js` (icon + uppercase label, sliding blue 
 
 ## Reading as a dex (CHV-036)
 
-The game page is the game's **dex**: "Dex No.<RA game ID>" above the title (`.dex-no.lg`), the dex record, then a summary (`.dsum`: Developer, Publisher, Genre, Released, Players). In the default achievement view (All, all types, default order) the list is split into chapters (`.dchap`): **Progression** (progression + win-condition achievements, in set order) and **Everything else**, each with its done count and missables flagged. Any filter, type or sort shows the plain list. **See also** (`.seealso`) at the end of the Achievements tab links related dexes: the base game of a subset, and the other Professor Oak subsets.
+The game page is the game's **dex entry**: "Dex No.<RA game ID>" above the title (`.dex-no.lg`), the dex record, then a summary (`.dsum`: Developer, Publisher, Genre, Released, Players). In the default achievement view (All, all types, default order) the list is split into chapters (`.dchap`): **Progression** (progression + win-condition achievements, in set order) and **Everything else**, each with its done count and missables flagged. Any filter, type or sort shows the plain list. **See also** (`.seealso`) at the end of the Achievements tab links related entries: the base game of a subset, and the other Professor Oak subsets.
 
 ## Dex Record
 

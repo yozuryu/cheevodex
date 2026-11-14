@@ -353,7 +353,7 @@ const DexTab = ({ games, filter, onFilter }) => {
         </div>
       </div>
       {/* Index line, and the console jump list when the dex is shown as an index */}
-      <div className="dindex"><b>{inScope.length.toLocaleString()}</b> dexes · <b>{new Set(inScope.map(g => g.console)).size}</b> consoles</div>
+      <div className="dindex"><b>{inScope.length.toLocaleString()}</b> entries · <b>{new Set(inScope.map(g => g.console)).size}</b> consoles</div>
       {asIndex && volumes.length > 1 && (
         <div className="frow" role="navigation" aria-label="Jump to console">
           {volumes.map(v => (
@@ -364,7 +364,7 @@ const DexTab = ({ games, filter, onFilter }) => {
         </div>
       )}
       {shown.length === 0
-        ? <div className="text-center py-12 text-ink-3 text-[12px]">No dexes match.</div>
+        ? <div className="text-center py-12 text-ink-3 text-[12px]">No entries match.</div>
         : asIndex
           ? <div key={`${filter}-idx`} className="anim-fade tl-tabs">
               {volumes.map(v => (
@@ -940,7 +940,7 @@ const ActivityTab = ({ achievements, refTime, heatmapData, games = [], loadingMo
   const streak  = useMemo(() => computeStreak(heatmapData, 1), [heatmapData]);
   const year    = useMemo(() => yearOf(heatmapData), [heatmapData]);
   const yearPts = useMemo(() => yearOf(heatmapData, 'points').total, [heatmapData]);
-  // The dexes that moved in the last 14 days: unlocks and points gained in each game, newest first, with its
+  // The dex entries that moved in the last 14 days: unlocks and points gained in each game, newest first, with its
   // progress now and before the fortnight (now minus what was unlocked in it) for the two-tone ring
   const moved = useMemo(() => {
     const from = addDays(dayKey(new Date()), -13);
@@ -1254,7 +1254,7 @@ const ActivityTab = ({ achievements, refTime, heatmapData, games = [], loadingMo
                   })}
                   {moved.length > 3 && (
                     <button type="button" onClick={() => setMovedAll(o => !o)} className="mdex-all">
-                      {movedAll ? 'Show fewer' : `${moved.length - 3} more dex${moved.length - 3 !== 1 ? 'es' : ''}`}
+                      {movedAll ? 'Show fewer' : `${moved.length - 3} more ${moved.length - 3 !== 1 ? 'entries' : 'entry'}`}
                       <ChevronDown size={12} className={movedAll ? 'rotate-180' : ''} />
                     </button>
                   )}

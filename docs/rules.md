@@ -87,6 +87,8 @@ give every segment its own visible count and icon so identity never rests on col
 Cheevodex follows RetroAchievements' own split (doc-012):
 
 - **Blue (`accent`) is structure:** section headings, rank, platform names, the active tab, filters that are on, and progress bars for anything not yet earned.
+  - Reward beats structure: on a beaten or mastered dex entry card (`.dent`) the whole card takes its metal, platform name included (silver or gold instead of blue).
+- **Words:** the dex is the whole book; each game in it is an **entry** ("96 entries", never "96 dexes"). Its page holds the entry's **dex record**.
 - **Gold (`gold`) is reward:** points, mastered, unlocked achievements, user links. Only earned things glow (gold ring/shadow); nothing blue glows except the heading diamond.
 - Surfaces are warm charcoal (`page` → `box` → `box-hi`), never blue-grey.
 
@@ -150,7 +152,7 @@ Use `TabBar` from `assets/tabs.js` for page tabs (an icon on every tab + upperca
 ### Cheevodex motifs
 
 Cheevodex's own pieces, not Savepoint's (CHV-040; styles in `assets/ui.css`):
-- **Ring** (`.dring`, `--p` %, `--c` colour, `--s` size, `--w` width; optional `--b` % in `--cb` for an earlier part drawn dim) for completion: the game page record, the game rows, the watchlist's in-progress rows, and the activity summary's dexes that moved (before dim, gained bright). Gold with a glow only when mastered.
+- **Ring** (`.dring`, `--p` %, `--c` colour, `--s` size, `--w` width; optional `--b` % in `--cb` for an earlier part drawn dim) for completion: the game page record, the game rows, the watchlist's in-progress rows, and the activity summary's entries that moved (before dim, gained bright). Gold with a glow only when mastered.
 - **Index lines** (`.dledger` / `.dl-row`: `.dl-k` label, `.dl-dots` dotted leader, `.dl-v` value) for lists of numbers: the game record, user stats, award counts, the activity summary's year and streaks, changelog sections. Not boxed stat tiles.
 - **Diamond path** (`.dpath`) for progression: one diamond per progression achievement (grouped past 20), gold when done, on a line that fills up to the last done one.
 - **Volumes** (`.dvol` / `.dvol-h`) for long grouped lists: the Dex by console, the changelog by release.

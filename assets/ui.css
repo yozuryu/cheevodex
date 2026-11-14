@@ -688,7 +688,7 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 .idrail .stiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .idrail .stile { padding: 8px 10px; }
 
-/* Dex index (CHV-037): dexes grouped by console like volumes, a sticky heading per console */
+/* Dex index (CHV-037): entries grouped by console like volumes, a sticky heading per console */
 .dvol { scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 52px); }
 @media (min-width: 768px) { .dvol { scroll-margin-top: 92px; } }
 .dvol + .dvol { margin-top: 18px; }
@@ -820,7 +820,7 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 .clog-rh .dvol-t { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.35; }
 .clog-rh .dvol-m { align-self: center; }
 
-/* Activity summary: the dexes that moved in the last 14 days. Each ring shows what you had before the fortnight
+/* Activity summary: the dex entries that moved in the last 14 days. Each ring shows what you had before the fortnight
    (dim) and what you gained in it (bright), the game's icon inside */
 .mdex-h { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; padding: 12px 14px 4px; }
 .mdex-t { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); }

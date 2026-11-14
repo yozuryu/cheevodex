@@ -8,6 +8,7 @@
 - **Beaten and mastered stand out.** A tag in the card's top corner (silver "Beaten" with a medal, solid gold "Mastered" with a star; the icon alone on phones), a silver or gold tint over the whole card, a heavier frame round the art, and the dex number and console name in the same metal
 - **Tidier card text.** The console is shortened (SNES, GBA, PS2; the full name is in the tooltip) and shares one bottom line with the count, and every title keeps two lines so the rows line up
 - **The dex number reads first.** Brighter digits on every card (the pixel face stays at its sharp 8px size)
+- **Entries, not dexes.** The dex is the whole book, so the count line says "96 entries", an empty search "No entries match" and the Activity summary "N more entries"
 
 ### Backlog
 
