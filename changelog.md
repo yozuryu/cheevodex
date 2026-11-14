@@ -72,6 +72,7 @@
 ### Backlog
 
 - In-progress watchlist rows show the count beside a small completion ring, like the Dex, Recent and Progress rows, instead of Savepoint's thin bar; Mastered keeps its gold pill and not-started games their trophy count
+- **The backlog is an index now, not Savepoint's watchlist rows.** **Up next** first: the started games as dex cards, closest to done first, in a row that scrolls (12, then a "+N more started" card). Then every game as an index line (icon, title, dotted leader, progress, dex number) in console volumes, biggest first, with a jump list, two columns on desktop; subsets are indented lines under their game. About twice as many games fit on a screen. The grouping menu is gone (the index is always by console); search also finds a dex number
 
 ### Navigation
 

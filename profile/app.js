@@ -2363,8 +2363,6 @@ export default function App() {
   const [gameView, setGameView] = useGameView();
   const [backlogSearch, setBacklogSearch] = useState('');
   const [backlogStatusFilter, setBacklogStatusFilter] = useState('all');
-  const [backlogGrouping, setBacklogGrouping] = useState('none');
-  const [collapsedGroups, setCollapsedGroups] = useState(new Set());
   const [selectedGame, setSelectedGame] = useState(null);
 
   const [socialView,            setSocialView]            = useState(() => {
@@ -2562,10 +2560,6 @@ export default function App() {
     url.searchParams.set('view', view);
     window.history.replaceState({}, '', url);
   };
-
-  const toggleGroup = (key) => setCollapsedGroups(prev => {
-    const next = new Set(prev); next.has(key) ? next.delete(key) : next.add(key); return next;
-  });
 
   // ── Fetch profile from RA API on mount; redirect to login if not authed ──
   useEffect(() => {
@@ -3095,31 +3089,30 @@ export default function App() {
                 ))}
               </div>
             ) : <>{(() => {
-              // ── Savepoint's watchlist (.wlist / .wrow / .wstack in assets/ui.css) ──
+              // ── The backlog as an index (styles .bnext / .bgrp / .bline in assets/ui.css) ──
+              // "Up next" first: the started games, closest to done first, as dex cards. Then every game as an
+              // index line (title, dotted leader, dex number) in console volumes, biggest first, like the Dex's
+              // By console view. Subsets sit under their base game as indented lines.
               const getStatus = g => {
                 if (g.achievementsTotal === 0) return 'noach';
                 if (g.achievementsTotal > 0 && g.numAwarded === g.achievementsTotal) return 'mastered';
                 if (g.inProgress) return 'inprogress';
                 return 'notstarted';
               };
+              const pctOf = g => g.achievementsTotal > 0 ? g.numAwarded / g.achievementsTotal * 100 : 0;
+              // The Dex's card reads the Dex's field names
+              const asDex = g => ({ ...g, achievementsUnlocked: g.numAwarded, rawProgress: pctOf(g), isMastered: getStatus(g) === 'mastered' });
 
               const filtered = BACKLOG.games.filter(g => {
                 if (backlogSearch) {
-                  const searchable = [g.baseTitle || g.title, g.isSubset ? 'subset' : null, g.subsetName, ...(g.tags || [])].filter(Boolean).join(' ');
+                  const searchable = [g.baseTitle || g.title, g.isSubset ? 'subset' : null, g.subsetName, String(g.id), ...(g.tags || [])].filter(Boolean).join(' ');
                   if (!fold(searchable).includes(fold(backlogSearch))) return false;
                 }
                 return backlogStatusFilter === 'all' || getStatus(g) === backlogStatusFilter;
               });
 
-              const statusMeta = {
-                mastered:   { dot: 'var(--gold)',       label: 'Mastered',        defaultOpen: true  },
-                inprogress: { dot: 'var(--accent)',     label: 'In progress',     defaultOpen: true  },
-                notstarted: { dot: 'var(--ink-3)',      label: 'Not started',     defaultOpen: false },
-                noach:      { dot: 'var(--line-faint)', label: 'No achievements', defaultOpen: false },
-              };
-
               // Subsets sit under their base game (same title and console) when both are in the list;
-              // a combined base like "A | B" counts as each of its names. A subset whose base isn't listed stays a row
+              // a combined base like "A | B" counts as each of its names. A subset whose base isn't listed stays a line
               const stackSubsets = games => {
                 const keyOf = (title, consoleName) => `${title.toLowerCase()}|${consoleName}`;
                 const baseFor = new Map();
@@ -3138,115 +3131,45 @@ export default function App() {
                 return out.map(g => ({ game: g, subsets: subsOf.get(g.id) ?? [] }));
               };
 
-              let groups = [];
-              if (backlogGrouping === 'console') {
-                const map = {};
-                filtered.forEach(g => { (map[g.console] ??= []).push(g); });
-                groups = Object.entries(map).sort(([x], [y]) => x.localeCompare(y))
-                  .map(([key, games]) => ({ key, label: key, dot: 'var(--accent)', games, defaultOpen: games.length <= 5 }));
-              } else if (backlogGrouping === 'status') {
-                ['mastered', 'inprogress', 'notstarted', 'noach'].forEach(st => {
-                  const games = filtered.filter(g => getStatus(g) === st);
-                  if (games.length) groups.push({ key: st, label: statusMeta[st].label, dot: statusMeta[st].dot, games, defaultOpen: statusMeta[st].defaultOpen });
-                });
-              } else if (backlogGrouping === 'subsets') {
-                const entries = stackSubsets(filtered);
-                const withSubs = entries.filter(e => e.subsets.length || e.game.isSubset);
-                const without  = entries.filter(e => !e.subsets.length && !e.game.isSubset);
-                groups = [
-                  { key: 'with', label: 'With subsets', dot: 'var(--gold-dim)', count: withSubs.length, games: withSubs.flatMap(e => [e.game, ...e.subsets]), defaultOpen: true },
-                  { key: 'without', label: 'Without subsets', dot: 'var(--ink-3)', count: without.length, games: without.map(e => e.game), defaultOpen: false },
-                ].filter(g => g.games.length);
-              }
+              const UP_NEXT_MAX = 12;
+              const showNext = !backlogSearch && backlogStatusFilter === 'all';
+              const started = BACKLOG.games.filter(g => getStatus(g) === 'inprogress').sort((a, b) => pctOf(b) - pctOf(a) || a.id - b.id);
+              const byTitle = (a, b) => (a.baseTitle || a.title).localeCompare(b.baseTitle || b.title) || a.id - b.id;
+              const volumes = (() => {
+                const m = new Map();
+                filtered.forEach(g => { if (!m.has(g.console)) m.set(g.console, []); m.get(g.console).push(g); });
+                return [...m.entries()].map(([name, games]) => ({ name, games: games.sort(byTitle), started: games.filter(g => getStatus(g) === 'inprogress').length }))
+                  .sort((a, b) => b.games.length - a.games.length || a.name.localeCompare(b.name));
+              })();
+              const volId = name => `bl-${name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`;
 
-              // Same edge ladder as the game rows: gold → silver (beaten) → blue → grey → near-black
-              const stripeOf = g => {
+              // One index line. Lines are render functions, not components: defined inside App's render,
+              // as components React would remount every line on each re-render
+              const line = (g, sub = false) => {
                 const st = getStatus(g);
-                return st === 'mastered' ? 'var(--gold)' : g.isBeaten ? 'var(--silver)' : st === 'inprogress' ? 'var(--accent)' : st === 'noach' ? 'var(--line-faint)' : 'var(--line-2)';
-              };
-              const statusEnd = (game, status, pct) => <>
-                {status === 'inprogress' && <>
-                  <span className="wprog">
-                    <span className="gcount num">{game.numAwarded}<span>/{game.achievementsTotal}</span></span>
-                    <span className="dring" title={`${Math.floor(pct)}% complete`} style={{ '--p': pct, '--c': 'var(--accent)', '--s': '26px', '--w': '4px' }} />
-                  </span>
-                </>}
-                {status === 'mastered' && <span className="text-[10px] font-bold uppercase tracking-[0.07em] px-1.5 py-[1px] rounded-[2px] bg-gold text-well flex items-center gap-1"><Trophy size={9} />Mastered</span>}
-                {status === 'notstarted' && <span className="text-[11px] text-ink-2 flex items-center gap-1 num" title={`${game.achievementsTotal} achievements`}><Trophy size={11} className="text-ink-3" />{game.achievementsTotal}</span>}
-                {status === 'noach' && <span className="text-[11px] text-ink-3 text-right leading-tight">No achievements</span>}
-              </>;
-
-              // Rows are render functions, not components: defined inside App's render, as components
-              // React would remount every row on each re-render and replay their fade
-              const gameRow = game => {
-                const status = getStatus(game);
-                const pct = game.achievementsTotal > 0 ? (game.numAwarded / game.achievementsTotal) * 100 : 0;
                 return (
-                  <a key={game.id} href={`../game/?id=${game.id}${compareParam}`} className={`wrow ${status === 'noach' ? 'dim' : ''}`} style={{ borderLeftColor: stripeOf(game) }}>
-                    <img src={game.icon} alt="" loading="lazy" className="wrow-icon" />
-                    <div className="wrow-main">
-                      <div className="wrow-title">
-                        <span title={game.title}>{game.baseTitle || game.title}</span>
-                        {game.isSubset && <span className="subset-tag">Subset</span>}
-                        {renderTildeTags(game.tags)}
-                      </div>
-                      <div className="wrow-sub">
-                        <span className="dex-no">No.{game.id}</span>
-                        {backlogGrouping !== 'console' && <span className="text-accent">{game.console}</span>}
-                        {game.pointsTotal > 0 && <>{backlogGrouping !== 'console' && <i>·</i>}<span className="num">{game.pointsTotal.toLocaleString()} pts</span></>}
-                        {game.isSubset && game.subsetName && <><i>·</i><span className="text-gold-dim shrink">{game.subsetName}</span></>}
-                      </div>
-                    </div>
-                    <div className="wrow-end">{statusEnd(game, status, pct)}</div>
+                  <a key={g.id} href={`../game/?id=${g.id}${compareParam}`} className={`bline ${st} ${sub ? 'sub' : ''}`} title={g.title}>
+                    {!sub && <img src={g.icon} alt="" loading="lazy" className="bline-i" onError={e => { e.currentTarget.style.visibility = 'hidden'; }} />}
+                    <span className="bline-t">{sub ? `+ ${g.subsetName || 'Subset'}` : (g.baseTitle || g.title)}</span>
+                    {!sub && g.isSubset && <span className="subset-tag">Subset</span>}
+                    {!sub && renderTildeTags(g.tags)}
+                    <span className="bline-d" />
+                    {st === 'inprogress' && <span className="bline-p num">{g.numAwarded}<span>/{g.achievementsTotal}</span></span>}
+                    {st === 'mastered' && <Trophy size={11} className="text-gold shrink-0" aria-label="Mastered" />}
+                    {st === 'noach' && <span className="bline-x">No set</span>}
+                    <span className="dex-no bline-no">No.{g.id}</span>
                   </a>
                 );
               };
-              // One set inside a game's card: its icon, "Base set" or the subset name, points, status
-              const setRow = (game, base = false) => {
-                const status = getStatus(game);
-                const pct = game.achievementsTotal > 0 ? (game.numAwarded / game.achievementsTotal) * 100 : 0;
-                return (
-                  <a key={game.id} href={`../game/?id=${game.id}${compareParam}`} title={game.title}
-                    className={`wsub ${base ? '' : 'subset'} ${status === 'noach' ? 'dim' : ''}`} style={{ borderLeftColor: stripeOf(game) }}>
-                    <img src={game.icon} alt="" loading="lazy" className="icon" />
-                    <span className="name">{base ? 'Base set' : game.subsetName}</span>
-                    <span className="dex-no shrink-0">No.{game.id}</span>
-                    {game.pointsTotal > 0 && <span className="pts num">· {game.pointsTotal.toLocaleString()} pts</span>}
-                    <span className="end">{statusEnd(game, status, pct)}</span>
-                  </a>
-                );
-              };
-              const stackCard = (game, subsets) => (
-                <div key={game.id} className="wstack">
-                  <a href={`../game/?id=${game.id}${compareParam}`} className="whead">
-                    <span className="t"><span>{game.baseTitle || game.title}</span>{renderTildeTags(game.tags)}</span>
-                    {backlogGrouping !== 'console' && <span className="c">{game.console}</span>}
-                  </a>
-                  {setRow(game, true)}
-                  {subsets.map(sg => setRow(sg))}
-                </div>
-              );
-              const rows = games => stackSubsets(games).map(({ game, subsets }) => subsets.length ? stackCard(game, subsets) : gameRow(game));
-              const toggleGroup = key => setCollapsedGroups(prev => { const next = new Set(prev); next.has(key) ? next.delete(key) : next.add(key); return next; });
 
               return (
                 <>
-                  {/* Search + grouping, then the status chips with their counts, then a meta line with the sync */}
+                  {/* Search, then the status chips with their counts, then a meta line with the sync */}
                   <div className="flex flex-col gap-2.5 mb-3">
-                    <div className="fbar">
-                      <div className="fsearch">
-                        <Search size={14} />
-                        <input type="text" inputMode="search" placeholder={`Search ${BACKLOG.games.length.toLocaleString()} games`} aria-label="Search backlog" value={backlogSearch} onChange={e => setBacklogSearch(e.target.value)} />
-                        {backlogSearch && <button type="button" onClick={() => setBacklogSearch('')} aria-label="Clear search"><X size={13} /></button>}
-                      </div>
-                      <span className="fselect-w">
-                        <select value={backlogGrouping} onChange={e => { setBacklogGrouping(e.target.value); setCollapsedGroups(new Set()); }} className="fselect" aria-label="Group">
-                          <option value="none">No grouping</option>
-                          <option value="console">Group: Console</option>
-                          <option value="status">Group: Status</option>
-                          <option value="subsets">Group: Subsets</option>
-                        </select>
-                      </span>
+                    <div className="fsearch">
+                      <Search size={14} />
+                      <input type="text" inputMode="search" placeholder={`Search ${BACKLOG.games.length.toLocaleString()} games or a No.`} aria-label="Search backlog" value={backlogSearch} onChange={e => setBacklogSearch(e.target.value)} />
+                      {backlogSearch && <button type="button" onClick={() => setBacklogSearch('')} aria-label="Clear search"><X size={13} /></button>}
                     </div>
                     <div className="frow" role="group" aria-label="Status">
                       {[
@@ -3283,28 +3206,54 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* List (two columns on desktop); groups get a header row that opens and closes */}
-                  <div key={`${backlogStatusFilter}-${backlogGrouping}`} className="wlist anim-fade">
-                    {filtered.length === 0 ? (
-                      <div className="text-center py-6 text-ink-3 text-[12px]" style={{ gridColumn: '1 / -1' }}>No games match the current filters.</div>
-                    ) : backlogGrouping === 'none' ? (
-                      rows(filtered)
-                    ) : (
-                      groups.map(group => {
-                        const isOpen = collapsedGroups.has(group.key) ? !group.defaultOpen : (group.defaultOpen ?? true);
-                        return (
-                          <React.Fragment key={group.key}>
-                            <button type="button" onClick={() => toggleGroup(group.key)} className="wgroup" aria-expanded={isOpen}>
-                              <span className="mark" style={{ background: group.dot }} />
-                              <span className="label">{group.label}</span>
-                              <span className="n num">{(group.count ?? group.games.length).toLocaleString()}</span>
-                              <ChevronDown size={14} className={`text-ink-3 transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180' : ''}`} />
+                  <div key={backlogStatusFilter} className="anim-fade">
+                    {/* Up next: the started games as dex cards, closest to done first */}
+                    {showNext && started.length > 0 && (
+                      <section className="bnext" aria-label="Up next">
+                        <div className="bnext-h">
+                          <span className="dvol-t">Up next</span>
+                          <span className="dvol-n">{started.length}</span>
+                          <span className="dvol-m">closest to done first</span>
+                        </div>
+                        <div className="bnext-row">
+                          {started.slice(0, UP_NEXT_MAX).map(g => <DexEntry key={g.id} game={asDex(g)} />)}
+                          {started.length > UP_NEXT_MAX && (
+                            <button type="button" className="bnext-more" onClick={() => setBacklogStatusFilter('inprogress')}>
+                              <b className="num">+{(started.length - UP_NEXT_MAX).toLocaleString()}</b>more started
                             </button>
-                            {isOpen && <div className="wlist anim-fade" style={{ gridColumn: '1 / -1' }}>{rows(group.games)}</div>}
-                          </React.Fragment>
-                        );
-                      })
+                          )}
+                        </div>
+                      </section>
                     )}
+
+                    {filtered.length === 0 ? (
+                      <div className="text-center py-6 text-ink-3 text-[12px]">No games match the current filters.</div>
+                    ) : <>
+                      {volumes.length > 1 && (
+                        <div className="frow mb-3" role="navigation" aria-label="Jump to console">
+                          {volumes.map(v => (
+                            <button type="button" key={v.name} className="fchip" onClick={() => document.getElementById(volId(v.name))?.scrollIntoView({ block: 'start', behavior: 'smooth' })}>
+                              {v.name}<span className="n num">{v.games.length}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {/* The index: one volume per console, each game an index line, subsets indented under their game */}
+                      {volumes.map(v => (
+                        <section key={v.name} id={volId(v.name)} className="dvol">
+                          <div className="dvol-h">
+                            <span className="dvol-t">{v.name}</span>
+                            <span className="dvol-n">{v.games.length}</span>
+                            {v.started > 0 && <span className="dvol-m"><span><b className="text-accent">{v.started}</b> started</span></span>}
+                          </div>
+                          <div className="bvol">
+                            {stackSubsets(v.games).map(({ game, subsets }) => (
+                              <div key={game.id} className="bgrp">{line(game)}{subsets.map(sg => line(sg, true))}</div>
+                            ))}
+                          </div>
+                        </section>
+                      ))}
+                    </>}
                   </div>
                 </>
               );
