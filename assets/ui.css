@@ -616,7 +616,7 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 .dexc-cell > i > u { display: block; height: 100%; background: var(--c); }
 .dexc-cell.mastered > i > u { box-shadow: 0 0 8px rgb(var(--c-gold) / 0.6); }
 
-/* Dex grid: one entry per game, number + state on top, the icon as the entry picture */
+/* Dex grid: one entry per game, the number on top, the icon as the entry picture with its completion ring */
 .dgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 @media (min-width: 640px) { .dgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (min-width: 768px) { .dgrid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; } }
@@ -624,21 +624,40 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
   background: var(--box); border: 1px solid var(--line); border-radius: 3px; transition: transform 150ms, border-color 150ms, background-color 150ms; }
 .dent:hover { transform: translateY(-2px); background: var(--box-hi); border-color: var(--ink-4); }
 .dent:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.dent-top { display: flex; align-items: center; justify-content: space-between; gap: 4px; min-width: 0; }
-.dent-st { display: grid; place-items: center; width: 14px; height: 14px; flex-shrink: 0; }
-.dent-st svg { width: 11px; height: 11px; }
+.dent-top { display: flex; align-items: center; justify-content: space-between; gap: 4px; min-width: 0; height: 15px; }
+.dent-sring.full::before { filter: drop-shadow(0 0 3px rgb(var(--c-gold) / 0.6)); }
 .dent-pic { position: relative; aspect-ratio: 1; border-radius: 2px; overflow: hidden; background: var(--well); border: 1px solid var(--well-edge); }
 .dent-pic img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; display: block; }
-/* Not started yet: the icon dimmed and grey */
 .dent.unstarted .dent-pic img { filter: grayscale(1) brightness(0.75); opacity: 0.55; }
-.dent-t { font-size: 11.5px; font-weight: 500; color: var(--ink); line-height: 1.25; min-height: 2.5em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.dent-c { font-size: 10px; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: -3px; }
-.dent-m { display: flex; align-items: center; justify-content: space-between; gap: 4px; font-family: var(--mono); font-size: 10px; color: var(--ink-2); }
-.dent-m b { font-weight: 600; color: var(--ink); }
-.dent.beaten { border-color: rgb(var(--c-silver) / 0.45); }
-.dent.mastered { border-color: rgb(var(--c-gold) / 0.7); box-shadow: 0 0 12px rgb(var(--c-gold) / 0.16); }
-.dent.mastered .dent-pic { border-color: var(--gold); }
-.dent.mastered .dent-m b { color: var(--gold); }
+.dent-t { font-size: 11.5px; font-weight: 500; color: var(--ink); line-height: 1.25; height: 2.5em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.dent-m { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; margin-top: auto; font-size: 10px; color: var(--ink-3); }
+.dent-c { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--accent); }
+.dent-c.sub { color: var(--gold-dim); }   /* a subset's name, dim gold as in the game rows */
+.dent-n { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; font-family: var(--mono); color: var(--ink-3); }
+.dent-n b { font-weight: 600; color: var(--ink); }
+/* Beaten and mastered: a labelled tag in the top corner, a tint of their metal and a heavier frame round the art */
+.dent-badge { display: inline-flex; align-items: center; gap: 3px; height: 15px; padding: 0 5px; flex-shrink: 0; border-radius: 2px;
+  font-size: 9px; font-weight: 700; line-height: 1; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }
+.dent-badge svg { flex-shrink: 0; }
+@media (max-width: 639px) {   /* phone cards are too narrow for the word: icon only, the word kept for screen readers */
+  .dent-badge { width: 17px; padding: 0; justify-content: center; }
+  .dent-badge-t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } }
+.dent.beaten { border-color: rgb(var(--c-silver) / 0.7); background: linear-gradient(180deg, rgb(var(--c-silver) / 0.20), rgb(var(--c-silver) / 0.07)), var(--box); }
+.dent.beaten:hover { background: linear-gradient(180deg, rgb(var(--c-silver) / 0.26), rgb(var(--c-silver) / 0.10)), var(--box-hi); }
+.dent.beaten .dent-badge { color: var(--silver); background: rgb(var(--c-silver) / 0.12); box-shadow: inset 0 0 0 1px rgb(var(--c-silver) / 0.6); }
+.dent.beaten .dent-pic { border-color: var(--silver); box-shadow: 0 0 0 1px rgb(var(--c-silver) / 0.5); }
+.dent .dex-no { color: var(--ink-3); }   /* the number is the entry's identity: Silkscreen stays at its 8px grid, so contrast does the work */
+.dent .dex-no b { color: var(--ink); }
+.dent.beaten .dex-no b { color: var(--silver); }
+.dent.mastered { border-color: var(--gold); background: linear-gradient(180deg, rgb(var(--c-gold) / 0.28), rgb(var(--c-gold) / 0.09)), var(--box); box-shadow: 0 0 14px rgb(var(--c-gold) / 0.2); }
+.dent.mastered:hover { background: linear-gradient(180deg, rgb(var(--c-gold) / 0.34), rgb(var(--c-gold) / 0.13)), var(--box-hi); border-color: var(--gold); }
+.dent.mastered .dent-badge { color: rgb(var(--c-page)); background: var(--gold); box-shadow: 0 0 8px rgb(var(--c-gold) / 0.45); }
+.dent.mastered .dent-pic { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
+.dent.mastered .dex-no b { color: var(--gold); }
+.dent.mastered .dent-n b { color: var(--gold); }
+.dent.beaten .dent-m, .dent.beaten .dent-n, .dent.mastered .dent-m, .dent.mastered .dent-n { color: var(--ink-2); }   /* grey ink sinks into the metal tint */
+.dent.beaten .dent-c { color: var(--silver); }
+.dent.mastered .dent-c { color: rgb(var(--c-gold) / 0.85); }
 
 /* Identity rail (≥1024px): the player's card pinned beside the content, in place of the wide header */
 .idrail { display: none; }

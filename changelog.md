@@ -1,5 +1,14 @@
 # Changelog
 
+## v26.11.14 — Dex cards with the completion ring
+
+### Profile
+
+- **Dex cards carry the completion ring.** Each entry has a small ring beside its count, blue in progress, silver beaten and full gold mastered, the same ring as the dex record and the Backlog lines. It replaces the per-card state icon and the percentage (now in the tooltip), and leaves the art uncovered
+- **Beaten and mastered stand out.** A tag in the card's top corner (silver "Beaten" with a medal, solid gold "Mastered" with a star; the icon alone on phones), a silver or gold tint over the whole card, a heavier frame round the art, and the dex number and console name in the same metal
+- **Tidier card text.** The console is shortened (SNES, GBA, PS2; the full name is in the tooltip) and shares one bottom line with the count, and every title keeps two lines so the rows line up
+- **The dex number reads first.** Brighter digits on every card (the pixel face stays at its sharp 8px size)
+
 ## v26.11.13 — Cheevodex: new name, Modern RA look, Savepoint components
 
 ### Auth

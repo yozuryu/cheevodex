@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Gamepad2, Activity, BarChart2, Award, Star, ChevronDown, ChevronUp, AlertCircle, Trophy, Crown, Lock, Unlock, AlertTriangle, Flame, Feather, Medal, ShieldOff, CircleDashed, X, Clock, Layers, Users, Loader2, RefreshCw, RotateCcw, ArrowLeftRight, PieChart, TrendingUp, List, LayoutGrid, Search, Check, Plus, Radio, ArrowDown, Hourglass, User, BookMarked, Circle, CircleDot } from 'lucide-react';
+import { Gamepad2, Activity, BarChart2, Award, Star, ChevronDown, ChevronUp, AlertCircle, Trophy, Crown, Lock, Unlock, AlertTriangle, Flame, Feather, Medal, ShieldOff, CircleDashed, X, Clock, Layers, Users, Loader2, RefreshCw, RotateCcw, ArrowLeftRight, PieChart, TrendingUp, List, LayoutGrid, Search, Check, Plus, Radio, ArrowDown, Hourglass, User, BookMarked } from 'lucide-react';
 import { MEDIA_URL, SITE_URL, TILDE_TAG_COLORS } from './utils/constants.js';
 import { getMediaUrl, parseTitle, formatTimeAgo } from './utils/helpers.js';
 import { transformData } from './utils/transform.js';
@@ -227,29 +227,43 @@ const DexCounter = ({ counts, onPick }) => {
   );
 };
 
-const DEX_STATE_ICON = {
-  mastered: <Star size={11} className="text-gold" fill="currentColor" aria-label="Mastered" />,
-  beaten:   <Medal size={11} className="text-silver" aria-label="Beaten" />,
-  played:   <CircleDot size={11} className="text-accent" aria-label="In progress" />,
-  unstarted: <Circle size={11} className="text-ink-4" aria-label="Not started" />,
+// Short console names for the dex card's bottom line (the full name stays in the card's tooltip)
+const CONSOLE_SHORT = {
+  'SNES/Super Famicom': 'SNES', 'NES/Famicom': 'NES', 'Game Boy Advance': 'GBA', 'Game Boy Color': 'GBC',
+  'Genesis/Mega Drive': 'Mega Drive', 'Nintendo 64': 'N64', 'Nintendo DS': 'DS', 'Nintendo DSi': 'DSi',
+  'PlayStation': 'PS1', 'PlayStation 2': 'PS2', 'PlayStation Portable': 'PSP',
+  'PC Engine/TurboGrafx-16': 'PC Engine', 'PC Engine CD/TurboGrafx-CD': 'PCE CD', 'Neo Geo Pocket': 'NGP', 'Neo Geo CD': 'NGCD',
+  'Atari 2600': '2600', 'Atari 7800': '7800', 'Atari Lynx': 'Lynx', 'Atari Jaguar': 'Jaguar',
+  'Pokemon Mini': 'Poké Mini', '3DO Interactive Multiplayer': '3DO',
 };
 
 const DexEntry = ({ game }) => {
   const st = dexState(game);
   const unstarted = game.achievementsUnlocked === 0 && st === 'played';
   const hasAch = game.achievementsTotal > 0;
+  const pct = Math.floor(game.rawProgress);
+  const sub = game.isSubset && game.subsetName ? game.subsetName : null;
+  const ringC = st === 'mastered' ? 'var(--gold)' : st === 'beaten' ? 'var(--silver)' : 'var(--accent)';
+  const ring = hasAch && (   // the completion ring, beside the count it belongs to
+    <span className={`dring dent-sring ${st === 'mastered' ? 'full' : ''}`} role="img" aria-label={`${pct}% complete`}
+      style={{ '--p': game.rawProgress, '--c': ringC, '--s': '15px', '--w': '2.5px' }} />
+  );
   return (
-    <a href={`../game/?id=${game.id}${compareParam}`} className={`dent ${st} ${unstarted ? 'unstarted' : ''}`} title={game.title}>
+    <a href={`../game/?id=${game.id}${compareParam}`} className={`dent ${st} ${unstarted ? 'unstarted' : ''}`}
+      title={`${game.title} · ${game.console}${hasAch ? ` · ${pct}%` : ''}`}>
       <div className="dent-top">
         <span className="dex-no">No.<b>{game.id}</b></span>
-        <span className="dent-st">{DEX_STATE_ICON[unstarted ? 'unstarted' : st]}</span>
+        {st === 'mastered' ? <span className="dent-badge"><Star size={9} fill="currentColor" /><span className="dent-badge-t">Mastered</span></span>
+          : st === 'beaten' ? <span className="dent-badge"><Medal size={9} /><span className="dent-badge-t">Beaten</span></span>
+          : null}
       </div>
-      <div className="dent-pic"><img src={game.icon} alt="" loading="lazy" onError={e => { e.currentTarget.style.visibility = 'hidden'; }} /></div>
+      <div className="dent-pic">
+        <img src={game.icon} alt="" loading="lazy" onError={e => { e.currentTarget.style.visibility = 'hidden'; }} />
+      </div>
       <span className="dent-t">{game.baseTitle || game.title}</span>
-      <span className="dent-c">{game.isSubset && game.subsetName ? game.subsetName : game.console}</span>
       <div className="dent-m">
-        {hasAch ? <span><b>{game.achievementsUnlocked}</b>/{game.achievementsTotal}</span> : <span className="text-ink-3">No set</span>}
-        {hasAch && <span>{Math.floor(game.rawProgress)}%</span>}
+        <span className={`dent-c ${sub ? 'sub' : ''}`}>{sub || CONSOLE_SHORT[game.console] || game.console}</span>
+        {hasAch ? <span className="dent-n">{ring}<span><b>{game.achievementsUnlocked}</b>/{game.achievementsTotal}</span></span> : <span className="dent-n">No set</span>}
       </div>
     </a>
   );
