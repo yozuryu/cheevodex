@@ -3155,14 +3155,17 @@ export default function App() {
               };
 
               // One index line: icon (lit when started, gold-ringed when mastered, faded until then), title and a
-              // dotted leader, then the dex number and size of the set; on the right the count and a bar when started,
+              // dotted leader, then the dex number and size of the set; on the right the count and the completion ring when started (the same ring as every other game row),
               // the points on offer when not. Subsets are one-row lines hung under their game.
               // Render functions, not components: as components React would remount every line on each re-render
               const line = (g, sub = false) => {
                 const st = getStatus(g);
                 const pct = pctOf(g);
                 const end = <span className="bline-e">
-                  {st === 'inprogress' && <span className="bline-c num">{g.numAwarded}<span>/{g.achievementsTotal}</span></span>}
+                  {st === 'inprogress' && <>
+                    <span className="bline-c num">{g.numAwarded}<span>/{g.achievementsTotal}</span></span>
+                    <span className="dring" title={`${Math.floor(pct)}% complete`} style={{ '--p': pct, '--c': g.isBeaten ? 'var(--silver)' : 'var(--accent)', '--s': sub ? '20px' : '26px', '--w': sub ? '3px' : '4px' }} />
+                  </>}
                   {st === 'mastered' && <span className="bline-m"><Trophy size={10} />Mastered</span>}
                   {st === 'notstarted' && g.pointsTotal > 0 && <span className="bline-pts num">{g.pointsTotal.toLocaleString()}<small>pts</small></span>}
                   {st === 'noach' && <span className="bline-x">No set</span>}
@@ -3189,7 +3192,6 @@ export default function App() {
                         {g.achievementsTotal > 0 && <span className="num">{g.achievementsTotal} achievements</span>}
                         {g.isSubset && g.subsetName && <span className="text-gold-dim truncate">{g.subsetName}</span>}
                       </span>
-                      {st === 'inprogress' && <span className="bline-bar" aria-hidden="true"><i style={{ width: `${Math.max(pct, 2)}%` }} /></span>}
                     </span>
                     {end}
                   </a>

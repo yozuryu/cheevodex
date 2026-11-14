@@ -236,10 +236,6 @@ button.grow:hover { background: var(--box-hover); }
 .grow-prog { flex-shrink: 0; width: 76px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .gcount { font-size: 11px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.6); }
 .gcount > span { color: var(--ink-2); font-weight: 400; }
-.gbar { width: 100%; height: 4px; background: var(--well); border-radius: 2px; overflow: hidden; }
-.gbar > i { display: block; height: 100%; min-width: 2px; border-radius: 2px; }
-/* 2px keeps a sliver of progress visible; nothing at all at 0 (and no full bar when the % couldn't be worked out) */
-.gbar > i[style*="width: 0%"], .gbar > i[style*="width:0%"], .gbar > i[style*="NaN"] { min-width: 0; width: 0 !important; }
 
 /* ── Backlog as an index ─────────────────────────────────────────────────────────────
    "Up next" (.bnext): the started games as dex cards in a row that scrolls. Then console volumes
@@ -281,9 +277,7 @@ button.grow:hover { background: var(--box-hover); }
 .bline.noach .bline-t { color: var(--ink-3); font-weight: 400; }
 .bline:hover .bline-t { color: var(--accent-hi); }
 .bline-r2 { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 11px; color: var(--ink-3); white-space: nowrap; overflow: hidden; }
-.bline-bar { display: block; height: 3px; border-radius: 2px; background: rgb(var(--c-ink) / 0.08); overflow: hidden; margin-top: 1px; }
-.bline-bar i { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
-.bline-e { flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end; min-width: 56px; }
+.bline-e { flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 56px; }
 .bline-c { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--accent); }
 .bline-c span { font-weight: 400; color: var(--ink-3); }
 .bline-m { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 2px; font-size: 10px; font-weight: 600; color: var(--gold); background: rgb(var(--c-gold) / 0.12); }
