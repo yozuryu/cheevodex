@@ -152,22 +152,22 @@ Use `TabBar` from `assets/tabs.js` for page tabs (an icon on every tab + upperca
 ### Cheevodex motifs
 
 Cheevodex's own pieces, not Savepoint's (CHV-040; styles in `assets/ui.css`):
-- **Ring** (`.dring`, `--p` %, `--c` colour, `--s` size, `--w` width; optional `--b` % in `--cb` for an earlier part drawn dim) for completion: the game page record, the game rows, the watchlist's in-progress rows, and the activity summary's entries that moved (before dim, gained bright). Gold with a glow only when mastered.
+- **Ring** (`.dring`, `--p` %, `--c` colour, `--s` size, `--w` width; optional `--b` % in `--cb` for an earlier part drawn dim) for completion: the game page record, the game rows, the Dex entry cards (small, beside the count), the Backlog's index lines, and the activity summary's entries that moved (before dim, gained bright). Gold with a glow only when mastered.
 - **Index lines** (`.dledger` / `.dl-row`: `.dl-k` label, `.dl-dots` dotted leader, `.dl-v` value) for lists of numbers: the game record, user stats, award counts, the activity summary's year and streaks, changelog sections. Not boxed stat tiles.
 - **Diamond path** (`.dpath`) for progression: one diamond per progression achievement (grouped past 20), gold when done, on a line that fills up to the last done one.
 - **Volumes** (`.dvol` / `.dvol-h`) for long grouped lists: the Dex by console, the changelog by release.
 
 - **Friend colours** (`friendColor(username)` in `profile/app.js`: hue 70°–330°, saturation 55–90% and lightness 60–76%, all from one hash of the username; computed, so no tokens): one stable colour per friend for identity only (avatar ring, name). Run edges show the mode the RA way (gold hardcore, grey softcore); earned counts stay gold. The hue range skips red, orange and gold, so it never reads as a status.
 
-Shared with Savepoint on purpose: the tab bar, filter chips, sheets, the activity day headings, and watchlist rows. Activity runs (Mine and Friends) use Cheevodex's own `RunStrip`: mode-coloured edge and wash, gold +N.
+Shared with Savepoint on purpose: the tab bar, filter chips, sheets, and the activity day headings. Activity runs (Mine and Friends) use Cheevodex's own `RunStrip`: mode-coloured edge and wash, gold +N.
 
 ### Consistency rules (CHV-046)
 
 - **Mode colours:** hardcore is gold, softcore grey, everywhere (pills, flames, counts, bars, run edges). Red (`--hc`) means errors, win conditions and the top RetroRatio band only.
-- **Progress is a ring** (`.dring`) beside its count. No progress bars on game rows, tiles, watchlist or compare.
+- **Progress is a ring** (`.dring`) beside its count. No progress bars on game rows, tiles, Dex cards, Backlog lines or compare.
 - **Controls are filter chips** (`.fchip`, `.on` when active, `.n` for a count). No tiny uppercase toggle buttons.
 - **Numbers in lists are index lines** (`.dledger`), not boxed tiles.
-- **Dex numbers** (`.dex-no`, 8px pixel face) on every game row: Dex, Recent, Progress, Activity runs, watchlist, console list, search, compare.
+- **Dex numbers** (`.dex-no`, 8px pixel face) on every game row and card: Dex, Recent, Progress, Activity runs, Backlog, console list, search, compare.
 - **Time ago** is one style: `5m ago`, `18h ago`, `3d ago`, then the date (`formatTimeAgo`, `timeAgo`, `shortAgo` + " ago").
 - **Text** is 10px or larger; only the 7px Subset / tilde tags and chart axis labels are smaller.
 - **Corners** 2–3px, sheets included. No `#fff` / `text-white`: use `ink`.

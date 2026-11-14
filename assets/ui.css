@@ -280,7 +280,7 @@ button.grow:hover { background: var(--box-hover); }
 .bline-e { flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 56px; }
 .bline-c { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--accent); }
 .bline-c span { font-weight: 400; color: var(--ink-3); }
-.bline-m { display: inline-flex; align-items: center; gap: 3px; height: 16px; padding: 0 6px; border-radius: 2px; font-size: 9px; font-weight: 700; line-height: 1;
+.bline-m { display: inline-flex; align-items: center; gap: 3px; height: 16px; padding: 0 6px; border-radius: 2px; font-size: 10px; font-weight: 700; line-height: 1;
   letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; color: rgb(var(--c-page)); background: var(--gold); box-shadow: 0 0 8px rgb(var(--c-gold) / 0.45); }   /* the same tag as a mastered dex card */
 .bline-pts { font-family: var(--mono); font-size: 12px; color: var(--gold-dim); }
 .bline-pts small { font-size: 10px; color: var(--ink-3); margin-left: 3px; }
@@ -627,7 +627,7 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 .dgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 @media (min-width: 640px) { .dgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (min-width: 768px) { .dgrid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; } }
-.dent { position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 7px 7px 8px; text-decoration: none;
+.dent { position: relative; container: dent / inline-size; display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 7px 7px 8px; text-decoration: none;
   background: var(--box); border: 1px solid var(--line); border-radius: 3px; transition: transform 150ms, border-color 150ms, background-color 150ms; }
 .dent:hover { transform: translateY(-2px); background: var(--box-hi); border-color: var(--ink-4); }
 .dent:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -644,9 +644,10 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 .dent-n b { font-weight: 600; color: var(--ink); }
 /* Beaten and mastered: a labelled tag in the top corner, a tint of their metal and a heavier frame round the art */
 .dent-badge { display: inline-flex; align-items: center; gap: 3px; height: 15px; padding: 0 5px; flex-shrink: 0; border-radius: 2px;
-  font-size: 9px; font-weight: 700; line-height: 1; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }
+  font-size: 10px; font-weight: 700; line-height: 1; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }
 .dent-badge svg { flex-shrink: 0; }
-@media (max-width: 639px) {   /* phone cards are too narrow for the word: icon only, the word kept for screen readers */
+/* A card too narrow for the word (phones, tablets, any narrow grid): icon only, the word kept for screen readers */
+@container dent (max-width: 150px) {
   .dent-badge { width: 17px; padding: 0; justify-content: center; }
   .dent-badge-t { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } }
 .dent.beaten { border-color: rgb(var(--c-silver) / 0.7); background: linear-gradient(180deg, rgb(var(--c-silver) / 0.20), rgb(var(--c-silver) / 0.07)), var(--box); }
