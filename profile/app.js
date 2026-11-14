@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Gamepad2, Activity, BarChart2, Award, Star, ChevronDown, ChevronUp, AlertCircle, Trophy, Crown, Lock, Unlock, AlertTriangle, Flame, Feather, Medal, ShieldOff, CircleDashed, X, Clock, Layers, Users, Loader2, RefreshCw, RotateCcw, ArrowLeftRight, PieChart, TrendingUp, List, LayoutGrid, Search, Check, Plus, Radio, ArrowDown, Hourglass, User, BookMarked } from 'lucide-react';
+import { Gamepad2, Activity, BarChart2, Award, Star, ChevronDown, ChevronUp, AlertCircle, Trophy, Crown, Lock, Unlock, AlertTriangle, Flame, Feather, Medal, ShieldOff, CircleDashed, X, Clock, Layers, Users, Loader2, RefreshCw, RotateCcw, ArrowLeftRight, PieChart, TrendingUp, List, LayoutGrid, Search, Check, Plus, Radio, ArrowDown, Hourglass, User, BookMarked, ChevronRight } from 'lucide-react';
 import { MEDIA_URL, SITE_URL, TILDE_TAG_COLORS } from './utils/constants.js';
 import { getMediaUrl, parseTitle, formatTimeAgo } from './utils/helpers.js';
 import { transformData } from './utils/transform.js';
@@ -3023,7 +3023,13 @@ export default function App() {
                     <ChevronDown size={13} className={`transition-transform duration-200 ${statsExpanded ? 'rotate-180' : ''}`} />
                   </button>
                 </div>
-                <CompletionsPanel title="Game awards" labels={{ gold: 'Mastered', silver: 'Beaten' }} shape="sq" items={awardItems} empty="No game awards yet" />
+                {/* The awards as a shelf, newest award first. The Dex counter already gives the counts (and counts a mastered
+                    game as beaten too, so a second count here read as a contradiction); the link opens them in the Dex */}
+                <CompletionsPanel title="Game awards" labels={{ gold: 'Mastered', silver: 'Beaten' }} shape="sq" items={awardItems} empty="No game awards yet"
+                  counts={false}
+                  footer={<button type="button" className="cmp-dex" onClick={() => { pickDex('beaten'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                    <BookMarked size={13} />All {dex.beaten} in the Dex<ChevronRight size={13} />
+                  </button>} />
               </div>
             </div>
           ) : activeTab === 'social' ? (

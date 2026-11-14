@@ -94,7 +94,8 @@ function Row({ g, shape, labels }) {
 // items: [{ key, tier: 'gold' | 'silver', name, tags?, title?, at, sub?, minutes?, score?, fact?: { label, pct?, icon? },
 //           href? (link) or onOpen, cover, coverFallback?, coverShape? (the Latest picture's shape when it isn't the shelf's), coverExt?, ext?, art?, artFallback?, tile, tileFallback?, pixel?, onOpen }]
 // shape: 'sq' (RA icons), 'wd' (Steam banners), 'pt' (Xbox posters); labels: { gold, silver }
-export function CompletionsPanel({ title, labels, items, shape, loading, empty = 'Nothing completed yet' }) {
+// counts: false hides the tier counts (when the page already shows them); footer: a node under the shelf
+export function CompletionsPanel({ title, labels, items, shape, loading, empty = 'Nothing completed yet', counts = true, footer = null }) {
   const [open, setOpen] = useState(false);
   const [view, setViewState] = useState(readView);
   const setView = (v) => { setViewState(v); setOpen(false); try { localStorage.setItem(VIEW_KEY, v); } catch { /* storage unavailable */ } };
@@ -136,13 +137,13 @@ export function CompletionsPanel({ title, labels, items, shape, loading, empty =
         h('button', { type: 'button', className: list ? '' : 'on', 'aria-pressed': !list, title: 'Tiles', onClick: () => setView('tiles') }, h(Icon, { name: 'grid', size: 13 })),
         h('button', { type: 'button', className: list ? 'on' : '', 'aria-pressed': list, title: 'List', onClick: () => setView('list') }, h(Icon, { name: 'list', size: 14 })))),
     loading ? h('div', { className: 'cmp-sk' },
-      h('div', { className: 'cmp-tiers' }, h('div', { className: 'shimmer cmp-sk-tier' }), h('div', { className: 'shimmer cmp-sk-tier' })),
+      counts && h('div', { className: 'cmp-tiers' }, h('div', { className: 'shimmer cmp-sk-tier' }), h('div', { className: 'shimmer cmp-sk-tier' })),
       h('div', { className: 'shimmer cmp-sk-latest' }),
       h('div', { className: `cmp-grid ${shape}`, style: { gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` } },
         ...Array.from({ length: cols }, (_, i) => h('div', { key: i, className: `shimmer cmp-tile ${shape}` }))))
     : h('div', { className: 'anim-in' },
       // Tier counts as index lines (Cheevodex's codex motif, replacing Savepoint's tier boxes)
-      h('div', { className: 'sledger dledger cmp-ledger' },
+      counts && h('div', { className: 'sledger dledger cmp-ledger' },
         [['gold', gold, 'star', 'var(--gold)'], ['silver', silver, 'medal', 'var(--silver)']].map(([t, n, icon, c]) =>
           h('div', { key: t, className: 'dl-row' },
             h('span', { className: 'dl-k' }, h(Icon, { name: icon, size: 12, style: { color: c } }), labels[t]),
@@ -155,5 +156,6 @@ export function CompletionsPanel({ title, labels, items, shape, loading, empty =
         style: { gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, maxHeight: open && boxH ? boxH : undefined },
       }, shown.map(g => list ? h(Row, { key: g.key, g, shape, labels }) : h(Tile, { key: g.key, g, shape }))),
       canOpen && h('button', { type: 'button', className: 'cmp-more', onClick: toggle, 'aria-expanded': open },
-        open ? 'Show less' : `Show all ${items.length}`, h(Icon, { name: 'chev', className: open ? 'rot' : '' }))));
+        open ? 'Show less' : `Show all ${items.length}`, h(Icon, { name: 'chev', className: open ? 'rot' : '' })),
+      items.length > 0 && footer));
 }

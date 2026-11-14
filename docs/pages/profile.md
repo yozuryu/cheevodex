@@ -40,7 +40,7 @@ The header sits on top, then the tab bar; nothing between them. Overview is `gri
 - **Last played**: the regular `GameListRow` with the rich presence as a `.grow-extra` line.
 - **Recent unlocks**: the newest unlock as a card; on ≥1024px also the next five as `.urow` rows (`.ulist`, hidden on phones) from the achievement chunks, which the wide Overview loads.
 - **User stats** (`.prail`): `StatTiles` (index lines, `.sledger`; two across in the rail, value over label, `STAT_LABELS` shortens labels, "of N" after a rank shown as small text); `statsRight` behind **More stats**.
-- **Game awards**: `CompletionsPanel` (`assets/completions.js`, `.cmp-*`): Mastered / Beaten counts, the newest award as a card with the game's screenshot behind, then the icons with a tiles / list switch (`cheevodex:awardsView`). Items link to the game page (`gameId` from the award's `awardData`, added in `transform.js`).
+- **Game awards**: `CompletionsPanel` (`assets/completions.js`, `.cmp-*`) with `counts={false}`: no Mastered / Beaten counts (the Dex counter gives them, and counts a mastered game as beaten too, so a second count read as a contradiction), the newest award as a card with the game's screenshot behind, then the icons with a tiles / list switch (`cheevodex:awardsView`). Items link to the game page (`gameId` from the award's `awardData`, added in `transform.js`). Under the shelf, "All N in the Dex" (`.cmp-dex`, the panel's `footer`) opens the Dex on the Beaten filter.
 
 ## Compare sheet
 
