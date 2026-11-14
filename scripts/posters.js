@@ -17,8 +17,9 @@
  *   RA_USERNAME  Your RetroAchievements username
  *   RA_API_KEY   Your RetroAchievements web API key (stays on this machine)
  *   RA_GAME_ID   A game you have progress in, for the dex record (default: your most recent game)
+ *   ONLY         Comma-separated shot names to retake (default: all)
  *
- * Output: docs/images/shots/*.webp (screenshots, 2x) and docs/images/{hero,record,contents}.jpg (posters)
+ * Output: docs/images/shots/*.webp (screenshots, 2x) and docs/images/{hero,record,friends,year,contents}.jpg (posters)
  */
 
 const puppeteer = require('puppeteer');
@@ -43,11 +44,13 @@ async function capture(browser) {
         process.exit(1);
     }
     let game = process.env.RA_GAME_ID;
+    const ONLY = process.env.ONLY && process.env.ONLY.split(',');   // retake only these shots, e.g. ONLY=friends,d-friends
     const shots = [
         ['dex', '/profile/?tab=dex', PHONE], ['activity', '/profile/?tab=activity', PHONE], ['backlog', '/profile/?tab=backlog', PHONE],
         ['overview', '/profile/?tab=overview', PHONE], ['d-dex', '/profile/?tab=dex', DESK], ['d-activity', '/profile/?tab=activity', DESK],
         ['d-stats', '/profile/?tab=stats', DESK], ['game', null, PHONE], ['d-game', null, DESK],
-    ];
+        ['friends', '/profile/?tab=activity&view=friends', PHONE], ['d-friends', '/profile/?tab=activity&view=friends', DESK],
+    ].filter(([name]) => !ONLY || ONLY.includes(name));
     fs.mkdirSync(SHOTS, { recursive: true });
     for (const [name, route, view] of shots) {
         const page = await browser.newPage();
@@ -63,7 +66,8 @@ async function capture(browser) {
         const url = BASE + (route || `/game/?id=${game}&tab=achievements`);
         await page.goto(url, { waitUntil: 'networkidle0', timeout: 120000 });
         await new Promise(r => setTimeout(r, 2500));
-        if (name === 'activity' || name === 'backlog') {   // phones: start at the tab's content, under the profile header
+        if (name.endsWith('friends')) await page.waitForFunction(() => !document.querySelector('.animate-spin'), { timeout: 240000 });   // every friend loaded
+        if (name === 'activity' || name === 'backlog' || name === 'friends') {   // phones: start at the tab's content, under the profile header
             await page.evaluate(() => { const t = document.querySelector('[role=tablist]'); if (t) window.scrollTo(0, t.getBoundingClientRect().top + scrollY - 8); });
             await new Promise(r => setTimeout(r, 800));
         }
@@ -112,6 +116,21 @@ const ring = (size, stroke, frac, color) => {
     return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)">
       <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="#1d1c1b" stroke-width="${stroke}"/>
       <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${c * frac} ${c}"/></svg>`;
+};
+// A piece of a desktop screenshot (2880 x 1800 pixels), x/y/w/h in screenshot pixels, shown dw wide
+const crop = (name, x, y, w, h, dw, style = '') => {
+    const k = dw / w;
+    return `<div class="desk abs" style="width:${dw}px;height:${Math.round(h * k)}px;background:url('${shot(name)}') ${-x * k}px ${-y * k}px / ${2880 * k}px auto no-repeat;${style}"></div>`;
+};
+// A labelled callout: dotted leader from the text to a gold diamond on the target
+const callout = (side, ty, tx, n, t, edge) => {
+    const line = side === 'l'
+        ? `<div class="abs" style="left:${edge}px;top:${ty}px;width:${tx - edge}px;border-top:2px dotted #f2b731;opacity:.7"></div>`
+        : `<div class="abs" style="left:${tx}px;top:${ty}px;width:${edge - tx}px;border-top:2px dotted #f2b731;opacity:.7"></div>`;
+    const box = side === 'l'
+        ? `<div class="abs" style="right:${1600 - edge + 18}px;width:270px;top:${ty}px;transform:translateY(-50%);text-align:right">`
+        : `<div class="abs" style="left:${edge + 18}px;width:250px;top:${ty}px;transform:translateY(-50%)">`;
+    return `${line}<div class="abs" style="left:${tx - 5}px;top:${ty - 4}px;width:10px;height:10px;background:#f2b731;transform:rotate(45deg)"></div>${box}<div class="px" style="font-size:26px">${n}</div><div class="mute" style="font-size:18px;line-height:1.4;margin-top:6px">${t}</div></div>`;
 };
 const brand = () => `<div class="brand"><img src="${mark}"><span>Cheevo<span class="blue">dex</span></span></div>`;
 
@@ -162,6 +181,31 @@ const posters = {
 </div>
 ${parts.map(call).join('')}`;
     },
+
+    // The Friends timeline: who you follow in a row, then their evening as posts, with what each part means
+    friends: () => {
+        const X = 320, Y = 290, f = 960 / 1767 * 1.44;   // timeline crop origin; f turns screen points (1440 wide) into poster pixels
+        const at = (dx, dy) => [Math.round(X + (dx - 618) * f), Math.round(Y + (dy - 530) * f)];
+        const [ax, ay] = at(626, 555), [bx, by] = at(693, 880), [gx, gy] = at(1150, 708), [sx, sy] = at(974, 823);
+        return `
+<div class="abs" style="left:0;right:0;top:52px;text-align:center"><h2 class="px" style="font-size:54px;line-height:1">Everyone you follow, on <span class="blue">one timeline.</span></h2></div>
+${crop('d-friends', 890, 355, 1767, 180, 960, `left:${X}px;top:168px`)}
+${crop('d-friends', 890, 763, 1767, 886, 960, `left:${X}px;top:${Y}px;-webkit-mask-image:linear-gradient(#000 80%,transparent)`)}
+${callout('l', ay, ax, 'A colour each', "Worked out from their name, so it never changes.", 296)}
+${callout('l', by, bx, 'Hardcore in gold', 'A gold run is hardcore, a grey one softcore.', 296)}
+${callout('r', sy, sx, 'Subsets tagged', 'Subset sets say so.', 1304)}
+${callout('r', gy, gx, 'Every badge', 'Each run shows what it unlocked.', 1304)}`;
+    },
+
+    // The year: the headline numbers, points month by month, and every day as a heatmap
+    year: () => `
+<h2 class="px abs" style="left:70px;top:72px;font-size:54px;line-height:1">Your year, <span class="gold">day by day.</span></h2>
+<div class="abs" style="left:70px;top:196px;width:440px;display:flex;flex-direction:column;gap:22px">
+  ${[['Unlocks', '628', 'blue'], ['Points', '2,576', 'gold'], ['Best day', '33', ''], ['Best streak', '9 days', '']].map(([k, v, c]) =>
+      `<div class="leader" style="font-size:24px"><span class="mute">${k}</span><i></i><span class="${c}" style="font-family:'Geist Mono',monospace;font-weight:500;font-size:36px">${v}</span></div>`).join('')}
+</div>
+${crop('d-stats', 890, 410, 1767, 464, 960, 'left:570px;top:176px')}
+${crop('d-activity', 890, 886, 1767, 364, 1460, 'left:70px;top:510px')}`,
 
     // The contents page: every part as an index line, one of them open on a desktop screen
     contents: () => {

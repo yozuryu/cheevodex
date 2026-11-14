@@ -32,6 +32,10 @@ Cheevodex reads your [RetroAchievements](https://retroachievements.org) account 
 - **Anyone's dex.** Open any RetroAchievements username to read their dex and progress.
 - **An app on your phone.** Install it from your browser's menu; it opens full screen and works on phones and computers alike.
 
+<img src="docs/images/friends.jpg" alt="The Friends timeline: everyone you follow in a row, then their unlocks as posts, each friend in their own colour, hardcore runs in gold" width="100%">
+
+<img src="docs/images/year.jpg" alt="Your year: unlocks, points, best day and best streak, points month by month, and a heatmap of every day" width="100%">
+
 <img src="docs/images/contents.jpg" alt="Cheevodex on desktop: the Activity tab beside a contents list of every part of the app" width="100%">
 
 ## Get started
