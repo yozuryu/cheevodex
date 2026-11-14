@@ -3115,7 +3115,11 @@ export default function App() {
               };
               const pctOf = g => g.achievementsTotal > 0 ? g.numAwarded / g.achievementsTotal * 100 : 0;
               // The Dex's card reads the Dex's field names
-              const asDex = g => ({ ...g, achievementsUnlocked: g.numAwarded, rawProgress: pctOf(g), isMastered: getStatus(g) === 'mastered' });
+              // The want-to-play list has no beaten flag: take it from the played games (ALL_GAMES), so Up next and the
+              // index lines show beaten games in silver like the Dex does
+              const beatenIds = new Set(ALL_GAMES.filter(x => x.isBeaten).map(x => x.id));
+              const isBeat = g => beatenIds.has(g.id);
+              const asDex = g => ({ ...g, achievementsUnlocked: g.numAwarded, rawProgress: pctOf(g), isMastered: getStatus(g) === 'mastered', isBeaten: isBeat(g) });
 
               const filtered = BACKLOG.games.filter(g => {
                 if (backlogSearch) {
@@ -3178,9 +3182,9 @@ export default function App() {
                 const end = <span className="bline-e">
                   {st === 'inprogress' && <>
                     <span className="bline-c num">{g.numAwarded}<span>/{g.achievementsTotal}</span></span>
-                    <span className="dring" title={`${Math.floor(pct)}% complete`} style={{ '--p': pct, '--c': g.isBeaten ? 'var(--silver)' : 'var(--accent)', '--s': sub ? '20px' : '26px', '--w': sub ? '3px' : '4px' }} />
+                    <span className="dring" title={`${Math.floor(pct)}% complete`} style={{ '--p': pct, '--c': isBeat(g) ? 'var(--silver)' : 'var(--accent)', '--s': sub ? '20px' : '26px', '--w': sub ? '3px' : '4px' }} />
                   </>}
-                  {st === 'mastered' && <span className="bline-m"><Trophy size={10} />Mastered</span>}
+                  {st === 'mastered' && <span className="bline-m"><Star size={9} fill="currentColor" />Mastered</span>}
                   {st === 'notstarted' && g.pointsTotal > 0 && <span className="bline-pts num">{g.pointsTotal.toLocaleString()}<small>pts</small></span>}
                   {st === 'noach' && <span className="bline-x">No set</span>}
                 </span>;

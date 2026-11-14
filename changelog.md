@@ -9,6 +9,11 @@
 - **Tidier card text.** The console is shortened (SNES, GBA, PS2; the full name is in the tooltip) and shares one bottom line with the count, and every title keeps two lines so the rows line up
 - **The dex number reads first.** Brighter digits on every card (the pixel face stays at its sharp 8px size)
 
+### Backlog
+
+- **Beaten games show as beaten.** The want-to-play list carries no beaten flag, so Up next showed beaten games as plain in-progress cards and the index lines never drew their silver ring. Both now take it from your played games
+- **One Mastered tag.** A mastered index line carries the same solid gold star tag as a mastered dex card (was a faint gold chip with a trophy)
+
 ## v26.11.13 — Cheevodex: new name, Modern RA look, Savepoint components
 
 ### Auth

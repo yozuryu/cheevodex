@@ -280,7 +280,8 @@ button.grow:hover { background: var(--box-hover); }
 .bline-e { flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-width: 56px; }
 .bline-c { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--accent); }
 .bline-c span { font-weight: 400; color: var(--ink-3); }
-.bline-m { display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 2px; font-size: 10px; font-weight: 600; color: var(--gold); background: rgb(var(--c-gold) / 0.12); }
+.bline-m { display: inline-flex; align-items: center; gap: 3px; height: 16px; padding: 0 6px; border-radius: 2px; font-size: 9px; font-weight: 700; line-height: 1;
+  letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; color: rgb(var(--c-page)); background: var(--gold); box-shadow: 0 0 8px rgb(var(--c-gold) / 0.45); }   /* the same tag as a mastered dex card */
 .bline-pts { font-family: var(--mono); font-size: 12px; color: var(--gold-dim); }
 .bline-pts small { font-size: 10px; color: var(--ink-3); margin-left: 3px; }
 .bline-x { font-size: 11px; color: var(--ink-4); }
