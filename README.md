@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/hero.jpg" alt="Cheevodex: every RetroAchievements game you have played as a numbered dex entry, on desktop and phone" width="100%">
+  <img src="docs/images/hero.jpg" alt="Cheevodex on three phones inside a gold completion ring: the Dex, a dex record and Activity" width="100%">
 </p>
 
 <p align="center">
@@ -18,7 +18,7 @@
 
 Cheevodex reads your [RetroAchievements](https://retroachievements.org) account and turns it into a dex: every game you have touched gets an entry and a number, its RetroAchievements game ID, and each one opens into a record of how far you are. There is nothing to install and no account to make. Sign in with your RA username and web API key, and it installs to your phone like an app.
 
-<img src="docs/images/phones.jpg" alt="Cheevodex on a phone: the Dex, a game's dex record, Activity and the Backlog" width="100%">
+<img src="docs/images/record.jpg" alt="A dex record taken apart: the dex number, hardcore badge, completion ring, ledger of achievements, points and time, and the progression path" width="100%">
 
 ## What you get
 
@@ -32,7 +32,7 @@ Cheevodex reads your [RetroAchievements](https://retroachievements.org) account 
 - **Anyone's dex.** Open any RetroAchievements username to read their dex and progress.
 - **An app on your phone.** Install it from your browser's menu; it opens full screen and works on phones and computers alike.
 
-<img src="docs/images/desktop.jpg" alt="Cheevodex on desktop: a game's dex record and the year in stats" width="100%">
+<img src="docs/images/contents.jpg" alt="Cheevodex on desktop: the Activity tab beside a contents list of every part of the app" width="100%">
 
 ## Get started
 

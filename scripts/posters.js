@@ -18,7 +18,7 @@
  *   RA_API_KEY   Your RetroAchievements web API key (stays on this machine)
  *   RA_GAME_ID   A game you have progress in, for the dex record (default: your most recent game)
  *
- * Output: docs/images/shots/*.webp (screenshots, 2x) and docs/images/{hero,phones,desktop}.jpg (posters)
+ * Output: docs/images/shots/*.webp (screenshots, 2x) and docs/images/{hero,record,contents}.jpg (posters)
  */
 
 const puppeteer = require('puppeteer');
@@ -87,42 +87,97 @@ const shot = name => {
 };
 const mark = `data:image/svg+xml;base64,${fs.readFileSync(path.join(ROOT, 'assets', 'favicon.svg')).toString('base64')}`;
 
+// The dex numbers of real games in the dex: the texture behind the hero
+const NUMBERS = [449, 503, 508, 515, 519, 559, 575, 668, 676, 723, 748, 767, 792, 810, 1451, 2279, 3470, 11206, 14363, 16244, 19012, 19015, 19016, 19017, 19021, 20345, 17166];
+
 const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@600&family=Geist:wght@400;500;600&display=swap');
-* { box-sizing: border-box; margin: 0; }
-body { width: 1600px; height: 900px; overflow: hidden; background: #111111; color: #e8e5df; font-family: Geist, system-ui, sans-serif; }
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@600&family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&family=Silkscreen&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { width: 1600px; height: 900px; overflow: hidden; position: relative; background: #111111; color: #e8e5df; font-family: Geist, system-ui, sans-serif; }
 .px { font-family: 'Pixelify Sans', Geist, sans-serif; font-weight: 600; }
-.blue { color: #2c97fa; } .gold { color: #f2b731; }
-.brand { display: flex; align-items: center; gap: 12px; font-size: 26px; font-weight: 700; }
-.brand img { width: 36px; height: 36px; image-rendering: pixelated; }
+.ss { font-family: Silkscreen, monospace; }
+.blue { color: #2c97fa; } .gold { color: #f2b731; } .mute { color: #9b968e; } .dim { color: #6b665f; }
+.abs { position: absolute; }
+.brand { display: flex; align-items: center; gap: 12px; font-size: 24px; font-weight: 600; }
+.brand img { width: 34px; height: 34px; image-rendering: pixelated; }
 .desk { border-radius: 10px; box-shadow: 0 0 0 1px #363431, 0 40px 80px -24px rgba(0,0,0,.9); display: block; }
-.phone { border-radius: 26px; box-shadow: 0 0 0 10px #1a1918, 0 0 0 11px #363431, 0 40px 80px -24px rgba(0,0,0,.9); display: block; }
-.label { font-size: 22px; color: #9b968e; }
+.phone { border-radius: 30px; box-shadow: 0 0 0 10px #1a1918, 0 0 0 11px #363431, 0 50px 90px -20px rgba(0,0,0,.95); display: block; }
+.numbers { position: absolute; inset: -20px; display: flex; flex-wrap: wrap; gap: 18px 34px; font-family: Silkscreen, monospace; font-size: 22px; color: #191918; line-height: 1; transform: rotate(0deg); }
+.leader { display: flex; align-items: baseline; gap: 12px; }
+.leader i { flex: 1; border-bottom: 2px dotted #3a3835; transform: translateY(-5px); }
 `;
 
-const posters = {
-    hero: () => `
-<div style="position:absolute;inset:0;padding:96px 0 0 96px">
-  <div class="brand"><img src="${mark}"><span>Cheevo<span class="blue">dex</span></span></div>
-  <h1 class="px" style="font-size:84px;line-height:1;margin-top:56px">Every <span class="gold">unlock,</span><br>in your own<br><span class="blue">dex.</span></h1>
-  <p style="font-size:26px;line-height:1.45;color:#9b968e;margin-top:36px;max-width:22ch">A pocket companion for RetroAchievements. Every game you have played, numbered, ringed and ready on your phone.</p>
-</div>
-<img class="desk" src="${shot('d-dex')}" style="position:absolute;left:760px;top:120px;width:1000px">
-<img class="phone" src="${shot('game')}" style="position:absolute;left:690px;top:330px;width:260px">`,
+const ring = (size, stroke, frac, color) => {
+    const r = (size - stroke) / 2, c = 2 * Math.PI * r;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)">
+      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="#1d1c1b" stroke-width="${stroke}"/>
+      <circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${c * frac} ${c}"/></svg>`;
+};
+const brand = () => `<div class="brand"><img src="${mark}"><span>Cheevo<span class="blue">dex</span></span></div>`;
 
-    phones: () => {
-        const cols = [['dex', 'The Dex'], ['game', 'A dex record'], ['activity', 'Activity'], ['backlog', 'Backlog']];
+const posters = {
+    // Three phones standing in one big completion ring, the dex numbers behind them
+    hero: () => {
+        const nums = Array.from({ length: 160 }, (_, k) => `<span>No.${NUMBERS[(k * 7) % NUMBERS.length]}</span>`).join('');
         return `
-<div style="display:flex;justify-content:center;gap:56px;padding-top:70px">
-  ${cols.map(([s, l]) => `<div style="display:flex;flex-direction:column;align-items:center;gap:26px"><span class="label px" style="color:#e8e5df;font-size:26px">${l}</span><img class="phone" src="${shot(s)}" style="width:300px"></div>`).join('')}
-</div>`;
+<div class="numbers">${nums}</div>
+<div class="abs" style="inset:0;background:radial-gradient(ellipse 60% 70% at 50% 18%, #111111 30%, rgba(17,17,17,.6) 60%, rgba(17,17,17,0) 100%)"></div>
+<div class="abs" style="left:180px;top:340px;filter:drop-shadow(0 0 36px rgba(242,183,49,.3))">${ring(1240, 22, 0.83, '#f2b731')}</div>
+<div class="abs" style="left:0;right:0;top:54px;display:flex;flex-direction:column;align-items:center;gap:26px">
+  ${brand()}
+  <h1 class="px" style="font-size:74px;line-height:1;white-space:nowrap">Every <span class="gold">unlock,</span> in your own <span class="blue">dex.</span></h1>
+  <p style="font-size:24px" class="mute">A pocket companion for RetroAchievements. Free, open source, all in your browser.</p>
+</div>
+<img class="phone abs" src="${shot('dex')}" style="left:318px;top:404px;width:290px">
+<img class="phone abs" src="${shot('activity')}" style="left:992px;top:404px;width:290px">
+<img class="phone abs" src="${shot('game')}" style="left:630px;top:322px;width:340px">`;
     },
 
-    desktop: () => `
-<img class="desk" src="${shot('d-game')}" style="position:absolute;left:70px;top:70px;width:900px">
-<img class="desk" src="${shot('d-stats')}" style="position:absolute;left:630px;top:290px;width:900px">
-<span class="label px" style="position:absolute;left:70px;top:640px;font-size:28px;color:#e8e5df">A game's dex record</span>
-<span class="label px" style="position:absolute;right:70px;top:230px;font-size:28px;color:#e8e5df">Your year in stats</span>`,
+    // One dex record, taken apart: the card in the middle, what each part means around it
+    record: () => {
+        const X = 410, Y = 196;   // where the card's top-left sits; part positions below are in card pixels
+        const parts = [
+            { side: 'r', y: 75, to: 400, n: 'The dex number', t: "The game's RetroAchievements ID. Every game you touch gets one." },
+            { side: 'l', y: 268, to: 190, n: 'Hardcore', t: 'Gold for hardcore, grey for softcore.' },
+            { side: 'l', y: 422, to: 62, n: 'The ring', t: 'Blue in progress, silver beaten, gold mastered.' },
+            { side: 'r', y: 373, to: 724, n: 'The ledger', t: 'Achievements, points and time played.' },
+            { side: 'r', y: 533, to: 724, n: 'The path', t: 'A diamond per progression achievement. Light them all and it is beaten.' },
+        ];
+        const call = p => {
+            const y = Y + p.y;
+            const line = p.side === 'l'
+                ? `<div class="abs" style="left:372px;top:${y}px;width:${X + p.to - 372}px;border-top:2px dotted #f2b731;opacity:.7"></div><div class="abs" style="left:${X + p.to - 5}px;top:${y - 4}px;width:10px;height:10px;background:#f2b731;transform:rotate(45deg)"></div>`
+                : `<div class="abs" style="left:${X + p.to}px;top:${y}px;width:${1228 - X - p.to}px;border-top:2px dotted #f2b731;opacity:.7"></div><div class="abs" style="left:${X + p.to - 5}px;top:${y - 4}px;width:10px;height:10px;background:#f2b731;transform:rotate(45deg)"></div>`;
+            const box = p.side === 'l'
+                ? `<div class="abs" style="left:64px;width:290px;top:${y}px;transform:translateY(-50%);text-align:right">`
+                : `<div class="abs" style="left:1246px;width:300px;top:${y}px;transform:translateY(-50%)">`;
+            return `${line}${box}<div class="px" style="font-size:28px">${p.n}</div><div class="mute" style="font-size:19px;line-height:1.4;margin-top:6px">${p.t}</div></div>`;
+        };
+        return `
+<div class="abs" style="left:0;right:0;top:58px;text-align:center">
+  <h2 class="px" style="font-size:56px;line-height:1">Every game opens as a <span class="blue">record.</span></h2>
+</div>
+<div class="abs desk" style="left:${X}px;top:${Y}px;width:780px;height:660px;background:url('${shot('game')}') top left / 780px auto no-repeat;border-radius:16px;overflow:hidden">
+  <div class="abs" style="left:0;right:0;bottom:0;height:90px;background:linear-gradient(transparent,#111111)"></div>
+</div>
+${parts.map(call).join('')}`;
+    },
+
+    // The contents page: every part as an index line, one of them open on a desktop screen
+    contents: () => {
+        const lines = [['The Dex', 'every game, numbered'], ['Records', 'ring, ledger, path'], ['Activity', 'the last 14 days', true],
+            ['Friends', 'one timeline'], ['Backlog', 'want to play'], ['Stats', 'the year in charts'], ['Search', 'every console']];
+        return `
+<img class="desk abs" src="${shot('d-activity')}" style="left:64px;top:132px;width:1000px">
+<div class="abs" style="left:1130px;right:64px;top:150px">
+  <div class="px" style="font-size:52px;line-height:1">Contents</div>
+  <p class="mute" style="font-size:20px;line-height:1.45;margin-top:18px">Everything RetroAchievements knows about your games, on your phone and on your desk.</p>
+  <div style="display:flex;flex-direction:column;gap:20px;margin-top:40px">
+    ${lines.map(([k, v, on]) => `<div class="leader" style="font-size:22px${on ? '' : ';opacity:.55'}">
+      <span class="px" style="${on ? 'color:#2c97fa' : ''}">${on ? '<span class="gold">&#9670;</span> ' : ''}${k}</span><i></i><span class="${on ? '' : 'mute'}" style="font-size:18px">${v}</span></div>`).join('')}
+  </div>
+</div>`;
+    },
 };
 
 async function render(browser) {

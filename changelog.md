@@ -29,7 +29,7 @@
 - One time-ago style everywhere: "5m ago", "18h ago", "3d ago", then the date (was "18 hrs ago" in some places and a bare "18h" in game rows, where it read like playtime)
 - No hard-coded white left: `#fff` and Tailwind's `text-white` became the `ink` token; the old run-card styles (`.tcard`, `.tlist`) and the segmented bar (`SegBar`) are removed
 - Pages behind sign-in (profile, game, achievement, console, search) carry `noindex`: without an account they show nothing, so they stay out of search results; the sign-in page and changelog stay indexable
-- **New README** around what Cheevodex does today (the Dex, dex records, Activity, Friends, Backlog, Stats, search and consoles, anyone's dex, installing), with three posters (`docs/images/hero.jpg`, `phones.jpg`, `desktop.jpg`) and links to the app and the website. `scripts/posters.js` builds the posters from stored screenshots (`docs/images/shots/`, WebP) and, with `--capture`, takes fresh ones from a running copy; it replaces `scripts/screenshot.js` and the old `docs/screenshots/`
+- **New README** around what Cheevodex does today (the Dex, dex records, Activity, Friends, Backlog, Stats, search and consoles, anyone's dex, installing), with three posters (`docs/images/hero.jpg`, `record.jpg`, `contents.jpg`: three phones in a completion ring, a dex record taken apart part by part, and a contents list beside the desktop app) and links to the app and the website. `scripts/posters.js` builds the posters from stored screenshots (`docs/images/shots/`, WebP) and, with `--capture`, takes fresh ones from a running copy; it replaces `scripts/screenshot.js` and the old `docs/screenshots/`
 
 ### Profile
 
