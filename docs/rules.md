@@ -88,7 +88,7 @@ Cheevodex follows RetroAchievements' own split (doc-012):
 
 - **Blue (`accent`) is structure:** section headings, rank, platform names, the active tab, filters that are on, and progress bars for anything not yet earned.
   - Reward beats structure: on a beaten or mastered dex entry card (`.dent`) the whole card takes its metal, platform name included (silver or gold instead of blue).
-- **Words:** the dex is the whole book; each game in it is an **entry** ("96 entries", never "96 dexes"). Its page holds the entry's **dex record**.
+- **Words:** the dex is the whole book; each game in it is an **entry** ("96 entries", never "96 dexes"). Its page holds the entry's **dex record**. An entry's number is its **Dex No.**, the number in the dex (its RA game ID, the same for everyone), never "Entry No.", which would read as a position in the list. On a card, "No." alone is enough.
 - **Gold (`gold`) is reward:** points, mastered, unlocked achievements, user links. Only earned things glow (gold ring/shadow); nothing blue glows except the heading diamond.
 - Surfaces are warm charcoal (`page` → `box` → `box-hi`), never blue-grey.
 
