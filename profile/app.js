@@ -2550,7 +2550,16 @@ export default function App() {
     url.searchParams.set('tab', tab);
     if (tab !== 'activity') url.searchParams.delete('view');
     window.history.replaceState({}, '', url);
+    window.dispatchEvent(new CustomEvent('cdx:tab', { detail: tab }));   // the bottom nav lights Social or Profile
   };
+  // The bottom nav's Social, tapped on this page: switch tabs here instead of reloading
+  const setTabRef = useRef(setTab);
+  setTabRef.current = setTab;
+  useEffect(() => {
+    const open = e => { if (VALID_TABS.includes(e.detail)) setTabRef.current(e.detail); };
+    window.addEventListener('cdx:open-tab', open);
+    return () => window.removeEventListener('cdx:open-tab', open);
+  }, []);
 
   // Tabs in display order: the desktop TabBar and the phone swipe both follow it
   const tabIcon = Icon => <Icon size={15} />;

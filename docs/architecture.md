@@ -33,6 +33,7 @@ cheevodex/
 │   ├── time.js         # Timezone-aware date helpers: dayKey, addDays, fmtClock… (from Savepoint)
 │   ├── mobile-nav.js   # Shared bottom nav IIFE (mobile only, < 768px)
 │   ├── pwa-install.js  # Install banner
+│   ├── update-notice.js # New-edition notice (new version published → Reload)
 │   └── ui.js           # Shared Topbar (with the Cheevodex brand) + Footer (React.createElement, no JSX)
 │
 ├── profile/            # Main profile page (also visitor mode via ?u=<username>)
@@ -203,6 +204,8 @@ Bust cache: `sessionStorage.clear()` for session data, `localStorage.removeItem(
 
 - Cache-first for same-origin static assets.
 - Network-first for `changelog.md` (always fresh).
+- Every code change bumps `CACHE_NAME`, so the browser installs the new worker; it takes over open pages at once (`skipWaiting` + `clients.claim`) and deletes the old cache. Install precaches with `cache: 'reload'`, past GitHub Pages' 10-minute HTTP cache, so a worker installed right after a deploy stores the new files.
+- **New-edition notice** (`assets/update-notice.js`, loaded by `mobile-nav.js`): on that takeover (`controllerchange`, only when a worker already controlled the page) a card slides up above the bottom nav: blue diamond, "A new edition of the dex", the newest changelog version (Geist Mono), Reload (a plain reload: the cache is already fresh) and × (hidden until the page reloads). The page calls `registration.update()` when it comes back to the foreground (at most once a minute) and every 30 minutes. The menu's Refresh stays
 - Cross-origin RA API requests pass through untouched.
 - Icons: `icon-192/512.png` (`purpose: any`, the mark at full size) and `icon-maskable-192/512.png` (`purpose: maskable`, the mark at 56% of the width so Android's circle crop, 80% wide, never cuts it). Never mark a full-bleed icon `maskable`.
 

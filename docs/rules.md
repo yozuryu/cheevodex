@@ -137,7 +137,7 @@ All page headers use `pt-8 pb-5 md:pt-5`. The extra `pt-8` compensates for the h
 
 ### Bottom navigation (`assets/mobile-nav.js`)
 
-- Visible only on screens < 768px. Injects a fixed bottom bar with two tabs: Profile and Log.
+- Visible only on screens < 768px. Injects a fixed bottom bar: Profile, Search, Consoles, Social (`profile/?tab=social`), Menu (Changelog, refresh, purge, debug, log out). On the changelog page Menu is the lit tab.
 - Hides `.page-topbar` and `footer` on mobile. Adds `padding-bottom` to body.
 - Repositions `.scroll-top-btn` above the nav bar — always use class `scroll-top-btn` on the FAB.
 

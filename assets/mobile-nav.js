@@ -7,14 +7,24 @@
   const BASE = (document.currentScript.src || '')
     .replace(/\/assets\/mobile-nav\.js.*$/, '');
 
+  // New-edition notice (a new version published → "A new edition of the dex", Reload), on every page with this nav
+  const upd = document.createElement('script');
+  upd.src = BASE + '/assets/update-notice.js';
+  document.head.appendChild(upd);
+
   const path       = window.location.pathname;
   const isProfile  = path.includes('/profile');
+  const params     = new URLSearchParams(window.location.search);
+  const ownProfile = isProfile && !params.get('u');            // a visitor's profile has no Social tab
+  const onSocial   = ownProfile && params.get('tab') === 'social';
+  const onChangelog = path.includes('/changelog/');           // the changelog lives under Menu
 
   // ── Sheet icon SVGs (16px) ─────────────────────────────────────────────────
   const ICON_USER     = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
   const ICON_REFRESH  = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>`;
   const ICON_PURGE    = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`;
   const ICON_DEBUG    = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="6" width="8" height="14" rx="4"/><path d="m19 7-3 2"/><path d="m5 7 3 2"/><path d="M19 12h-4"/><path d="M5 12h4"/><path d="m19 17-3-2"/><path d="m5 17 3-2"/></svg>`;
+  const ICON_LOG      = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
   const ICON_LOGOUT   = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`;
 
   // ── Nav items: pages (the profile's own tabs live in its sticky tab bar) ────
@@ -24,7 +34,7 @@
       id: 'profile',
       label: 'Profile',
       href: BASE + '/profile/',
-      active: isProfile || path.includes('/game/') || path.includes('/achievement/'),
+      active: (isProfile && !onSocial) || path.includes('/game/') || path.includes('/achievement/'),
       color: 'var(--accent)',
       icon: ICON20('<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
     },
@@ -45,18 +55,18 @@
       icon: ICON20('<line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><circle cx="15" cy="12" r="1"/><circle cx="18" cy="10" r="1"/><rect x="2" y="6" width="20" height="12" rx="2"/>'),
     },
     {
-      id: 'changelog',
-      label: 'Changelog',
-      href: BASE + '/changelog/',
-      active: path.includes('/changelog/'),
+      id: 'social',
+      label: 'Social',
+      href: BASE + '/profile/?tab=social',
+      active: onSocial,
       color: 'var(--accent)',
-      icon: ICON20('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'),
+      icon: ICON20('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
     },
     {
       id: 'menu',
       label: 'Menu',
       href: null,
-      active: false,
+      active: onChangelog,
       color: 'var(--ink-2)',
       icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="3" y1="6" x2="21" y2="6"/>
@@ -237,6 +247,23 @@
 
   document.body.appendChild(nav);
 
+  // ── Social / Profile on the profile page: its tabs switch without a reload ──
+  if (ownProfile) {
+    const profileBtn = nav.querySelector('[data-id="profile"]'), socialBtn = nav.querySelector('[data-id="social"]');
+    const light = (social) => {
+      profileBtn.classList.toggle('mnav-active', !social);
+      socialBtn.classList.toggle('mnav-active', social);
+      const cur = (el, on) => on ? el.setAttribute('aria-current', 'page') : el.removeAttribute('aria-current');
+      cur(profileBtn, !social);
+      cur(socialBtn, social);
+    };
+    window.addEventListener('cdx:tab', e => light(e.detail === 'social'));
+    socialBtn.addEventListener('click', e => {
+      e.preventDefault();
+      window.dispatchEvent(new CustomEvent('cdx:open-tab', { detail: 'social' }));
+    });
+  }
+
   // ── Sheet logic ────────────────────────────────────────────────────────────
   const menuNavBtn = nav.querySelector('[data-id="menu"]');
   let sheetOpen = false;
@@ -259,7 +286,7 @@
   function closeSheet() {
     if (!sheetOpen) return;
     sheetOpen = false;
-    menuNavBtn.classList.remove('mnav-active');
+    if (!onChangelog) menuNavBtn.classList.remove('mnav-active');
     document.body.style.overflow = '';
     const bd = document.querySelector('.msheet-bd');
     if (bd) { bd.classList.add('closing'); setTimeout(() => bd.remove(), 150); }
@@ -294,6 +321,13 @@
       userRow.innerHTML = `<span class="msheet-row-icon" style="background:var(--box-hi);color:var(--ink-2)">${ICON_USER}</span><span class="msheet-row-body"><span class="msheet-row-label">${creds.username}</span><span class="msheet-row-desc">Signed in to RetroAchievements</span></span>`;
       sheet.appendChild(userRow);
     }
+
+    sheet.appendChild(divider());
+
+    // Changelog (its page lights Menu in the nav)
+    const logRow = makeRow('a', BASE + '/changelog/', ICON_LOG, 'var(--aqua)', 'var(--box-hi)', 'Changelog', 'What changed in each edition of the dex');
+    if (onChangelog) logRow.setAttribute('aria-current', 'page');
+    sheet.appendChild(logRow);
 
     sheet.appendChild(divider());
 

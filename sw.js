@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cheevodex-1794890000';
+const CACHE_NAME = 'cheevodex-1794900000';
 
 // Static assets — cache-first
 const PRECACHE = [
@@ -23,6 +23,7 @@ const PRECACHE = [
   './search/app.js',
   './assets/mobile-nav.js',
   './assets/pwa-install.js',
+  './assets/update-notice.js',
   './assets/ui.js',
   './assets/ui.css',
   './assets/motion.css',
@@ -45,8 +46,10 @@ const PRECACHE = [
 // Install — precache static assets
 self.addEventListener('install', event => {
   event.waitUntil(
+    // cache: 'reload' skips the browser's HTTP cache (GitHub Pages allows 10 minutes), so a worker
+    // installed right after a deploy stores the new files, not the ones from before it
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(PRECACHE))
+      .then(cache => cache.addAll(PRECACHE.map(u => new Request(u, { cache: 'reload' }))))
       .then(() => self.skipWaiting())
   );
 });

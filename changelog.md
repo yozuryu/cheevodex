@@ -1,5 +1,17 @@
 # Changelog
 
+## v26.11.21 — Social in the bottom bar, a note when the dex has a new edition
+
+### Structure
+
+- **A note when a new version is out.** When Cheevodex is updated while you have it open, "A new edition of the dex" slides up with the version number. Reload brings in the new edition; × hides the note. The Refresh in the menu stays
+- **Updates arrive whole.** A new version now always stores the new files, even right after it's published, instead of sometimes keeping copies from minutes before
+
+### Navigation
+
+- **Social in the bottom bar.** Following, followers and your friends' runs are one tap away, in the place of Changelog. On your profile it switches tabs without reloading, and the bar lights Social or Profile as you move between tabs
+- **Changelog moved into Menu,** its first row. Menu stays lit while you read it
+
 ## v26.11.14 — Dex cards with the completion ring
 
 ### Profile

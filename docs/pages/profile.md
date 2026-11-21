@@ -307,7 +307,7 @@ The same sticky `TabBar` as desktop, pinned under the status bar (`top: env(safe
 
 ### Bottom nav
 
-`assets/mobile-nav.js` links pages: Profile, Search, Consoles, Changelog, Menu (refresh, purge, debug, log out).
+`assets/mobile-nav.js` links pages: Profile, Search, Consoles, Social (`profile/?tab=social`), Menu (Changelog, refresh, purge, debug, log out). On your own profile Social and Profile follow the tab: `setTab` sends `cdx:tab` (the nav lights Social on the Social tab, Profile on the others), and tapping Social here sends `cdx:open-tab`, which switches tabs without a reload. A visitor's profile (`?u=`) has no Social tab, so there Social opens your own.
 
 ### User stats
 

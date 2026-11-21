@@ -61,7 +61,7 @@ Unknown sections fall back to gray `#8f98a0`.
 
 Single-column list at all sizes. No layout differences between mobile and desktop — entries are full-width and stack vertically.
 
-No bottom nav inject — the changelog page is at `/changelog/`, which is one of the two mobile nav tabs. The mobile nav is injected via `mobile-nav.js` in `index.html`.
+On phones the changelog is reached from the bottom nav's Menu (its first row); on this page Menu is the lit tab. The nav comes from `mobile-nav.js` in `index.html`.
 
 ## Changelog Format (Source File)
 
