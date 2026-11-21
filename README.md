@@ -25,13 +25,13 @@ Cheevodex reads your [RetroAchievements](https://retroachievements.org) account 
 - **The Dex.** Every game you have played as a numbered entry with its progress ring. Search by name or dex number, filter to unbeaten, beaten or mastered, or read it console by console.
 - **Dex records.** Each game opens as a record: a completion ring (blue in progress, silver beaten, gold mastered), achievements, points and time played, and a progression path with one diamond per progression achievement. Then the achievements themselves, the leaderboards, the community and the supported hashes.
 - **Activity.** The games you moved in the last 14 days, every run of unlocks day by day, a year of streaks and a heatmap.
-- **Social.** Everyone you follow on one timeline, each in a colour worked out from their name, beside who you follow and who follows you. Compare any shared game side by side.
+- **Social.** Your friends' activity on one timeline, each friend in a colour worked out from their name, beside who you follow and who follows you; on a phone you swipe between them. Compare yourself with anyone: who leads in how many of the games you share, and each game's progress ring around both your faces.
 - **Backlog.** Your RetroAchievements want-to-play list as an index: the games you have started up next, then every game by console under A to Z, lit up once you start it, with the points on offer for the rest.
 - **Stats.** Streaks, points across the year, masteries by month, consoles and how rare your unlocks are.
-- **Search from anywhere.** One search over games, players and pages: the button in the middle of the bar on a phone, ⌘K or Ctrl+K on a computer. It forgives typos, puts your own games first and works on what Cheevodex has already loaded.
-- **Every console.** Browse any system's whole library, or search the full RetroAchievements catalog by name.
+- **Search from anywhere.** One search over games, players, consoles and pages: the button in the middle of the bar on a phone, ⌘K or Ctrl+K on a computer. It forgives typos, knows short console names like ps2 or gba, puts your own games first and works on what Cheevodex has already loaded. Swipe away the recent searches you no longer need.
+- **Every console.** Every system with its game count, saved one console at a time. Open one to browse its library and see how many of its sets you have played, or search every saved game at once.
 - **Anyone's dex.** Open any RetroAchievements username to read their dex and progress.
-- **An app on your phone.** Install it from your browser's menu; it opens full screen, works on phones and computers alike, and tells you when a new edition is out.
+- **An app on your phone.** Install it from your browser's menu, or from Cheevodex's own menu when your browser offers it; it opens full screen, works on phones and computers alike, and tells you when a new edition is out.
 
 <img src="docs/images/friends.jpg" alt="The Friends timeline: everyone you follow in a row, then their unlocks as posts, each friend in their own colour, hardcore runs in gold" width="100%">
 

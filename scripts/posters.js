@@ -18,8 +18,11 @@
  *   RA_API_KEY   Your RetroAchievements web API key (stays on this machine)
  *   RA_GAME_ID   A game you have progress in, for the dex record (default: your most recent game)
  *   ONLY         Comma-separated shot names to retake (default: all)
+ *   CHROME_PATH  The browser to drive (default: the installed Google Chrome, else puppeteer's download)
  *
- * Output: docs/images/shots/*.webp (screenshots, 2x) and docs/images/{hero,record,friends,year,contents}.jpg (posters)
+ * Output: docs/images/shots/*.webp (screenshots, 2x) and docs/images/{hero,record,friends,year,contents}.jpg (posters).
+ * d-friends also writes d-friends.json: where the friend row, the feed and the details the poster labels sit on the
+ * Social page (CSS pixels), so the friends poster follows the page's layout instead of fixed positions.
  */
 
 const puppeteer = require('puppeteer');
@@ -49,7 +52,9 @@ async function capture(browser) {
         ['dex', '/profile/?tab=dex', PHONE], ['activity', '/profile/?tab=activity', PHONE], ['backlog', '/profile/?tab=backlog', PHONE],
         ['overview', '/profile/?tab=overview', PHONE], ['d-dex', '/profile/?tab=dex', DESK], ['d-activity', '/profile/?tab=activity', DESK],
         ['d-stats', '/profile/?tab=stats', DESK], ['game', null, PHONE], ['d-game', null, DESK],
-        ['friends', '/profile/?tab=activity&view=friends', PHONE], ['d-friends', '/profile/?tab=activity&view=friends', DESK],
+        ['friends', '/social/', PHONE], ['d-friends', '/social/', DESK],
+        ['compare', '/social/?view=following', PHONE], ['social-people', '/social/?view=following', PHONE],
+        ['consoles', '/console/', PHONE], ['console', '/console/?id=21', PHONE], ['d-console', '/console/?id=21', DESK],
         ['stats', '/profile/?tab=stats', PHONE], ['d-backlog', '/profile/?tab=backlog', DESK], ['d-overview', '/profile/?tab=overview', DESK],
     ].filter(([name]) => !ONLY || ONLY.includes(name));
     fs.mkdirSync(SHOTS, { recursive: true });
@@ -67,8 +72,29 @@ async function capture(browser) {
         const url = BASE + (route || `/game/?id=${game}&tab=achievements`);
         await page.goto(url, { waitUntil: 'networkidle0', timeout: 120000 });
         await new Promise(r => setTimeout(r, 2500));
-        if (name.endsWith('friends')) await page.waitForFunction(() => !document.querySelector('.animate-spin'), { timeout: 240000 });   // every friend loaded
-        if (name === 'activity' || name === 'backlog' || name === 'friends' || name === 'stats') {   // phones: start at the tab's content, under the profile header
+        if (name.endsWith('friends')) await page.waitForFunction(() => !document.querySelector('.animate-spin') && document.querySelector('.fposts'), { timeout: 240000 });   // every friend loaded
+        if (name === 'd-friends') {   // where the poster's pieces and labels are, in CSS pixels
+            const layout = await page.evaluate(() => {
+                const r = el => { if (!el) return null; const b = el.getBoundingClientRect(); return [b.left + scrollX, b.top + scrollY, b.width, b.height]; };
+                const feed = document.querySelector('.fposts')?.closest('section');
+                const top = feed ? feed.getBoundingClientRect().top + scrollY : 0;
+                const within = sel => [...document.querySelectorAll(sel)].find(el => { const y = el.getBoundingClientRect().top + scrollY; return y > top && y < top + 420; });
+                const mid = (el, side) => { const b = el?.getBoundingClientRect(); return b ? [Math.round(side === 'r' ? b.right + scrollX : b.left + scrollX), Math.round(b.top + scrollY + b.height / 2)] : null; };
+                const hcRun = within('.frun.hc');
+                return { strip: r(document.querySelector('.fstrip')), feed: r(feed),
+                    pts: { avatar: mid(within('.fpost-av'), 'l'), hc: hcRun ? [Math.round(hcRun.getBoundingClientRect().left + scrollX), Math.round(hcRun.getBoundingClientRect().top + scrollY + Math.min(110, hcRun.getBoundingClientRect().height - 20))] : null,
+                        subset: mid(within('.frun-h .subset-tag'), 'r'), badge: mid(within('.frun-b img:last-of-type'), 'r') } };
+            });
+            fs.writeFileSync(path.join(SHOTS, 'd-friends.json'), JSON.stringify(layout, null, 1));
+        }
+        if (name === 'compare') {   // open Compare on the first person and wait for both players' progress
+            await page.waitForFunction(() => [...document.querySelectorAll('button')].some(b => b.textContent.includes('Compare')), { timeout: 120000 });
+            await page.evaluate(() => [...document.querySelectorAll('button')].find(b => b.textContent.includes('Compare')).click());
+            await page.waitForSelector('.cmpr', { timeout: 120000 });
+            await new Promise(r => setTimeout(r, 1500));
+        }
+        if (name === 'console' || name === 'd-console') await page.waitForSelector('.cn-game', { timeout: 240000 });   // the console's list saved and shown
+        if (name === 'activity' || name === 'backlog' || name === 'friends' || name === 'stats' || name === 'social-people') {   // phones: start at the tab's content, under the header
             await page.evaluate(() => { const t = document.querySelector('[role=tablist]'); if (t) window.scrollTo(0, t.getBoundingClientRect().top + scrollY - 8); });
             await new Promise(r => setTimeout(r, 800));
         }
@@ -185,6 +211,26 @@ ${parts.map(call).join('')}`;
 
     // The Friends timeline: who you follow in a row, then their evening as posts, with what each part means
     friends: () => {
+        // Placed from d-friends.json when the capture wrote one (the Social page); else the old fixed positions
+        const lf = path.join(SHOTS, 'd-friends.json');
+        const L = fs.existsSync(lf) ? JSON.parse(fs.readFileSync(lf, 'utf8')) : null;
+        if (L && L.strip && L.feed) {
+            const x0 = Math.min(L.strip[0], L.feed[0]), w = Math.max(L.strip[0] + L.strip[2], L.feed[0] + L.feed[2]) - x0;   // one column, one scale
+            const DW = 960, k = DW / (w * 2), X = 320, stripH = Math.round(L.strip[3] * 2 * k), Y = 168 + stripH + 22, FH = 860;
+            const at = p => p && [Math.round(X + (p[0] - x0) * 2 * k), Math.round(Y + (p[1] - L.feed[1]) * 2 * k)];
+            const P = L.pts || {}, [a, b, sb, g] = [at(P.avatar), at(P.hc), at(P.subset), at(P.badge)];
+            // Labels on one side need ~120px each: push a label down along its target's edge (a gold run's edge is tall)
+            if (a && b && b[1] - a[1] < 130) b[1] = a[1] + 130;
+            if (sb && g && Math.abs(g[1] - sb[1]) < 130) g[1] = Math.max(g[1], sb[1] + 130);
+            return `
+<div class="abs" style="left:0;right:0;top:52px;text-align:center"><h2 class="px" style="font-size:54px;line-height:1">Everyone you follow, on <span class="blue">one timeline.</span></h2></div>
+${crop('d-friends', x0 * 2, L.strip[1] * 2, w * 2, L.strip[3] * 2, DW, `left:${X}px;top:168px`)}
+${crop('d-friends', x0 * 2, L.feed[1] * 2, w * 2, FH, DW, `left:${X}px;top:${Y}px;-webkit-mask-image:linear-gradient(#000 80%,transparent)`)}
+${a ? callout('l', a[1], a[0], 'A colour each', "Worked out from their name, so it never changes.", 296) : ''}
+${b ? callout('l', b[1], b[0], 'Hardcore in gold', 'A gold run is hardcore, a grey one softcore.', 296) : ''}
+${sb ? callout('r', sb[1], sb[0], 'Subsets tagged', 'Subset sets say so.', 1304) : ''}
+${g ? callout('r', g[1], g[0], 'Every badge', 'Each run shows what it unlocked.', 1304) : ''}`;
+        }
         const X = 320, Y = 290, f = 960 / 1767 * 1.44;   // timeline crop origin; f turns screen points (1440 wide) into poster pixels
         const at = (dx, dy) => [Math.round(X + (dx - 618) * f), Math.round(Y + (dy - 530) * f)];
         const [ax, ay] = at(626, 555), [bx, by] = at(693, 880), [gx, gy] = at(1150, 708), [sx, sy] = at(974, 823);
@@ -211,7 +257,7 @@ ${crop('d-activity', 890, 886, 1767, 364, 1460, 'left:70px;top:510px')}`,
     // The contents page: every part as an index line, one of them open on a desktop screen
     contents: () => {
         const lines = [['The Dex', 'every game, numbered'], ['Records', 'ring, ledger, path'], ['Activity', 'the last 14 days', true],
-            ['Friends', 'one timeline'], ['Backlog', 'want to play'], ['Stats', 'the year in charts'], ['Search', 'every console']];
+            ['Friends', 'one timeline'], ['Backlog', 'want to play'], ['Stats', 'the year in charts'], ['Consoles', 'every system']];
         return `
 <img class="desk abs" src="${shot('d-activity')}" style="left:64px;top:132px;width:1000px">
 <div class="abs" style="left:1130px;right:64px;top:150px">
@@ -239,7 +285,10 @@ async function render(browser) {
 }
 
 (async () => {
-    const browser = await puppeteer.launch({ headless: 'new', protocolTimeout: 180000 });
+    // The installed Google Chrome when there is one (CHROME_PATH overrides), else puppeteer's own download
+    const SYS = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+    const executablePath = process.env.CHROME_PATH || (fs.existsSync(SYS) ? SYS : undefined);
+    const browser = await puppeteer.launch({ headless: 'new', protocolTimeout: 180000, ...(executablePath ? { executablePath } : {}) });
     try {
         if (CAPTURE) await capture(browser);
         await render(browser);
