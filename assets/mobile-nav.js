@@ -12,6 +12,12 @@
   upd.src = BASE + '/assets/update-notice.js';
   document.head.appendChild(upd);
 
+  // Command palette (assets/palette.js): the middle button here, the desktop top bar's field, ⌘K / Ctrl+K
+  const pal = document.createElement('script');
+  pal.type = 'module';
+  pal.src = BASE + '/assets/palette.js';
+  document.head.appendChild(pal);
+
   const path       = window.location.pathname;
   const isProfile  = path.includes('/profile');
   const onSocial   = path.includes('/social/');
@@ -37,11 +43,20 @@
       icon: ICON20('<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
     },
     {
+      id: 'social',
+      label: 'Social',
+      href: BASE + '/social/',
+      active: onSocial,
+      color: 'var(--accent)',
+      icon: ICON20('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
+    },
+    {
       id: 'search',
       label: 'Search',
-      href: BASE + '/search/',
+      href: null,          // opens the command palette (assets/palette.js)
       active: path.includes('/search/'),
       color: 'var(--accent)',
+      fab: true,
       icon: ICON20('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>'),
     },
     {
@@ -51,14 +66,6 @@
       active: path.includes('/console/'),
       color: 'var(--accent)',
       icon: ICON20('<line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><circle cx="15" cy="12" r="1"/><circle cx="18" cy="10" r="1"/><rect x="2" y="6" width="20" height="12" rx="2"/>'),
-    },
-    {
-      id: 'social',
-      label: 'Social',
-      href: BASE + '/social/',
-      active: onSocial,
-      color: 'var(--accent)',
-      icon: ICON20('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
     },
     {
       id: 'menu',
@@ -117,6 +124,20 @@
     }
 
     .mnav-item:active { background: rgb(var(--c-accent) / 0.06); }
+
+    /* Search, in the middle: a raised round button over the bar's top edge (opens the command palette) */
+    .mnav-fab { overflow: visible; }
+    .mnav-fab:active { background: none; }
+    .mnav-fab .mnav-icon {
+      width: 50px; height: 50px; margin-top: -22px; border-radius: 50%;
+      background: var(--accent); color: var(--page); border: 4px solid var(--bar);
+      box-shadow: 0 6px 16px rgb(0 0 0 / 0.45), 0 0 0 1px var(--line);
+      transition: transform 0.12s, background 0.15s;
+    }
+    .mnav-fab .mnav-icon svg { stroke: var(--page) !important; }
+    .mnav-fab:active .mnav-icon { transform: scale(0.94); background: var(--accent-hi); }
+    .mnav-fab .mnav-label { color: var(--ink-2); }
+    .mnav-fab.mnav-active::before { display: none; }
 
     .mnav-icon {
       width: 20px; height: 20px;
@@ -232,7 +253,7 @@
     const tag   = isBtn ? 'button' : 'a';
     const attr  = isBtn ? 'type="button"' : `href="${t.href}"`;
     return `<${tag} ${attr}
-        class="mnav-item${t.active ? ' mnav-active' : ''}"
+        class="mnav-item${t.active ? ' mnav-active' : ''}${t.fab ? ' mnav-fab' : ''}"
         style="--mnav-color: ${t.color};"
         data-id="${t.id}"
         ${t.active && !isBtn ? 'aria-current="page"' : ''}
@@ -387,4 +408,5 @@
   }
 
   menuNavBtn.addEventListener('click', openSheet);
+  nav.querySelector('[data-id="search"]').addEventListener('click', () => window.dispatchEvent(new Event('cdx:palette')));
 })();

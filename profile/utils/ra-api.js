@@ -1632,6 +1632,30 @@ export async function fetchGameDetails(username, apiKey, gameId) {
   return result;
 }
 
+/**
+ * Everything the command palette (assets/palette.js) searches, read straight from what is stored on this
+ * device: no network and no expiry (a stale cache is still worth finding things in).
+ * Returns { catalog, consoles (catalog consoles saved), consolesTotal (consoles known), progress, backlog, social, profiles,
+ *   friendActivity, completion }.
+ */
+export async function getLocalSearchData(username) {
+  const [catalog, progress, backlog, social, profiles, friendActivity] = await Promise.all([
+    getAllGamesFromDB().catch(() => ({ games: [], consolesFetched: {} })),
+    idbGetAllByIndex('progress', 'username', username).catch(() => []),
+    idbGet('backlog', username).catch(() => null),
+    idbGet('friend_list', username).catch(() => null),
+    idbGetAll('social_profiles').catch(() => []),
+    idbGetAll('friend_activity').catch(() => []),
+  ]);
+  let completion = {};
+  try { completion = JSON.parse(localStorage.getItem(`ra_completion_${username}`))?.data ?? {}; } catch {}
+  return {
+    catalog: catalog.games || [], consoles: Object.values(catalog.consolesFetched || {}).filter(Boolean).length,
+    consolesTotal: Object.keys(catalog.consolesFetched || {}).length,
+    progress, backlog: backlog?.results ?? backlog?.games ?? [], social, profiles, friendActivity, completion,
+  };
+}
+
 export async function getSocialData(username) {
   return idbGet('friend_list', username); // returns { username, ts, following, followers } or null
 }

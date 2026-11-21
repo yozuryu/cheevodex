@@ -8,6 +8,8 @@ Cross-console game search. Unlike every other page, search runs **entirely again
 IndexedDB catalog** — it makes no RA API call to answer a query. The catalog has to be built
 first, which is the page's other job.
 
+`?q=` fills the search box on load (the command palette's "See all results").
+
 ## Data Fetched on Mount
 
 - `getAllGamesFromDB()` — the whole cached catalog: `{ games, consolesFetched, lastFullFetch }`.

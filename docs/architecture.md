@@ -34,6 +34,7 @@ cheevodex/
 │   ├── mobile-nav.js   # Shared bottom nav IIFE (mobile only, < 768px)
 │   ├── pwa-install.js  # Install banner
 │   ├── update-notice.js # New-edition notice (new version published → Reload)
+│   ├── palette.js      # Command palette: one search over the data saved on this device (⌘K / Ctrl+K / '/')
 │   └── ui.js           # Shared Topbar (Cheevodex brand, desktop page links, ☰ menu) + Footer (React.createElement, no JSX)
 │
 ├── social/             # Social: friends' unlocks, following / followers, Compare (docs/pages/social.md)
@@ -203,6 +204,15 @@ Bust cache: `sessionStorage.clear()` for session data, `localStorage.removeItem(
 - The sign-in page (`index.html`) carries the title, description, canonical and Open Graph tags, using the website's share image; it links to the website (yozuryu.github.io/cheevodex-site), which holds the full SEO head and sitemap.
 - Pages behind sign-in (profile, game, achievement, console, search) carry `<meta name="robots" content="noindex">`: without an account they render nothing.
 - The domain root's `robots.txt` (root site repo) lists the website's sitemap.
+
+## Command palette
+
+`assets/palette.js` (ES module, no JSX; loaded by `mobile-nav.js` on every page with the nav, its own React root). One search over **what this device has already saved**, never the network: `getLocalSearchData(username)` in `ra-api.js` reads the IDB catalog (`games` / `consoles`), your unlocks (`progress`), your backlog, following / followers (`friend_list`), their profiles (`social_profiles`), friends' unlocks (`friend_activity`) and the completion map, without expiry.
+
+- **Opens** from the bottom bar's middle Search button, the desktop top bar's field, ⌘K (Mac) / Ctrl+K (elsewhere; the page takes it before the browser's own search box), or `/` when not typing in a field; `window.dispatchEvent(new Event('cdx:palette'))` from code. Phones: full screen, field on top; md+: centred, 640px, with a footer of keys and what is saved
+- **Results** in groups ordered by their best match: Games (your games first with count and ring, Backlog tagged, then the catalog; a number or `No.123` opens that Dex No.), Players (you, following, followers), Go to (pages). Nothing typed: Recent (what was opened from the palette, `cdx:paletteRecent`, six) and Go to. **See all results** opens `search/?q=`
+- **Matching** (`match()`): word based. Every typed word must match a word of the name, from its start, inside it (3+ letters), or within a typo (Damerau–Levenshtein: one from 4 letters, two from 7); numbers exactly; one typed word of 2–5 letters may be the title's initials (ff, kh, smt). Fewer extra words rank higher; your games and Backlog get a boost. Typo-only matches show only when nothing matches without one
+- **Not saved yet** (gold rows that open the page that loads it): the catalog missing or partial (`N of M consoles`, from the `consoles` store's `fetchedAt`) → Search; friends missing → Social. Shown with nothing typed (above Go to), under an empty result, and after game results while the catalog is incomplete
 
 ## PWA / Service Worker
 

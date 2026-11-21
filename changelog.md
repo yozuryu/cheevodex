@@ -1,6 +1,6 @@
 # Changelog
 
-## v26.11.21 — Social gets its own page, a note when the dex has a new edition
+## v26.11.21 — Search everything from anywhere, Social gets its own page
 
 ### Structure
 
@@ -12,11 +12,19 @@
 - **Social is its own page.** Your friends' unlocks, who you follow and who follows you, and Compare, together in one place instead of split between the profile's Social tab and Activity's Friends view. On phones three chips switch between Unlocks, Following and Followers; on a wide screen the unlocks sit beside the people
 - **The profile is about you.** Its Social tab is gone and Activity shows only your own runs. Old links to either open the Social page
 
+### Search
+
+- **Search everything from anywhere.** Games, players and pages in one search: the middle button of the bottom bar, the search field in the desktop top bar, ⌘K on a Mac, Ctrl+K elsewhere, or /. It looks through what Cheevodex has already saved, so results are instant and work offline
+- **Forgiving with typos.** "breth of fyre" finds Breath of Fire, "pixl" finds pixelmoth, initials like "ff" or "smt" work, and a number opens that Dex No.
+- **Your games first.** Your own games come with their count and ring, Backlog games are tagged, and See all results opens the Search page with your words
+- **It says what's missing.** When the catalog or your friends aren't saved yet, the search says so and takes you to the page that loads them
+
 ### Navigation
 
+- **Search in the middle of the bottom bar,** a round button with Profile and Social on its left, Consoles and Menu on its right
 - **Social in the bottom bar,** in the place of Changelog
 - **Changelog moved into Menu,** its first row. Menu stays lit while you read it
-- **Page links on desktop.** Profile, Search, Consoles and Social sit in the top bar, the current one lit; ☰ keeps Changelog, refresh, purge, debug and log out
+- **Page links on desktop.** The search field, Profile, Consoles and Social sit together on the right of the top bar, the current page lit; ☰ keeps Changelog, refresh, purge, debug and log out
 
 ## v26.11.14 — Dex cards with the completion ring
 

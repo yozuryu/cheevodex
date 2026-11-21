@@ -293,7 +293,6 @@ function TopbarMenu() {
 // assets/mobile-nav.js). The current page is lit blue, like the bottom bar. ☰ holds the rest.
 const PAGE_LINKS = [
   { Icon: User,     label: 'Profile',  href: '../profile/', match: p => /\/(profile|game|achievement)\//.test(p) },
-  { Icon: Search,   label: 'Search',   href: '../search/',  match: p => p.includes('/search/') },
   { Icon: Gamepad2, label: 'Consoles', href: '../console/', match: p => p.includes('/console/') },
   { Icon: Users,    label: 'Social',   href: '../social/',  match: p => p.includes('/social/') },
 ];
@@ -306,6 +305,16 @@ function PageLinks() {
       return React.createElement('a', { key: l.label, href: l.href, className: `tnav-a${on ? ' on' : ''}`, ...(on ? { 'aria-current': 'page' } : {}) },
         React.createElement(l.Icon, { size: 12, strokeWidth: 2 }), l.label);
     }));
+}
+
+// The search field (desktop), beside the page links: opens the command palette (assets/palette.js), as ⌘K / Ctrl+K and / do
+const isMac = /mac|iphone|ipad/i.test(navigator.userAgentData?.platform || navigator.platform || navigator.userAgent);
+function TopSearch() {
+  return React.createElement('button', { type: 'button', className: 'tsearch hidden md:flex', onClick: () => window.dispatchEvent(new Event('cdx:palette')),
+      'aria-label': 'Search games, players and pages' },
+    React.createElement(Search, { size: 13, strokeWidth: 2 }),
+    React.createElement('span', { className: 'tsearch-t' }, 'Search games and players'),
+    React.createElement('kbd', null, isMac ? '⌘K' : 'Ctrl K'));
 }
 
 // ── Topbar ────────────────────────────────────────────────────────────────────
@@ -357,6 +366,7 @@ export function Topbar({ crumbs = [], right }) {
   });
 
   items.push(React.createElement('div', { key: 'spacer', className: 'ml-auto' }));
+  items.push(React.createElement(TopSearch, { key: 'search' }));   // beside the page links: one navigation cluster on the right
   if (right) {
     items.push(React.createElement('div', { key: 'right', className: 'shrink-0' }, right));
   }

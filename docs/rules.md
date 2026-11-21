@@ -137,7 +137,7 @@ All page headers use `pt-8 pb-5 md:pt-5`. The extra `pt-8` compensates for the h
 
 ### Bottom navigation (`assets/mobile-nav.js`)
 
-- Visible only on screens < 768px. Injects a fixed bottom bar: Profile, Search, Consoles, Social (`social/`), Menu (Changelog, refresh, purge, debug, log out). On the changelog page Menu is the lit tab. From md the top bar has the same four pages as links (`PageLinks` in `assets/ui.js`, `.tnav-a`, the current one blue with a line on the bar's bottom edge); its ☰ holds Changelog, refresh, purge, debug and log out
+- Visible only on screens < 768px. Injects a fixed bottom bar: Profile, Social (`social/`), **Search** in the middle (a raised round button, `.mnav-fab`, that opens the command palette), Consoles, Menu (Changelog, refresh, purge, debug, log out). On the changelog page Menu is the lit tab. From md the top bar has the same pages: on the right a search field (`TopSearch`, `.tsearch`, opens the palette, shows ⌘K or Ctrl K) beside the links Profile, Consoles, Social (`PageLinks`, `.tnav-a`, the current one blue with a line on the bar's bottom edge), then ☰ with Changelog, refresh, purge, debug and log out. The command palette: `docs/architecture.md`
 - Hides `.page-topbar` and `footer` on mobile. Adds `padding-bottom` to body.
 - Repositions `.scroll-top-btn` above the nav bar — always use class `scroll-top-btn` on the FAB.
 

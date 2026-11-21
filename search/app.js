@@ -35,7 +35,7 @@ function SearchApp() {
 
   const [store, setStore]                   = useState(null);
   const [storeLoading, setStoreLoading]     = useState(true);
-  const [query, setQuery]                   = useState('');
+  const [query, setQuery]                   = useState(() => new URLSearchParams(window.location.search).get('q') || '');   // ?q= from the palette's "See all results"
   const [achFilter, setAchFilter]           = useState('all');   // 'all' | 'with' | 'without'
   const [consoleFilter, setConsoleFilter]   = useState(new Set()); // empty = all consoles
   const [showConsolePanel, setShowConsolePanel] = useState(false);
