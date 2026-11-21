@@ -9,12 +9,12 @@ body { -webkit-font-smoothing: antialiased; font-feature-settings: 'tnum' 1; }
 
 /* ── Section heading (doc-012) ─────────────────────────────────────────────────────
  * <div class="... border-b ..."><span class="sec-mark" /><span class="sec-t">Title</span></div>
- * Blue diamond, blue title, and a plain hairline under it (lines are never gradients). Any
+ * Blue diamond, blue title, and a solid blue hairline (35%) under it (lines are never gradients). Any
  * element that directly holds a .sec-mark gets the underline. */
 .sec-mark { width: 7px; height: 7px; flex-shrink: 0; background: var(--accent); transform: rotate(45deg); margin: 0 3px 0 2px; box-shadow: 0 0 6px rgb(var(--c-accent) / 0.45); }
 .sec-t { font-size: 15px; font-weight: 500; color: var(--accent); letter-spacing: -0.005em; line-height: 1.3; }
 .sec-t svg { color: var(--accent); }
-:has(> .sec-mark) { border-bottom: 1px solid var(--line); }
+html :has(> .sec-mark) { border-bottom: 1px solid rgb(var(--c-accent) / 0.35); }   /* html: beats Tailwind's border-line on the same heading */
 /* Card header title: the same marker, smaller, inside a panel's header strip */
 .sec-mark.sm { width: 5px; height: 5px; margin: 0 2px 0 1px; box-shadow: none; }
 .card-t { font-size: 13px; font-weight: 500; color: var(--accent); line-height: 1.3; }
@@ -751,7 +751,7 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 /* Progress ring: conic fill masked to a ring; the value sits in the middle */
 .dring { position: relative; flex-shrink: 0; width: var(--s, 72px); height: var(--s, 72px); display: grid; place-items: center; }
 .dring::before { content: ''; position: absolute; inset: 0; border-radius: 50%;
-  background: conic-gradient(var(--cb, var(--c)) 0 calc(var(--b, var(--p)) * 1%), var(--c) 0 calc(var(--p) * 1%), rgb(var(--c-ink) / 0.09) 0);
+  background: conic-gradient(var(--cb, var(--c)) 0 calc(var(--b, var(--p)) * 1%), var(--c) 0 calc(var(--p) * 1%), var(--rt, rgb(var(--c-ink) / 0.09)) 0);
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--w, 6px)), black calc(100% - var(--w, 6px) + 0.5px));
           mask: radial-gradient(farthest-side, transparent calc(100% - var(--w, 6px)), black calc(100% - var(--w, 6px) + 0.5px)); }
 .dring.full::before { filter: drop-shadow(0 0 6px rgb(var(--c-gold) / 0.55)); }
@@ -939,10 +939,38 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 .cmpr-g:hover .cmpr-t > .truncate { color: var(--accent-hi); }
 .cmpr-s { display: flex; align-items: baseline; gap: 7px; min-width: 0; font-size: 11px; color: var(--ink-3); white-space: nowrap; }
 .cmpr-p { display: flex; gap: 6px; flex-shrink: 0; }
-.cmpx { flex: 1; display: flex; align-items: center; gap: 7px; padding: 4px 8px; border-radius: 2px; min-width: 100px; }
-.cmpx.lead { background: color-mix(in srgb, var(--lc) 14%, transparent); }
-.cmpx-v { display: flex; align-items: center; gap: 4px; }
-.cmpx-v b { font-family: var(--mono); font-size: 12.5px; font-weight: 600; }
+.cmpx { flex: 1; display: flex; align-items: center; gap: 7px; padding: 5px 8px; border-radius: 3px; min-width: 132px; border: 1px solid transparent; }
+.cmpx.lead { background: color-mix(in srgb, var(--lc) 12%, transparent); border-color: color-mix(in srgb, var(--lc) 40%, transparent); }
+/* the avatar sits inside the ring, a 2px gap between face and arc */
+.cmpx-ring { --rt: color-mix(in srgb, var(--lc) 28%, transparent); }   /* the track in the person's colour: whose it is even at 1% */
+.cmpx-ring img { position: relative; width: calc(100% - 10px); height: calc(100% - 10px); border-radius: 50%; object-fit: cover; background: var(--well); }
+.cmpx-v { flex: 1; display: flex; flex-direction: column; gap: 1px; line-height: 1.1; }
+.cmpx-v b { font-family: var(--mono); font-size: 13px; font-weight: 600; }
+.cmpx-v small { font-size: 10px; color: var(--ink-3); }
+@media (max-width: 639px) { .cmpr-p > .cmpx { min-width: 0; } }
+/* Compare header: you on the left, them on the right, each with an avatar ringed in their colour */
+.cmp-top { display: flex; align-items: center; height: 30px; padding: 0 56px 0 16px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+@media (min-width: 768px) { .cmp-top { height: 28px; margin-top: 10px; } }   /* lines up with the close button (12px / 30px on phones under the handle, 10px / 28px on desktop) */
+.cmp-vs { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; padding: 14px 16px 16px; }
+.cmp-p { display: flex; align-items: center; gap: 10px; min-width: 0; color: inherit; text-decoration: none; }
+.cmp-p.them { justify-content: flex-end; text-align: right; }
+.cmp-p img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: var(--well); box-shadow: 0 0 0 2px var(--pc); }
+.cmp-p > span { display: flex; flex-direction: column; gap: 2px; }
+.cmp-p b { font-size: 14px; font-weight: 600; color: var(--pc); line-height: 1.2; }
+.cmp-p small { font-size: 11px; color: var(--ink-3); }
+.cmp-p.them:hover small { color: var(--accent-hi); }
+.cmp-vs-x { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.08em; }
+/* Who leads: one bar in the two colours */
+.cmp-score { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--box-hi); border: 1px solid var(--line-soft); border-radius: 3px; }
+.cmp-score-h { font-size: 12px; color: var(--ink-2); }
+.cmp-score-h b { color: var(--ink); font-weight: 600; }
+.cmp-bar { display: flex; gap: 2px; height: 8px; }
+.cmp-bar i { border-radius: 2px; min-width: 4px; }
+.cmp-bar .me { background: var(--mc); } .cmp-bar .tie { background: var(--line-2); } .cmp-bar .them { background: var(--tc); }
+.cmp-score-k { display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px; color: var(--ink-3); }
+.cmp-score-k span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-score-k b { font-weight: 600; }
+.cmp-score-k .me b { color: var(--mc); } .cmp-score-k .them b { color: var(--tc); } .cmp-score-k .tie b { color: var(--ink-2); }
 
 /* Tiles: the count beside a small ring (the ring motif), in place of the old segmented bar */
 .gtile-n { display: inline-flex; align-items: center; gap: 6px; }

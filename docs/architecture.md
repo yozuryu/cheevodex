@@ -247,7 +247,7 @@ Back closes them without leaving the page; closing them any other way calls `his
 from either uses `location.replace`, so Back from there lands on the page, not on it twice. A page with its own
 `popstate` handling ignores a pop that lands on the address it already shows (Consoles: `urlRef`).
 
-**No gradient lines, no sliding loading lines.** Lines (heading underlines, rules, edges, rails) are solid.
+**No gradient lines, no sliding loading lines.** Lines (heading underlines, rules, edges, rails) are solid; a blue heading's underline is solid blue at 35%.
 Loading is a spinner (Lucide `Loader2` or the palette's ring), never a line sweeping across; a bar only when the
 fraction is real (Consoles: N of M consoles), and then a solid fill. Gradient fills and glows (header glows, the
 gold avatar ring, mastered / beaten tints, the feed's run washes, art scrims) and the skeleton shimmer are fine.

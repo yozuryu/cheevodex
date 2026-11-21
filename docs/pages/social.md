@@ -18,7 +18,7 @@
 | Following / followers | `fetchSocial()` (`API_GetUsersIFollow` + `API_GetUsersFollowingMe`) | IDB, a day; Refresh forces it |
 | People's pictures, last played, rich presence | `fetchAndCacheSocialProfiles()` (`API_GetUserSummary` per person, 1 s apart) | IDB, an hour (`PROFILE_SYNC_TTL`) |
 | Friends' unlocks | `fetchFriendsActivity()` (`API_GetAchievementsEarnedBetween`, last 30 days in three windows, one friend at a time), started once the following list is in | IDB per friend, an hour; Refresh marks them stale, Reset clears them |
-| Compare | `getUserCompletionProgress()` for you and for them, in parallel, when it opens | none |
+| Compare (`CompareModal`: header You vs them, each avatar ringed in their colour, you `--accent`, them `friendColor()`; a split bar of who leads; each game's two cells with the avatar inside its progress ring (`.cmpx-ring`, track `--rt` tinted in the person's colour), %, count, mode, the leader's tinted) | `getUserCompletionProgress()` for you and for them, in parallel, when it opens | none |
 
 ## Feed (`FriendsFeed`)
 

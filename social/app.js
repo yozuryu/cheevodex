@@ -206,6 +206,11 @@ const CompareModal = ({ otherUser, myGames, compareData, loading, error, onClose
     return s;
   }, [sharedGames, sortBy]);
 
+  // Who's who: you in RA blue, them in their own colour (the one their name has in the feed), each with an avatar
+  const me = getCredentials()?.username || 'You';
+  const theirC = friendColor(otherUser);
+  const myPic = profileMap.get(me)?.userPic ? getMediaUrl(profileMap.get(me).userPic) : `${MEDIA_URL}/UserPic/${me}.png`;
+  const theirPic = profileMap.get(otherUser)?.userPic ? getMediaUrl(profileMap.get(otherUser).userPic) : `${MEDIA_URL}/UserPic/${otherUser}.png`;
   const meAhead = sharedGames.filter(g => g.myPct > g.theirPct).length;
   const tied    = sharedGames.filter(g => g.myPct === g.theirPct).length;
   const behind  = sharedGames.filter(g => g.myPct < g.theirPct).length;
@@ -223,17 +228,18 @@ const CompareModal = ({ otherUser, myGames, compareData, loading, error, onClose
         <button onClick={close} className="sheet-close" aria-label="Close">
           <X size={15} />
         </button>
-        <div className="relative flex items-center gap-3 px-4 pt-3 pb-3 pr-12">
-          <img
-            src={profileMap.get(otherUser)?.userPic ? getMediaUrl(profileMap.get(otherUser).userPic) : `${MEDIA_URL}/UserPic/${otherUser}.png`}
-            alt={otherUser}
-            className="w-8 h-8 rounded-full border border-well bg-bar object-cover shrink-0"
-            onError={e => { e.currentTarget.style.visibility = 'hidden'; }}
-          />
-          <div>
-            <div className="text-[11px] text-ink-3">Comparing with</div>
-            <a href={`../profile/?u=${otherUser}`} className="text-[13px] font-semibold text-gold hover:text-gold-hi transition-colors">{otherUser}</a>
-          </div>
+        {/* The top bar: the sheet's title on the close button's row, so the band under the handle isn't empty */}
+        <div className="cmp-top"><span>Compare</span></div>
+        <div className="cmp-vs">
+          <span className="cmp-p" style={{ '--pc': 'var(--accent)' }}>
+            <img src={myPic} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden'; }} />
+            <span className="min-w-0"><b>You</b><small className="truncate">{me}</small></span>
+          </span>
+          <span className="cmp-vs-x">vs</span>
+          <a href={`../profile/?u=${otherUser}`} className="cmp-p them" style={{ '--pc': theirC }}>
+            <span className="min-w-0"><b className="truncate">{otherUser}</b><small>Profile ›</small></span>
+            <img src={theirPic} alt="" onError={e => { e.currentTarget.style.visibility = 'hidden'; }} />
+          </a>
         </div>
         </div>
 
@@ -261,16 +267,27 @@ const CompareModal = ({ otherUser, myGames, compareData, loading, error, onClose
 
           {!loading && !error && compareData && (
             <>
-              <div className="sledger dledger mb-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', columnGap: 20 }}>
-                {[['Shared', sharedGames.length, 'var(--ink)'], ['You ahead', meAhead, 'var(--accent)'], ['Tied', tied, 'var(--ink-2)'], [`${otherUser} ahead`, behind, 'var(--aqua)']].map(([k, v, c]) => (
-                  <div key={k} className="dl-row"><span className="dl-k truncate" style={{ minWidth: 0 }}>{k}</span><span className="dl-dots" /><span className="dl-v" style={{ color: c }}>{v}</span></div>
-                ))}
+              {/* Who leads in how many of the shared games: one bar split in the two colours, tied in grey between */}
+              <div className="cmp-score mb-3" style={{ '--mc': 'var(--accent)', '--tc': theirC }}>
+                <div className="cmp-score-h"><b className="num">{sharedGames.length}</b> games you both play</div>
+                {sharedGames.length > 0 && (
+                  <div className="cmp-bar" aria-hidden="true">
+                    {meAhead > 0 && <i className="me" style={{ flex: meAhead }} />}
+                    {tied > 0 && <i className="tie" style={{ flex: tied }} />}
+                    {behind > 0 && <i className="them" style={{ flex: behind }} />}
+                  </div>
+                )}
+                <div className="cmp-score-k">
+                  <span className="me"><b className="num">{meAhead}</b> you lead</span>
+                  <span className="tie"><b className="num">{tied}</b> tied</span>
+                  <span className="them"><b className="num">{behind}</b> {otherUser} leads</span>
+                </div>
               </div>
 
               {sharedGames.length > 0 && (
                 <div className="frow mb-3">
                   <span className="text-[11px] text-ink-3 shrink-0">Sort</span>
-                  {[['diff', 'Biggest gap'], ['mine', 'Mine'], ['theirs', 'Theirs'], ['az', 'A–Z']].map(([v, label]) => (
+                  {[['diff', 'Biggest gap'], ['mine', 'You first'], ['theirs', `${otherUser} first`], ['az', 'A–Z']].map(([v, label]) => (
                     <button type="button" key={v} onClick={() => setSortBy(v)} aria-pressed={sortBy === v} className={`fchip ${sortBy === v ? 'on' : ''}`}>{label}</button>
                   ))}
                 </div>
@@ -282,16 +299,21 @@ const CompareModal = ({ otherUser, myGames, compareData, loading, error, onClose
                 <div className="flex flex-col gap-[2px]">
                   {sorted.map(g => {
                     const { baseTitle, subsetName, isSubset, tags } = parseTitle(g.title);
-                    const side = (pct, hc, kind, base, lead, label) => {
+                    // One person's side: their avatar inside their progress ring (whose and how far in one mark), %, count and
+                    // mode; the leader's side tinted in their colour
+                    const side = (pct, hc, kind, base, lead, label, pic, got, max) => {
                       const mastered = kind === 'mastered' || kind === 'completed';
                       const c = mastered ? 'var(--gold)' : base;
                       return (
-                        <span className={`cmpx ${lead ? 'lead' : ''}`} style={{ '--lc': base }} title={`${label}: ${Math.round(pct)}%${mastered ? ' · mastered' : ''}`}>
-                          <span className={`dring ${mastered ? 'full' : ''}`} style={{ '--p': pct, '--c': c, '--s': '24px', '--w': '3.5px' }} />
+                        <span className={`cmpx ${lead ? 'lead' : ''}`} style={{ '--lc': base }} title={`${label}: ${got} of ${max}${mastered ? ' · mastered' : ''}`}>
+                          <span className={`dring cmpx-ring ${mastered ? 'full' : ''}`} style={{ '--p': pct, '--c': c, '--s': '32px', '--w': '3px' }}>
+                            <img src={pic} alt={label} loading="lazy" />
+                          </span>
                           <span className="cmpx-v">
                             <b style={{ color: lead || mastered ? c : 'var(--ink-2)' }}>{Math.round(pct)}%</b>
-                            <ModeIcon hc={hc} size={10} />
+                            <small className="num">{got}/{max}</small>
                           </span>
+                          <ModeIcon hc={hc} size={11} />
                         </span>
                       );
                     };
@@ -306,8 +328,8 @@ const CompareModal = ({ otherUser, myGames, compareData, loading, error, onClose
                           </span>
                         </a>
                         <div className="cmpr-p">
-                          {side(g.myPct, g.myHC, g.highestAwardKind, 'var(--accent)', g.myPct > g.theirPct, 'You')}
-                          {side(g.theirPct, g.theirHC, g.them.highestAwardKind, 'var(--aqua)', g.theirPct > g.myPct, otherUser)}
+                          {side(g.myPct, g.myHC, g.highestAwardKind, 'var(--accent)', g.myPct > g.theirPct, 'You', myPic, g.numAwarded, g.maxPossible)}
+                          {side(g.theirPct, g.theirHC, g.them.highestAwardKind, theirC, g.theirPct > g.myPct, otherUser, theirPic, g.them.numAwarded, g.them.maxPossible)}
                         </div>
                       </div>
                     );

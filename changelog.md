@@ -12,6 +12,7 @@
 - **Social is its own page.** Your friends' activity, who you follow and who follows you, and Compare, together in one place instead of split between the profile's Social tab and Activity's Friends view. On a wide screen the activity sits beside the people
 - **Tabs you can swipe.** On phones Activity, Following and Followers are a tab bar that stays at the top as you scroll, and you swipe between them like the profile's tabs
 - **Unlocks is now Activity.** The friends' feed is called Activity, like the profile's own
+- **Compare shows who's who.** You and them side by side at the top, each with an avatar in your own colour (you in blue, them in the colour their name has in the feed), a bar of how many shared games each of you leads, and on every game each avatar inside its progress ring (full gold when mastered) with the percentage and count, the leader's side lit
 - **Day headings sit flush.** The date that stays at the top while you scroll the feed no longer leaves a gap above it
 - **The profile is about you.** Its Social tab is gone and Activity shows only your own runs. Old links to either open the Social page
 
@@ -43,7 +44,7 @@
 - **Changelog moved into Menu,** its first row. Menu stays lit while you read it
 - **Page links on desktop.** The search field, Profile, Consoles and Social sit together on the right of the top bar, the current page lit
 - **A new menu.** Who you're signed in as at the top, then Cheevodex (Changelog, and Install the app when your browser offers it), This device (refresh your data, get the latest app, debug mode as a switch) and Log out, each row saying what it does. On a phone it's a sheet you drag down to close, or close with Back; on a computer ☰ opens the same menu under it
-- **Cleaner lines.** Lines under headings and along the feed are solid instead of fading out, and loading shows a spinner instead of a sliding line
+- **Cleaner lines.** Lines under headings are a solid blue and the feed's line a solid grey, instead of fading out, and loading shows a spinner instead of a sliding line
 
 ## v26.11.14 — Dex cards with the completion ring
 
