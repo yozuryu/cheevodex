@@ -7,6 +7,10 @@
 - **A note when a new version is out.** When Cheevodex is updated while you have it open, "A new edition of the dex" slides up with the version number. Reload brings in the new edition; × hides the note. The Refresh in the menu stays
 - **Updates arrive whole.** A new version now always stores the new files, even right after it's published, instead of sometimes keeping copies from minutes before
 
+### Profile
+
+- **Dex numbers readable on finished games.** On beaten and mastered cards, "No." is in the card's silver or gold instead of a grey that disappeared into the tint
+
 ### Social
 
 - **Social is its own page.** Your friends' activity, who you follow and who follows you, and Compare, together in one place instead of split between the profile's Social tab and Activity's Friends view. On a wide screen the activity sits beside the people

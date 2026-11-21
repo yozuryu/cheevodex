@@ -672,11 +672,13 @@ button.dexc-cell:hover { background: rgb(var(--c-box-hi) / 0.8); }
 .dent.beaten .dent-pic { border-color: var(--silver); box-shadow: 0 0 0 1px rgb(var(--c-silver) / 0.5); }
 .dent .dex-no { color: var(--ink-3); }   /* the number is the entry's identity: Silkscreen stays at its 8px grid, so contrast does the work */
 .dent .dex-no b { color: var(--ink); }
+.dent.beaten .dex-no { color: rgb(var(--c-silver) / 0.65); }   /* "No." in the metal: grey ink vanishes into the tint */
 .dent.beaten .dex-no b { color: var(--silver); }
 .dent.mastered { border-color: var(--gold); background: linear-gradient(180deg, rgb(var(--c-gold) / 0.28), rgb(var(--c-gold) / 0.09)), var(--box); box-shadow: 0 0 14px rgb(var(--c-gold) / 0.2); }
 .dent.mastered:hover { background: linear-gradient(180deg, rgb(var(--c-gold) / 0.34), rgb(var(--c-gold) / 0.13)), var(--box-hi); border-color: var(--gold); }
 .dent.mastered .dent-badge { color: rgb(var(--c-page)); background: var(--gold); box-shadow: 0 0 8px rgb(var(--c-gold) / 0.45); }
 .dent.mastered .dent-pic { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
+.dent.mastered .dex-no { color: rgb(var(--c-gold) / 0.65); }
 .dent.mastered .dex-no b { color: var(--gold); }
 .dent.mastered .dent-n b { color: var(--gold); }
 .dent.beaten .dent-m, .dent.beaten .dent-n, .dent.mastered .dent-m, .dent.mastered .dent-n { color: var(--ink-2); }   /* grey ink sinks into the metal tint */
