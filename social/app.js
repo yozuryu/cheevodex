@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Users, Loader2, RefreshCw, RotateCcw, AlertCircle, ArrowLeftRight, ChevronDown, Flame, Feather, Trophy, Crown, AlertTriangle, X } from 'lucide-react';
+import { Users, Loader2, RefreshCw, RotateCcw, AlertCircle, ArrowLeftRight, ChevronDown, Flame, Feather, Trophy, Crown, AlertTriangle, X, Activity, UserCheck, UserPlus } from 'lucide-react';
 import { MEDIA_URL, TILDE_TAG_COLORS } from '../profile/utils/constants.js';
 import { getMediaUrl, parseTitle } from '../profile/utils/helpers.js';
 import {
@@ -11,14 +11,16 @@ import {
   getSocialProfilesSyncTs, setSocialProfilesSyncTs, PROFILE_SYNC_TTL,
 } from '../profile/utils/ra-api.js';
 import { Topbar, Footer } from '../assets/ui.js';
+import { TabBar, useSwipeTabs, scrollToTabs } from '../assets/tabs.js';
 import { useSheet } from '../assets/sheet.js';
 import { DayHead, UnlockRow, FriendsSkeleton } from '../assets/activity-ui.js';
 import { fmtClock } from '../assets/time.js';
 
 // ── Social: your friends' unlocks and the people you follow / who follow you ──────────────────────
-// Its own page (was the profile's Social tab and the Activity tab's Friends view). Phone: the friend
-// strip and one of Unlocks / Following / Followers (chips, ?view=). Desktop: the unlocks beside a rail
-// with the people. Compare opens over the page and loads both players' progress (two calls).
+// Its own page (was the profile's Social tab and the Activity tab's Friends view). One header (title, counts,
+// the sync state of what's showing). Phone: a sticky tab bar, Activity · Following · Followers (?view=), swiped
+// between like the profile's tabs. Desktop: the activity beside a rail with the people. Compare opens over the
+// page and loads both players' progress (two calls).
 
 function handleAuthError() {
   clearCredentials();
@@ -410,7 +412,7 @@ const SocialUserRow = ({ user, isMutual, onCompare, cachedProfile }) => {
   );
 };
 
-// subTab / hideTabs: on phones the page's own chips (Unlocks · Following · Followers) pick the list
+// subTab / hideTabs: on phones the page's tab bar (Activity · Following · Followers) picks the list
 const SocialTab = ({ socialData, socialError, onRetry, onCompare, profileMap = new Map(), subTab: subTabProp, hideTabs = false }) => {
   const [sortBy, setSortBy] = useState('az');
   const [ownTab, setSubTab] = useState('following');
@@ -682,21 +684,26 @@ const useWide = () => {
   return wide;
 };
 
-const VIEWS = ['unlocks', 'following', 'followers'];
+const VIEWS = ['activity', 'following', 'followers'];
 
 function SocialApp() {
   const creds = getCredentials();
   const wide = useWide();
   const [view, setViewState] = useState(() => {
     const v = new URLSearchParams(window.location.search).get('view');
-    return VIEWS.includes(v) ? v : 'unlocks';
+    return VIEWS.includes(v) ? v : 'activity';   // old links said ?view=unlocks: that's Activity
   });
+  const tabBarRef = useRef(null), swipeRef = useRef(null);
   const setView = v => {
     setViewState(v);
+    scrollToTabs(tabBarRef);
     const url = new URL(window.location);
-    if (v === 'unlocks') url.searchParams.delete('view'); else url.searchParams.set('view', v);
+    if (v === 'activity') url.searchParams.delete('view'); else url.searchParams.set('view', v);
     window.history.replaceState({}, '', url);
   };
+  // A swiped-in tab has just slid into place: it skips the fade a tapped tab gets
+  const [swiped, setSwiped] = useSwipeTabs(swipeRef, VIEWS, view, setView, !wide);
+  const pickTab = v => { setSwiped(null); setView(v); };
 
   // People: following / followers (cached a day), their profiles (cached an hour) for pictures and last played
   const [socialData, setSocialData] = useState(null);
@@ -842,34 +849,51 @@ function SocialApp() {
   const feed = <FriendsFeed friendsActivity={friendsActivity} status={status} onRetry={() => setStatus('idle')} failedFriends={failedFriends} profileMap={profileMap} />;
   const people = (props = {}) => <SocialTab socialData={socialData} socialError={socialError} onRetry={() => setSocialError(false)} onCompare={openCompare} profileMap={profileMap} {...props} />;
   const counts = { following: socialData?.following?.total, followers: socialData?.followers?.total };
+  const tabs = [
+    { id: 'activity', label: 'Activity', icon: <Activity size={15} /> },
+    { id: 'following', label: 'Following', icon: <UserCheck size={15} />, count: counts.following },
+    { id: 'followers', label: 'Followers', icon: <UserPlus size={15} />, count: counts.followers },
+  ];
+  // The page header, the same on both sizes: what this page is, its counts, and the sync state of what's showing
+  // (phone: the open tab's; desktop: the activity's, the people rail has its own)
+  const header = (
+    <header className="cn-title soc-head">
+      <span className="cn-icon" style={{ width: 44, height: 44 }}><Users size={20} color="var(--accent)" /></span>
+      <div className="min-w-0 flex-1">
+        <h1 className="truncate">Social</h1>
+        <span className="cn-st">
+          {socialData ? <><b className="num">{counts.following ?? 0}</b> following<span className="text-ink-4">·</span><b className="num">{counts.followers ?? 0}</b> followers</> : <span className="shimmer inline-block w-32 h-[9px] rounded" />}
+        </span>
+      </div>
+    </header>
+  );
 
   return (
     <div className="min-h-screen bg-page flex flex-col">
       <Topbar crumbs={[{ label: 'Cheevodex', href: '../profile/' }, { label: 'Social' }]} />
-      <main className="flex-1 max-w-6xl mx-auto w-full px-4 md:px-8 pt-8 pb-16 md:pt-5 md:pb-8">
-        {wide ? (
+      <main className="soc flex-1 max-w-6xl mx-auto w-full px-4 md:px-8 pt-8 pb-16 md:pt-5 md:pb-8">
+        {wide ? (<>
+          <div className="mb-5">{header}</div>
           <div className="grid grid-cols-[minmax(0,1fr)_400px] gap-8 items-start">
             <section className="min-w-0">
-              <Heading title="Friends' unlocks" icon={<Users size={15} className="text-accent shrink-0" />}>{feedSync}</Heading>
+              <Heading title="Activity" icon={<Activity size={15} className="text-accent shrink-0" />}>{feedSync}</Heading>
               {feed}
             </section>
             <aside className="min-w-0 sticky top-[42px]">
-              <Heading title="People">{peopleSync}</Heading>
+              <Heading title="People" icon={<Users size={15} className="text-accent shrink-0" />}>{peopleSync}</Heading>
               {people()}
             </aside>
           </div>
-        ) : (
+        </>) : (
           <>
-            <Heading title="Social" icon={<Users size={15} className="text-accent shrink-0" />}>{view === 'unlocks' ? feedSync : peopleSync}</Heading>
-            <div className="frow mb-4" role="group" aria-label="Show">
-              {[['unlocks', 'Unlocks'], ['following', 'Following'], ['followers', 'Followers']].map(([v, label]) => (
-                <button type="button" key={v} onClick={() => setView(v)} aria-pressed={view === v} className={`fchip ${view === v ? 'on' : ''}`}>
-                  {label}{counts[v] != null && <span className="n num">{counts[v]}</span>}
-                </button>
-              ))}
-            </div>
-            <div key={view} className="anim-fade">
-              {view === 'unlocks' ? feed : people({ subTab: view, hideTabs: true })}
+            {header}
+            <div className="ptabs-anchor" />
+            <TabBar barRef={tabBarRef} className="-mx-4 mt-3 mb-3 px-2" tabs={tabs} active={view} onChange={pickTab} />
+            <div className="soc-sync">{view === 'activity' ? feedSync : peopleSync}</div>
+            <div ref={swipeRef}>
+              <div key={view} className={swiped ? '' : 'anim-fade'}>
+                {view === 'activity' ? feed : people({ subTab: view, hideTabs: true })}
+              </div>
             </div>
           </>
         )}

@@ -9,23 +9,41 @@
 
 ### Social
 
-- **Social is its own page.** Your friends' unlocks, who you follow and who follows you, and Compare, together in one place instead of split between the profile's Social tab and Activity's Friends view. On phones three chips switch between Unlocks, Following and Followers; on a wide screen the unlocks sit beside the people
+- **Social is its own page.** Your friends' activity, who you follow and who follows you, and Compare, together in one place instead of split between the profile's Social tab and Activity's Friends view. On a wide screen the activity sits beside the people
+- **Tabs you can swipe.** On phones Activity, Following and Followers are a tab bar that stays at the top as you scroll, and you swipe between them like the profile's tabs
+- **Unlocks is now Activity.** The friends' feed is called Activity, like the profile's own
+- **Day headings sit flush.** The date that stays at the top while you scroll the feed no longer leaves a gap above it
 - **The profile is about you.** Its Social tab is gone and Activity shows only your own runs. Old links to either open the Social page
+
+### Console Page
+
+- **Consoles and search in one place.** Search from the Consoles page to look through every saved game, or from inside a console to search only that console. The old Search page now opens here
+- **See every console's games load.** Each console shows its game count once saved, or Not saved with a download button at its edge. While one loads, a spinner and how many games so far, since a console's total isn't known until it's done; loading several also shows "3 of 54" and a bar, and Stop
+- **Counts everywhere.** Every console shows how many games it has, and the page shows how many games are saved in all and across how many consoles
+- **Easier to move around.** A console opens under a Consoles › name line instead of a back button; on a phone the name switches console, on a computer a list of every console sits on the left with its count
+- **A header that stays put.** All consoles and each console share one header, the name, its numbers and one ring in the same places, so moving between them no longer rearranges the top of the screen
+- **Search finds games without a set too.** While searching, every game shows; browsing a console's list still starts with the games that have achievements
+- **Your progress on the list.** Games you've played show your count and ring; your games come first when you search
 
 ### Search
 
 - **Search everything from anywhere.** Games, players and pages in one search: the middle button of the bottom bar, the search field in the desktop top bar, ⌘K on a Mac, Ctrl+K elsewhere, or /. It looks through what Cheevodex has already saved, so results are instant and work offline
 - **Forgiving with typos.** "breth of fyre" finds Breath of Fire, "pixl" finds pixelmoth, initials like "ff" or "smt" work, and a number opens that Dex No.
-- **Your games first.** Your own games come with their count and ring, Backlog games are tagged, and See all results opens the Search page with your words
-- **It says what's missing.** When the catalog or your friends aren't saved yet, the search says so and takes you to the page that loads them
-- **Smooth while you type.** It waits for a short pause before searching and does the work in the background, so even a full catalog never freezes the screen; a thin line under the field shows a search on its way
+- **Your games first.** Your own games come with their count and ring, Backlog games are tagged, and See all results opens Consoles with your words
+- **Consoles too.** Type a console's name or its short name (ps2, gba, snes, n64) to jump to it, with how many of its games are saved
+- **Remove what you don't want in Recent.** Swipe an entry left on a phone, or use its × (Delete key on a highlighted one) on a computer; Undo puts it back for a few seconds, and Clear empties the list
+- **Back closes it.** On a phone the back button closes the search and leaves you on the page you were on
+- **It says what's missing.** When the catalog or your friends aren't saved yet, the search says so and takes you to the page that loads them (it now counts the consoles not loaded yet correctly)
+- **Smooth while you type.** It waits for a short pause before searching and does the work in the background, so even a full catalog never freezes the screen. A small spinner takes the place of the magnifier only when a search takes a moment, and stays long enough not to flicker
 
 ### Navigation
 
 - **Search in the middle of the bottom bar,** a round button with Profile and Social on its left, Consoles and Menu on its right
 - **Social in the bottom bar,** in the place of Changelog
 - **Changelog moved into Menu,** its first row. Menu stays lit while you read it
-- **Page links on desktop.** The search field, Profile, Consoles and Social sit together on the right of the top bar, the current page lit; ☰ keeps Changelog, refresh, purge, debug and log out
+- **Page links on desktop.** The search field, Profile, Consoles and Social sit together on the right of the top bar, the current page lit
+- **A new menu.** Who you're signed in as at the top, then Cheevodex (Changelog, and Install the app when your browser offers it), This device (refresh your data, get the latest app, debug mode as a switch) and Log out, each row saying what it does. On a phone it's a sheet you drag down to close, or close with Back; on a computer ☰ opens the same menu under it
+- **Cleaner lines.** Lines under headings and along the feed are solid instead of fading out, and loading shows a spinner instead of a sliding line
 
 ## v26.11.14 — Dex cards with the completion ring
 

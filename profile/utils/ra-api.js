@@ -1521,7 +1521,8 @@ export async function fetchConsoles(username, apiKey) {
  * Fetches the full game list for a console, sorted alphabetically.
  * IDB-backed: cache hit if consoles.fetchedAt < CONSOLE_TTL.
  */
-export async function fetchConsoleGames(username, apiKey, consoleId, forceRefresh = false) {
+// onProgress(gamesSoFar): called after each page of 500 while the list loads (the Consoles page's cards)
+export async function fetchConsoleGames(username, apiKey, consoleId, forceRefresh = false, onProgress) {
   if (!forceRefresh) {
     const row = await idbGet('consoles', consoleId);
     if (row?.fetchedAt && (Date.now() - row.fetchedAt) < CONSOLE_TTL) {
@@ -1536,6 +1537,7 @@ export async function fetchConsoleGames(username, apiKey, consoleId, forceRefres
   while (true) {
     const page = await getGameList(username, apiKey, { i: consoleId, f: 0, c: PAGE, o: offset });
     all.push(...page);
+    onProgress?.(all.length);
     if (page.length < PAGE) break;
     offset += PAGE;
     await sleep(1000);
@@ -1635,7 +1637,7 @@ export async function fetchGameDetails(username, apiKey, gameId) {
 /**
  * Everything the command palette (assets/palette.js) searches, read straight from what is stored on this
  * device: no network and no expiry (a stale cache is still worth finding things in).
- * Returns { catalog, consoles (catalog consoles saved), consolesTotal (consoles known), progress, backlog, social, profiles,
+ * Returns { catalog, consoles (catalog consoles saved), consolesTotal (every console, from the cached console list), progress, backlog, social, profiles,
  *   friendActivity, completion }.
  */
 export async function getLocalSearchData(username) {
@@ -1647,11 +1649,14 @@ export async function getLocalSearchData(username) {
     idbGetAll('social_profiles').catch(() => []),
     idbGetAll('friend_activity').catch(() => []),
   ]);
-  let completion = {};
+  let completion = {}, consoleList = [];
   try { completion = JSON.parse(localStorage.getItem(`ra_completion_${username}`))?.data ?? {}; } catch {}
+  // The full console list (fetchConsoles' cache): the consoles store only has the ones already loaded
+  try { consoleList = JSON.parse(localStorage.getItem('ra_consoles'))?.data ?? []; } catch {}
   return {
     catalog: catalog.games || [], consoles: Object.values(catalog.consolesFetched || {}).filter(Boolean).length,
-    consolesTotal: Object.keys(catalog.consolesFetched || {}).length,
+    consoleList: consoleList.map(c => ({ id: c.id, name: c.name, iconUrl: c.iconUrl })),
+    consolesTotal: Math.max(consoleList.length, Object.keys(catalog.consolesFetched || {}).length),
     progress, backlog: backlog?.results ?? backlog?.games ?? [], social, profiles, friendActivity, completion,
   };
 }

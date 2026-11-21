@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, X, FileText, RotateCcw, LogOut, Trash2, Gamepad2, Bug, Users, User, Search } from 'lucide-react';
+import { Menu, X, Gamepad2, Bug, Users, User, Search } from 'lucide-react';
 
 /**
  * Shared UI components — Topbar and Footer.
@@ -165,126 +165,19 @@ function DebugFab() {
   );
 }
 
-// ── Menu dropdown ─────────────────────────────────────────────────────────────
-
-// Inject dropdown entry animation once per page load
-(() => {
-  const s = document.createElement('style');
-  s.textContent = '@keyframes menuDropIn{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}';
-  document.head.appendChild(s);
-})();
-
-function MenuDropdown({ onClose }) {
-  const ref = React.useRef(null);
-  const [debugMode, setDebugMode] = React.useState(() => localStorage.getItem('raDebugMode') === 'true');
-
-  React.useEffect(() => {
-    function handleClick(e) {
-      if (ref.current && !ref.current.contains(e.target)) onClose();
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [onClose]);
-
-  async function handleRefresh() {
-    sessionStorage.clear();
-    Object.keys(localStorage).filter(k => k.startsWith('ra_')).forEach(k => localStorage.removeItem(k));
-    // Clear only ephemeral IDB stores — keep consoles + games (expensive catalog data)
-    if (window.indexedDB) {
-      await new Promise(resolve => {
-        const req = indexedDB.open('cheevodex');
-        req.onsuccess = e => {
-          const db = e.target.result;
-          const toClean = ['progress', 'friend_activity', 'backlog', 'friend_list', 'meta']
-            .filter(s => db.objectStoreNames.contains(s));
-          if (!toClean.length) { db.close(); resolve(); return; }
-          const tx = db.transaction(toClean, 'readwrite');
-          toClean.forEach(s => tx.objectStore(s).clear());
-          tx.oncomplete = () => { db.close(); resolve(); };
-          tx.onerror    = () => { db.close(); resolve(); };
-        };
-        req.onerror = () => resolve();
-      });
-    }
-    location.reload();
-  }
-
-  async function handlePurgeCache() {
-    // Clear only SW asset cache — IDB data (including game catalog) is untouched
-    if ('caches' in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map(k => caches.delete(k)));
-    }
-    location.reload();
-  }
-
-  function handleLogout() {
-    localStorage.removeItem('raCredentials');
-    window.location.replace('../');
-  }
-
-  function handleToggleDebug() {
-    const next = !debugMode;
-    setDebugMode(next);
-    localStorage.setItem('raDebugMode', String(next));
-    window.dispatchEvent(new CustomEvent('raDebugModeChange', { detail: next }));
-  }
-
-  const rows = [
-    { Icon: FileText,  label: 'Changelog',   href: '../changelog/', color: 'var(--aqua)' },
-    null, // divider
-    { Icon: RotateCcw, label: 'Refresh Data', onClick: handleRefresh,    color: 'var(--accent)' },
-    { Icon: Trash2,    label: 'Purge Cache',  onClick: handlePurgeCache, color: 'var(--ink-2)' },
-    null, // divider
-    { Icon: Bug, label: debugMode ? 'Debug: On' : 'Debug: Off', onClick: handleToggleDebug, color: debugMode ? 'var(--gold)' : 'var(--ink-3)', labelColor: debugMode ? 'var(--gold)' : 'var(--ink-2)' },
-    null, // divider
-    { Icon: LogOut, label: 'Log Out', onClick: handleLogout, color: 'var(--hc)', labelColor: 'var(--hc)' },
-  ];
-
-  return React.createElement(
-    'div',
-    {
-      ref,
-      className: 'absolute top-full right-0 mt-1 w-44 bg-box border border-line rounded-[3px] overflow-hidden shadow-xl z-50',
-      style: { animation: 'menuDropIn 0.15s ease-out' },
-    },
-    ...rows.map((row, i) => {
-      if (row === null) {
-        return React.createElement('div', { key: `div-${i}`, className: 'border-t border-line' });
-      }
-      const inner = [
-        React.createElement(row.Icon, { key: 'icon', size: 13, color: row.color, strokeWidth: 2 }),
-        React.createElement('span', {
-          key: 'label',
-          className: 'text-[12px]',
-          style: { color: row.labelColor || 'var(--ink)' },
-        }, row.label),
-      ];
-      const cls = 'flex items-center gap-2.5 w-full px-3 py-2.5 hover:bg-box-hi active:bg-box-hi transition-colors text-left';
-      if (row.href) {
-        return React.createElement('a', { key: i, href: row.href, className: cls }, ...inner);
-      }
-      return React.createElement('button', { key: i, type: 'button', onClick: row.onClick, className: cls + ' font-[inherit]' }, ...inner);
-    })
-  );
-}
-
+// ── Menu (desktop ☰) ──────────────────────────────────────────────────────────
+// The menu itself lives in assets/mobile-nav.js (one menu for every screen): this button asks it to open as a
+// popover under the button. The bottom bar's Menu opens the same menu as a sheet on phones.
 function TopbarMenu() {
-  const [open, setOpen] = React.useState(false);
-
   return React.createElement(
-    'div',
-    { className: 'relative' },
-    React.createElement(
-      'button',
-      {
-        type: 'button',
-        onClick: () => setOpen(o => !o),
-        className: 'flex items-center justify-center w-6 h-6 text-ink-3 hover:text-ink transition-colors',
-      },
-      React.createElement(open ? X : Menu, { size: 14 })
-    ),
-    open ? React.createElement(MenuDropdown, { onClose: () => setOpen(false) }) : null
+    'button',
+    {
+      type: 'button',
+      'aria-label': 'Menu',
+      onClick: e => window.dispatchEvent(new CustomEvent('cdx:menu', { detail: { anchor: e.currentTarget.getBoundingClientRect() } })),
+      className: 'flex items-center justify-center w-7 h-7 rounded-[3px] text-ink-3 hover:text-ink hover:bg-box transition-colors',
+    },
+    React.createElement(Menu, { size: 15 })
   );
 }
 

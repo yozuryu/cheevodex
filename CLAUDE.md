@@ -26,8 +26,8 @@ Personal RetroAchievements profile tracker. Static site — React, Tailwind, Luc
 | Game page (achievements, friend comparison, leaderboards) | [`docs/pages/game.md`](docs/pages/game.md) |
 | Adding a new game to the Professor Oak Challenge guide | [`docs/poc-data-generation.md`](docs/poc-data-generation.md) |
 | Achievement page | [`docs/pages/achievement.md`](docs/pages/achievement.md) |
-| Console page | [`docs/pages/console.md`](docs/pages/console.md) |
-| Search page | [`docs/pages/search.md`](docs/pages/search.md) |
+| Consoles page (catalog, per-console loading, search) | [`docs/pages/console.md`](docs/pages/console.md) |
+| Search page (redirects to Consoles) | [`docs/pages/search.md`](docs/pages/search.md) |
 | Settings page (removed — see the note) | [`docs/pages/settings.md`](docs/pages/settings.md) |
 | Changelog page | [`docs/pages/changelog.md`](docs/pages/changelog.md) |
 | `ra-api.js` full endpoint reference | [`profile/utils/ra-api.md`](profile/utils/ra-api.md) |

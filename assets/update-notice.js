@@ -25,9 +25,8 @@
       box-shadow: 0 8px 32px rgb(0 0 0 / 0.65); font-family: var(--font); color: var(--ink);
       animation: cdx-up-in .35s cubic-bezier(0.34, 1.4, 0.64, 1) backwards;
     }
-    .cdx-up::before {   /* the dex's blue rule along the top edge, like a section heading's underline */
-      content: ''; position: absolute; left: 0; right: 0; top: -1px; height: 2px; border-radius: 3px 3px 0 0;
-      background: linear-gradient(90deg, rgb(var(--c-accent) / 0.9), rgb(var(--c-accent) / 0.1));
+    .cdx-up::before {   /* the dex's blue rule along the top edge, solid */
+      content: ''; position: absolute; left: 0; right: 0; top: -1px; height: 2px; border-radius: 3px 3px 0 0; background: var(--accent);
     }
     .cdx-up.out { animation: cdx-up-out .25s ease-in forwards; }
     @keyframes cdx-up-in { from { transform: translate(-50%, calc(100% + 28px)); } }

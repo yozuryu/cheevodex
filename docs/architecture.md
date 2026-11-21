@@ -35,6 +35,7 @@ cheevodex/
 │   ├── pwa-install.js  # Install banner
 │   ├── update-notice.js # New-edition notice (new version published → Reload)
 │   ├── palette.js      # Command palette: one search over the data saved on this device (⌘K / Ctrl+K / '/')
+│   ├── match.js        # Typo-tolerant word matching + the Web Worker searcher (palette, Consoles page)
 │   └── ui.js           # Shared Topbar (Cheevodex brand, desktop page links, ☰ menu) + Footer (React.createElement, no JSX)
 │
 ├── social/             # Social: friends' unlocks, following / followers, Compare (docs/pages/social.md)
@@ -53,7 +54,7 @@ cheevodex/
 ├── game/               # Game detail page (?id=<gameId>)
 ├── achievement/        # Achievement detail page (?id=<achievementId>)
 ├── console/            # Console list + per-console game list (?id=<consoleId>)
-├── search/             # Cross-console game search, backed by the IDB catalog
+├── search/             # Redirect to console/ (the search moved into Consoles)
 └── changelog/          # Changelog viewer page
 ```
 
@@ -210,10 +211,10 @@ Bust cache: `sessionStorage.clear()` for session data, `localStorage.removeItem(
 `assets/palette.js` (ES module, no JSX; loaded by `mobile-nav.js` on every page with the nav, its own React root). One search over **what this device has already saved**, never the network: `getLocalSearchData(username)` in `ra-api.js` reads the IDB catalog (`games` / `consoles`), your unlocks (`progress`), your backlog, following / followers (`friend_list`), their profiles (`social_profiles`), friends' unlocks (`friend_activity`) and the completion map, without expiry.
 
 - **Opens** from the bottom bar's middle Search button, the desktop top bar's field, ⌘K (Mac) / Ctrl+K (elsewhere; the page takes it before the browser's own search box), or `/` when not typing in a field; `window.dispatchEvent(new Event('cdx:palette'))` from code. Phones: full screen, field on top; md+: centred, 640px, with a footer of keys and what is saved
-- **Results** in groups ordered by their best match: Games (your games first with count and ring, Backlog tagged, then the catalog; a number or `No.123` opens that Dex No.), Players (you, following, followers), Go to (pages). Nothing typed: Recent (what was opened from the palette, `cdx:paletteRecent`, six) and Go to. **See all results** opens `search/?q=`
+- **Results** in groups ordered by their best match: Games (your games first with count and ring, Backlog tagged, then the catalog; a number or `No.123` opens that Dex No.), Players (you, following, followers), Go to (pages). Nothing typed: Recent (what was opened from the palette, `cdx:paletteRecent`, six) and Go to. **See all results** opens `console/?q=` (the Consoles page)
 - **Speed**: the field is instant; the search runs once typing pauses (`DEBOUNCE_MS`, 140 ms; the first letter and clearing at once), in a **Web Worker** built from the matcher's own functions (`makeSearcher`: the saved names go to it once per open, then one query at a time; an answer for an outdated query is dropped; without workers it runs on the page). The last finished results stay on screen while a newer search runs; a blue line slides along the field's bottom edge while the data loads or a search is on its way, and shimmer rows show only when you type before the saved data is read. Enter before the results catch up opens the top one once they do. On 30,000 titles a search takes ~3 ms clean, ~20 ms with the typo pass (Node; 228 ms before)
-- **Matching** (`match()`): word based. Every typed word must match a word of the name, from its start, inside it (3+ letters), or within a typo (Damerau–Levenshtein: one from 4 letters, two from 7); numbers exactly; one typed word of 2–5 letters may be the title's initials (ff, kh, smt). Fewer extra words rank higher; your games and Backlog get a boost. Typo-only matches show only when nothing matches without one, so the typo pass runs only when the clean pass finds nothing; it skips words sharing neither of the first two letters (nor their swap) and gives up on a word once it is over the typo budget
-- **Not saved yet** (gold rows that open the page that loads it): the catalog missing or partial (`N of M consoles`, from the `consoles` store's `fetchedAt`) → Search; friends missing → Social. Shown with nothing typed (above Go to), under an empty result, and after game results while the catalog is incomplete
+- **Matching** (`match()`, in `assets/match.js`, shared with the Consoles page): word based. Every typed word must match a word of the name, from its start, inside it (3+ letters), or within a typo (Damerau–Levenshtein: one from 4 letters, two from 7); numbers exactly; one typed word of 2–5 letters may be the title's initials (ff, kh, smt). Fewer extra words rank higher; your games and Backlog get a boost. Typo-only matches show only when nothing matches without one, so the typo pass runs only when the clean pass finds nothing; it skips words sharing neither of the first two letters (nor their swap) and gives up on a word once it is over the typo budget
+- **Not saved yet** (gold rows that open the page that loads it): the catalog missing or partial (`N of M consoles`, from the `consoles` store's `fetchedAt`) → Consoles; friends missing → Social. Shown with nothing typed (above Go to), under an empty result, and after game results while the catalog is incomplete
 
 ## PWA / Service Worker
 
@@ -231,8 +232,22 @@ Bust cache: `sessionStorage.clear()` for session data, `localStorage.removeItem(
 - Adds `padding-bottom` to body
 - Repositions `.scroll-top-btn` above the nav bar
 
-Six nav slots: Profile, Progress, Activity, Backlog, Social, Menu. The bar is full — a seventh
-slot makes the 8px labels unreadable at 360px, so new destinations go in the Menu sheet instead.
+Five nav slots: Profile, Social, Search (a raised round button in the middle: opens the palette), Consoles,
+Menu. New destinations go in the Menu, not a sixth slot.
 
-The Menu sheet (slide-up, opened from the Menu slot) holds: Stats (`/profile/?tab=stats`),
-Consoles, Search, Changelog, Refresh Data, Purge Cache, Debug Mode, Log Out.
+**The menu** is one menu for every screen, built here: the Menu slot opens it as a bottom sheet (drag it down
+from the handle, or from anywhere once it's scrolled to the top; tap outside; or press Back, since opening it
+pushes a history entry `{ cdxOverlay: 'menu' }`); the desktop top bar's ☰ (`TopbarMenu` in `assets/ui.js`)
+sends `cdx:menu` with its button's rect and it opens as a popover under it. Rows: who's signed in (links to their
+RA profile), Changelog, Install the app (only when the browser has offered `beforeinstallprompt`), Refresh my
+data, Get the latest app (purge), Debug mode (a switch), Log out. Classes `.msheet*` / `.mm-*` in its own `<style>`.
+
+**Overlays and Back:** the palette and the menu sheet each push a history entry when they open, so the phone's
+Back closes them without leaving the page; closing them any other way calls `history.back()`. A link followed
+from either uses `location.replace`, so Back from there lands on the page, not on it twice. A page with its own
+`popstate` handling ignores a pop that lands on the address it already shows (Consoles: `urlRef`).
+
+**No gradient lines, no sliding loading lines.** Lines (heading underlines, rules, edges, rails) are solid.
+Loading is a spinner (Lucide `Loader2` or the palette's ring), never a line sweeping across; a bar only when the
+fraction is real (Consoles: N of M consoles), and then a solid fill. Gradient fills and glows (header glows, the
+gold avatar ring, mastered / beaten tints, the feed's run washes, art scrims) and the skeleton shimmer are fine.

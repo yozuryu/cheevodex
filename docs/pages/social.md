@@ -1,15 +1,15 @@
 # Social Page
 
-`social/` (`social/app.js`, one React app like every page). Your friends' unlocks and the people you follow / who follow you. It used to be the profile's Social tab plus the Activity tab's Friends view; the profile redirects old links here.
+`social/` (`social/app.js`, one React app like every page). Your friends' activity (their unlocks) and the people you follow / who follow you. It used to be the profile's Social tab plus the Activity tab's Friends view; the profile redirects old links here.
 
 ## Layout
 
 | Screen | Layout |
 |---|---|
-| Phone (< md) | Heading **Social** with the current part's sync time and controls; chips **Unlocks · Following N · Followers N** (`?view=`, absent = unlocks); the chosen part below |
-| md and up | Two columns: **Friends' unlocks** (feed) beside a 400px **People** rail (Following / Followers chips and the A–Z / Points sort, which sits on the right as one unit and drops to its own line rather than splitting) |
+| Phone (< md) | The header (icon, **Social**, following / followers counts), then a sticky `TabBar` (`assets/tabs.js`) **Activity · Following N · Followers N** (`?view=`, absent = activity; the old `?view=unlocks` opens Activity), the open tab's sync time and controls, the tab below. `useSwipeTabs` swipes between them like the profile's tabs |
+| md and up | The same header, then two columns: **Activity** (feed) beside a 400px **People** rail (Following / Followers chips and the A–Z / Points sort, which sits on the right as one unit and drops to its own line rather than splitting) |
 
-`useWide()` (`matchMedia('(min-width: 768px)')`) picks the layout; on phones `SocialTab` gets `subTab` from the page chips and `hideTabs`.
+`useWide()` (`matchMedia('(min-width: 768px)')`) picks the layout; on phones `SocialTab` gets `subTab` from the tab bar and `hideTabs`. Day headings pin under the tab bar on phones (`.tl-tabs .tday`, 43px) and under the top bar on desktop (`.soc .tl-tabs .tday`, 37px).
 
 ## Data
 

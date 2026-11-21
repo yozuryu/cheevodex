@@ -25,12 +25,13 @@ Cheevodex reads your [RetroAchievements](https://retroachievements.org) account 
 - **The Dex.** Every game you have played as a numbered entry with its progress ring. Search by name or dex number, filter to unbeaten, beaten or mastered, or read it console by console.
 - **Dex records.** Each game opens as a record: a completion ring (blue in progress, silver beaten, gold mastered), achievements, points and time played, and a progression path with one diamond per progression achievement. Then the achievements themselves, the leaderboards, the community and the supported hashes.
 - **Activity.** The games you moved in the last 14 days, every run of unlocks day by day, a year of streaks and a heatmap.
-- **Friends.** Everyone you follow on one timeline, each in a colour worked out from their name. Compare any shared game side by side.
+- **Social.** Everyone you follow on one timeline, each in a colour worked out from their name, beside who you follow and who follows you. Compare any shared game side by side.
 - **Backlog.** Your RetroAchievements want-to-play list as an index: the games you have started up next, then every game by console under A to Z, lit up once you start it, with the points on offer for the rest.
 - **Stats.** Streaks, points across the year, masteries by month, consoles and how rare your unlocks are.
-- **Search and consoles.** Find any game across every system RetroAchievements supports, or browse a console's whole library.
+- **Search from anywhere.** One search over games, players and pages: the button in the middle of the bar on a phone, ⌘K or Ctrl+K on a computer. It forgives typos, puts your own games first and works on what Cheevodex has already loaded.
+- **Every console.** Browse any system's whole library, or search the full RetroAchievements catalog by name.
 - **Anyone's dex.** Open any RetroAchievements username to read their dex and progress.
-- **An app on your phone.** Install it from your browser's menu; it opens full screen and works on phones and computers alike.
+- **An app on your phone.** Install it from your browser's menu; it opens full screen, works on phones and computers alike, and tells you when a new edition is out.
 
 <img src="docs/images/friends.jpg" alt="The Friends timeline: everyone you follow in a row, then their unlocks as posts, each friend in their own colour, hardcore runs in gold" width="100%">
 
