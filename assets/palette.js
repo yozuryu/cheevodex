@@ -14,6 +14,7 @@ const h = React.createElement;
 const { useState, useEffect, useMemo, useRef } = React;
 const BASE = new URL('../', import.meta.url).href;
 const RECENT_KEY = 'cdx:paletteRecent';
+const DEBOUNCE_MS = 140;
 const isMac = /mac|iphone|ipad/i.test(navigator.userAgentData?.platform || navigator.platform || navigator.userAgent);
 
 // ── Matching ──────────────────────────────────────────────────────────────────
@@ -23,45 +24,101 @@ const isMac = /mac|iphone|ipad/i.test(navigator.userAgentData?.platform || navig
 // names with fewer words beyond the ones typed come first. null = no match.
 const norm = t => String(t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 const words = t => norm(t).split(' ').filter(Boolean);
-function dl(a, b) {
-  const m = a.length, n = b.length, d = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)]);
-  for (let j = 1; j <= n; j++) d[0][j] = j;
-  for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) {
-    const c = a[i - 1] === b[j - 1] ? 0 : 1;
-    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + c);
-    if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
-  }
-  return d[m][n];
-}
-function tokenScore(t, ws) {
-  let best = null;
-  const allow = /^\d+$/.test(t) ? 0 : t.length >= 7 ? 2 : t.length >= 4 ? 1 : 0;   // three letters is too short to guess a typo
-  for (const w of ws) {
-    let sc = null;
-    if (w === t) sc = 0;
-    else if (w.startsWith(t)) sc = 0.1;
-    else if (allow === 0) sc = null;
-    else if (t.length >= 3 && w.includes(t)) sc = 0.4;
-    else {
-      const d = Math.min(dl(t, w), dl(t, w.slice(0, t.length)));
-      if (d <= allow) sc = 0.5 + d * 0.2;
+// Damerau–Levenshtein distance, giving up past `max` (returns max + 1): the length gap alone rules most words out,
+// and a row whose best cell is already over `max` can't come back under it
+function dl(a, b, max) {
+  const m = a.length, n = b.length;
+  if (Math.abs(m - n) > max) return max + 1;
+  let pp = null, p = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    const c = [i];
+    let low = i;
+    for (let j = 1; j <= n; j++) {
+      let v = Math.min(p[j] + 1, c[j - 1] + 1, p[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (pp && i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) v = Math.min(v, pp[j - 2] + 1);
+      c[j] = v;
+      if (v < low) low = v;
     }
-    if (sc != null && (best == null || sc < best)) best = sc;
-    if (best === 0) break;
+    if (low > max) return max + 1;
+    pp = p; p = c;
+  }
+  return p[n];
+}
+// One typed word against a name's words: exact, start, inside first (cheap); a typo only when none of those hit
+// and `typos` is on
+function tokenScore(t, ws, typos = true) {
+  let best = null;
+  for (const w of ws) {
+    if (w === t) return 0;
+    if (w.startsWith(t)) best = 0.1;
+    else if (best == null && t.length >= 3 && w.includes(t)) best = 0.4;
+  }
+  if (best != null || !typos) return best;
+  const allow = /^\d+$/.test(t) ? 0 : t.length >= 7 ? 2 : t.length >= 4 ? 1 : 0;   // three letters is too short to guess a typo
+  if (!allow) return null;
+  for (const w of ws) {
+    // a real typo almost never breaks both of the first two letters: skip words sharing neither (nor a swap of them)
+    if (t[0] !== w[0] && t[1] !== w[1] && !(t[0] === w[1] && t[1] === w[0])) continue;
+    const d = Math.min(dl(t, w, allow), w.length > t.length ? dl(t, w.slice(0, t.length), allow) : allow + 1);
+    if (d <= allow && (best == null || 0.5 + d * 0.2 < best)) best = 0.5 + d * 0.2;
+    if (best === 0.7) break;
   }
   return best;
 }
-function match(query, ws) {
+// The query, prepared once per search: its words, and whether it can be a title's initials
+const prepare = query => {
   const qs = words(query);
+  return { qs, ini: qs.length === 1 && /^[a-z]{2,5}$/.test(qs[0]) ? qs[0] : null };
+};
+// An item's words (`ws`) and initials (`ini`) are worked out once, when the data loads
+function match(pq, item, typos = true) {
+  const { qs, ini } = pq, ws = item.ws;
   if (!qs.length) return null;
-  // Initials: "ff" → Final Fantasy, "kh2" isn't, "kh" → Kingdom Hearts (one typed word of 2–5 letters)
-  if (qs.length === 1 && /^[a-z]{2,5}$/.test(qs[0]) && ws.length >= qs[0].length && ws.map(w => w[0]).join('').startsWith(qs[0])
-    && tokenScore(qs[0], ws) == null) return 0.35 + Math.max(0, ws.length - qs[0].length) * 0.03;
+  // Initials: "ff" → Final Fantasy, "kh" → Kingdom Hearts (one typed word of 2–5 letters)
+  if (ini && ws.length >= ini.length && item.ini.startsWith(ini) && tokenScore(ini, ws) == null) {
+    const sc = new Number(0.35 + Math.max(0, ws.length - ini.length) * 0.03); sc.typo = false; return sc;
+  }
   let total = 0, typo = false;
-  for (const t of qs) { const sc = tokenScore(t, ws); if (sc == null) return null; total += sc; if (sc >= 0.5) typo = true; }
+  for (const t of qs) { const sc = tokenScore(t, ws, typos); if (sc == null) return null; total += sc; if (sc >= 0.5) typo = true; }
   const score = new Number(total / qs.length + Math.max(0, ws.length - qs.length) * 0.03);
   score.typo = typo;   // matched only with a typo: shown only when nothing matches without one
   return score;
+}
+const withIni = item => ({ ...item, ini: item.ws.map(w => w[0]).join('') });
+
+// Every list against the query: clean matches first (cheap), the typo pass only when nothing matched cleanly, since
+// typo-only matches are hidden whenever a clean one exists. Returns per list [index, score, typo] rows
+function searchAll(lists, query) {
+  const pq = prepare(query);
+  const pass = typos => lists.map(list => {
+    const out = [];
+    for (let i = 0; i < list.length; i++) { const m = match(pq, list[i], typos); if (m != null) out.push([i, +m, m.typo ? 1 : 0]); }
+    return out;
+  });
+  const all = pass(false);
+  return all.some(rs => rs.length) ? all : pass(true);
+}
+
+// The search runs in a Web Worker built from the functions above, so a long catalog never freezes typing: the
+// worker gets the names once ({ ws, ini } per item), then one query at a time. Without workers it runs here
+function makeSearcher(lists) {
+  try {
+    const src = `const norm = ${norm}; const words = ${words}; ${dl} ${tokenScore} const prepare = ${prepare}; ${match} ${searchAll}
+      let lists = []; onmessage = e => { if (e.data.lists) lists = e.data.lists; else postMessage({ id: e.data.id, all: searchAll(lists, e.data.query) }); };`;
+    const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+    const worker = new Worker(url);
+    URL.revokeObjectURL(url);
+    worker.postMessage({ lists });
+    let seq = 0;
+    const waiting = new Map();
+    worker.onmessage = e => { waiting.get(e.data.id)?.(e.data.all); waiting.delete(e.data.id); };
+    return {
+      search: query => new Promise(res => { const id = ++seq; waiting.set(id, res); worker.postMessage({ id, query }); }),
+      stop: () => worker.terminate(),
+    };
+  } catch {
+    return { search: query => Promise.resolve(searchAll(lists, query)), stop: () => {} };
+  }
 }
 
 // ── Data ──────────────────────────────────────────────────────────────────────
@@ -106,7 +163,7 @@ const PAGES = [
   { key: 'p-console', label: 'Consoles',  hint: 'Every console and its games',      href: 'console/',   icon: 'pad' },
   { key: 'p-search',  label: 'Search',    hint: 'Browse the whole catalog',         href: 'search/',    icon: 'search' },
   { key: 'p-log',     label: 'Changelog', hint: 'What changed in each edition',     href: 'changelog/', icon: 'log' },
-].map(p => ({ ...p, ws: words(`${p.label} ${p.hint}`) }));
+].map(p => withIni({ ...p, ws: words(`${p.label} ${p.hint}`) }));
 
 const ICONS = {
   search: '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>',
@@ -172,7 +229,11 @@ function PageRow({ page }) {
 
 function Palette({ onClose }) {
   const creds = getCredentials();
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState('');          // the field, instant
+  const [term, setTerm] = useState('');    // what is searched: q once typing pauses (DEBOUNCE_MS), or at once on Enter
+  const openFirst = useRef(false);         // Enter pressed before the search caught up: open the top result once it has
+  const [found, setFound] = useState(null);   // the last finished search: { query, all } (shown until a newer one lands)
+  const searcher = useRef(null);
   const [data, setData] = useState(null);
   const [active, setActive] = useState(0);
   const inputRef = useRef(null), listRef = useRef(null);
@@ -189,7 +250,7 @@ function Palette({ onClose }) {
     if (!creds) return;
     let live = true;
     getLocalSearchData(creds.username).then(d => {
-      if (live) setData({ games: buildGames(d), players: buildPlayers(d, creds.username), consoles: d.consoles, consolesTotal: d.consolesTotal, hasSocial: !!d.social });
+      if (live) setData({ games: buildGames(d).map(withIni), players: buildPlayers(d, creds.username).map(withIni), consoles: d.consoles, consolesTotal: d.consolesTotal, hasSocial: !!d.social });
     });
     return () => { live = false; };
   }, []);
@@ -208,9 +269,29 @@ function Palette({ onClose }) {
   }, [data]);
 
   // Results: groups of { kind, items }; a dex number jumps to that entry first
+  // A searcher per open, fed the saved names once
+  useEffect(() => {
+    if (!data) return;
+    const s = makeSearcher([data.games, data.players, PAGES].map(list => list.map(x => ({ ws: x.ws, ini: x.ini }))));
+    searcher.current = s;
+    return () => s.stop();
+  }, [data]);
+  useEffect(() => {
+    if (!term || !data || !searcher.current) return;
+    let live = true;
+    searcher.current.search(term).then(all => { if (live) setFound({ query: term, all }); });
+    return () => { live = false; };
+  }, [term, data]);
+
+  useEffect(() => {
+    const t = q.trim();
+    if (t === term) return;
+    const id = setTimeout(() => setTerm(t), t && term ? DEBOUNCE_MS : 0);   // the first letter and clearing answer at once
+    return () => clearTimeout(id);
+  }, [q]);
+
   const groups = useMemo(() => {
-    const query = q.trim();
-    if (!query) {
+    if (!term) {
       const recent = readRecent();
       return [
         recent.length && { label: 'Recent', items: recent.map(r => ({ ...r, kind: 'recent' })) },
@@ -218,16 +299,17 @@ function Palette({ onClose }) {
         { label: 'Go to', items: PAGES.map(page => ({ kind: 'page', key: page.key, page })) },
       ].filter(Boolean);
     }
-    if (!data) return [];
+    if (!data || !found) return [];
+    const query = found.query;   // the last finished search, while a newer one is on its way
     const out = [];
     const num = query.match(/^(?:no\.?\s*)?(\d{1,6})$/i);
     if (num) {
       const g = data.games.find(x => x.id === Number(num[1]));
       out.push({ label: 'Dex No.', items: [g ? { kind: 'game', key: `g-${g.id}`, g } : { kind: 'game', key: `g-${num[1]}`, g: { id: Number(num[1]), base: `Open entry No.${num[1]}`, title: '', consoleName: 'Not saved on this device yet' } }] });
     }
-    const all = [data.games, data.players, PAGES].map(list => list.map(item => ({ item, m: match(query, item.ws) })).filter(r => r.m != null));
-    const clean = all.some(rs => rs.some(r => !r.m.typo));   // anything matched without a typo: hide the typo-only matches
-    const find = i => all[i].filter(r => !clean || !r.m.typo).map(r => ({ item: r.item, s: +r.m }));   // 0 games, 1 players, 2 pages
+    const lists = [data.games, data.players, PAGES];
+    const clean = found.all.some(rs => rs.some(r => !r[2]));
+    const find = i => found.all[i].filter(r => !clean || !r[2]).map(([k, s]) => ({ item: lists[i][k], s }));   // 0 games, 1 players, 2 pages
     // Your games rank above the catalog when the match is as good
     const games = find(0).map(r => ({ ...r, s: r.s - (r.item.yours ? 0.08 : r.item.want ? 0.04 : 0) }))
       .sort((a, b) => a.s - b.s || a.item.base.length - b.item.base.length).slice(0, 8);
@@ -244,9 +326,12 @@ function Palette({ onClose }) {
     if (!ranked.length && notes.length) out.push({ label: 'Not saved yet', items: notes });
     else if (games.length && notes.some(n => n.key === 'n-games')) out.push({ label: 'Not saved yet', items: notes.filter(n => n.key === 'n-games') });
     return out;
-  }, [q, data, notes]);
+  }, [term, found, data, notes]);
   const flat = useMemo(() => groups.flatMap(gr => gr.items), [groups]);
-  useEffect(() => setActive(0), [q]);
+  useEffect(() => {
+    setActive(0);
+    if (openFirst.current && data && (!term || found?.query === term)) { openFirst.current = false; open(flat[0]); }
+  }, [term, found, data]);
   useEffect(() => { listRef.current?.querySelector('.cpl-row.on')?.scrollIntoView({ block: 'nearest' }); }, [active]);
 
   const open = item => {
@@ -261,7 +346,11 @@ function Palette({ onClose }) {
   const onKey = e => {
     if (e.key === 'ArrowDown') { e.preventDefault(); setActive(a => Math.min(flat.length - 1, a + 1)); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(a => Math.max(0, a - 1)); }
-    else if (e.key === 'Enter') { e.preventDefault(); open(flat[active]); }
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (q.trim() !== term || !data) { openFirst.current = true; setTerm(q.trim()); }   // results not caught up yet
+      else open(flat[active]);
+    }
     else if (e.key === 'Escape') { e.preventDefault(); onClose(); }
   };
 
@@ -278,11 +367,13 @@ function Palette({ onClose }) {
       onMouseMove: () => idx !== active && setActive(idx), onClick: () => open(item) }, content);
   };
 
-  const query = q.trim();
-  const searching = query && !data;
+  const query = term;
+  const searching = !!q.trim() && !data;                    // typed before the saved data was read: shimmer rows
+  const settled = !term || found?.query === term;           // the results are for exactly what is typed
+  const busy = !data || q.trim() !== term || !settled;      // the line under the field: loading, or a search on its way
   return h('div', { className: 'cpl-root', onMouseDown: e => { if (e.target === e.currentTarget) onClose(); } },
     h('div', { className: 'cpl', role: 'dialog', 'aria-modal': true, 'aria-label': 'Search Cheevodex' },
-      h('div', { className: 'cpl-bar' },
+      h('div', { className: `cpl-bar ${busy ? 'busy' : ''}` },
         h(Svg, { name: 'search', size: 17 }),
         h('input', { ref: inputRef, value: q, onChange: e => setQ(e.target.value), onKeyDown: onKey, placeholder: 'Search games, players and pages',
           className: 'cpl-input', type: 'search', enterKeyHint: 'go', autoComplete: 'off', spellCheck: false, 'aria-controls': 'cpl-list', id: 'cpl-input' }),
@@ -290,11 +381,11 @@ function Palette({ onClose }) {
         h('button', { type: 'button', className: 'cpl-x', onClick: onClose, 'aria-label': 'Close' }, h(Svg, { name: 'x', size: 16 }))),
       h('div', { ref: listRef, id: 'cpl-list', role: 'listbox', className: 'cpl-list' },
         searching ? [0, 1, 2, 3].map(k => h('div', { key: k, className: 'cpl-sk' }, h('span', { className: 'shimmer' }), h('span', { className: 'shimmer' })))
-        : !groups.some(gr => gr.label !== 'Not saved yet') && query ? [h('div', { key: 'none', className: 'cpl-none' },
+        : !groups.some(gr => gr.label !== 'Not saved yet') && query && settled ? [h('div', { key: 'none', className: 'cpl-none' },
             h('b', null, `Nothing saved here matches “${query}”`)),
             ...groups.map(gr => h('div', { key: gr.label, className: 'cpl-group', role: 'group', 'aria-label': gr.label },
               h('div', { className: 'cpl-label' }, gr.label), gr.items.map(row)))]
-        : groups.length === 0 ? h('div', { className: 'cpl-none' },
+        : groups.length === 0 ? settled && h('div', { className: 'cpl-none' },
             h('b', null, `Nothing saved here matches “${query}”`),
             h('span', null, 'The palette searches what this device has already loaded. The Search page fetches the whole catalog.'))
         : groups.map(gr => h('div', { key: gr.label, className: 'cpl-group', role: 'group', 'aria-label': gr.label },
@@ -319,7 +410,12 @@ css.textContent = `
     border-radius: 4px; box-shadow: 0 24px 64px rgb(0 0 0 / 0.7); overflow: hidden; font-family: var(--font); color: var(--ink); animation: cpl-in .18s cubic-bezier(.2,.8,.2,1); }
   @keyframes cpl-bd { from { opacity: 0; } }
   @keyframes cpl-in { from { opacity: 0; transform: translateY(-8px) scale(.98); } }
-  .cpl-bar { display: flex; align-items: center; gap: 10px; padding: 0 12px 0 16px; height: 54px; border-bottom: 1px solid var(--line); color: var(--ink-3); flex-shrink: 0; }
+  .cpl-bar { position: relative; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 16px; height: 54px; border-bottom: 1px solid var(--line); color: var(--ink-3); flex-shrink: 0; }
+  /* Loading, or a search on its way: a short blue line sliding along the field's bottom edge */
+  .cpl-bar::after { content: ''; position: absolute; left: 0; bottom: -1px; height: 2px; width: 30%; background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0; transition: opacity .15s; pointer-events: none; }
+  .cpl-bar.busy::after { opacity: 1; animation: cpl-busy 0.9s ease-in-out infinite; }
+  @keyframes cpl-busy { from { transform: translateX(-100%); } to { transform: translateX(340%); } }
   .cpl-input { flex: 1; min-width: 0; height: 100%; background: none; border: 0; outline: 0; color: var(--ink); font: 500 16px var(--font); }
   .cpl-input::placeholder { color: var(--ink-3); }
   .cpl-input::-webkit-search-cancel-button { display: none; }
@@ -364,7 +460,7 @@ css.textContent = `
     @keyframes cpl-up { from { opacity: 0; transform: translateY(16px); } }
     .cpl-list { padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
   }
-  @media (prefers-reduced-motion: reduce) { .cpl-root, .cpl { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { .cpl-root, .cpl { animation: none; } .cpl-bar.busy::after { animation: none; left: 35%; } }
 `;
 document.head.appendChild(css);
 

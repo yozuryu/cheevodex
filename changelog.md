@@ -18,6 +18,7 @@
 - **Forgiving with typos.** "breth of fyre" finds Breath of Fire, "pixl" finds pixelmoth, initials like "ff" or "smt" work, and a number opens that Dex No.
 - **Your games first.** Your own games come with their count and ring, Backlog games are tagged, and See all results opens the Search page with your words
 - **It says what's missing.** When the catalog or your friends aren't saved yet, the search says so and takes you to the page that loads them
+- **Smooth while you type.** It waits for a short pause before searching and does the work in the background, so even a full catalog never freezes the screen; a thin line under the field shows a search on its way
 
 ### Navigation
 
