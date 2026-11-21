@@ -16,7 +16,7 @@
 
 ---
 
-Cheevodex reads your [RetroAchievements](https://retroachievements.org) account and turns it into a dex: every game you have touched gets an entry and a number, its RetroAchievements game ID, and each one opens into a record of how far you are. There is nothing to install and no account to make. Sign in with your RA username and web API key, and it installs to your phone like an app.
+Cheevodex is a free, open-source [RetroAchievements](https://retroachievements.org) tracker for your phone and computer. It reads your account and turns it into a dex: every game you have touched gets an entry and a number, its RetroAchievements game ID, and each one opens into a record of how far you are. There is nothing to install and no account to make. Sign in with your RA username and web API key, and it installs to your phone like an app.
 
 <img src="docs/images/record.jpg" alt="A dex record taken apart: the dex number, hardcore badge, completion ring, ledger of achievements, points and time, and the progression path" width="100%">
 
