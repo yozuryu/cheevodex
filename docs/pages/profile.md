@@ -12,12 +12,11 @@
 | Overview | User | `?tab=overview` | Last played, Recent unlocks, User stats, Game awards |
 | Recent | Clock | `?tab=recent` | Search over the library; the latest 15, or up to 50 matches |
 | Progress | BarChart2 | `?tab=progress` | Views + Mastered toggle, search, sort |
-| Activity | Activity | `?tab=activity` | Mine / Friends chips; lazy-loads achievement chunks |
+| Activity | Activity | `?tab=activity` | Your own runs; lazy-loads achievement chunks |
 | Backlog | Star | `?tab=backlog` | Want-to-play list; triggers `fetchBacklog` on first open |
-| Social | Users | `?tab=social` | Following / followers; triggers `fetchSocial` on first open |
 | Stats | PieChart | `?tab=stats` | Own profile only |
 
-Tab state persists in the URL. `profileTabs` (in `App`) is the single ordered list: it feeds the shared `TabBar` (`assets/tabs.js`: icon + uppercase label, sliding blue underline, sideways scroll, sticky under the status bar on phones and under the top bar from md) and the phone swipe (`useSwipeTabs` on `tabContentRef`). A `.ptabs-anchor` marks the bar's natural spot; `setTab` calls `scrollToTabs(tabBarRef)` so a new tab starts at its top with the bar pinned. The layout follows Savepoint's RA profile (CHV-026–030); the phone bottom nav goes to pages, not tabs.
+Tab state persists in the URL. Social is its own page now (`social/`, `docs/pages/social.md`): old links to `?tab=social` or `?tab=activity&view=friends` redirect there (top of `profile/app.js`). `profileTabs` (in `App`) is the single ordered list: it feeds the shared `TabBar` (`assets/tabs.js`: icon + uppercase label, sliding blue underline, sideways scroll, sticky under the status bar on phones and under the top bar from md) and the phone swipe (`useSwipeTabs` on `tabContentRef`). A `.ptabs-anchor` marks the bar's natural spot; `setTab` calls `scrollToTabs(tabBarRef)` so a new tab starts at its top with the bar pinned. The layout follows Savepoint's RA profile (CHV-026–030); the phone bottom nav goes to pages, not tabs.
 
 ## Dex (CHV-033, CHV-037)
 
@@ -71,47 +70,15 @@ Filters use Savepoint's shared filter styles (`.frow` / `.fchip` / `.fsep` / `.f
 | Trigger | Fetch | State updated |
 |---|---|---|
 | Backlog tab opens (first time) | `getBacklog()` from IDB, then `fetchBacklog()` | `backlogData` |
-| Social tab opens (first time) | `fetchSocial()` | `socialData` |
 | Activity tab scroll (sentinel ref) | `fetchAchievementsChunk(u, k, idx)` idx 1–3 | `achievementChunks` |
 | Stats tab opens (first time) | `loadAchievements()` — same call the Activity tab makes, shared state | `achievements` |
 | Game modal opens (achievements not yet loaded) | `fetchGameDetails(u, k, gameId)` | `gamesData.detailedGameProgress[gameId]` |
-| Friends view opens (first time, own session) | `fetchFriendsActivity()` | `friendsActivity`, `friendsActivityStatus` |
 
-## Social Timeline (Activity Tab — Friends View)
+## Activity tab
 
-The Activity tab has a **Mine / Friends** toggle. Friends view shows a merged timeline of the authed user's own achievements + all followed users' achievements, as a timeline of friends' posts by day (runs: user + game within a 1-hour window; a friend's consecutive runs grouped), under a strip of active friends.
-
-### State (main app)
-
-| State | Type | Purpose |
-|---|---|---|
-| `socialView` | `'mine' \| 'friends'` | Active sub-tab |
-| `friendsActivityStatus` | `'idle' \| 'loading' \| 'updating' \| 'done' \| 'error'` | Fetch lifecycle |
-| `friendsActivity` | `{ [username]: achievement[] }` | Per-friend achievement arrays (streams in) |
-| `friendsFetchProgress` | `{ done, total } \| null` | Progress counter for loading indicator |
-| `friendsFetchingRef` | `useRef(boolean)` | Re-entry guard for the fetch useEffect |
-
-### Fetch flow
-
-1. User switches to Friends view → useEffect fires (deps: `activeTab`, `socialView`, `friendsActivityStatus`)
-2. Resolve following list: `socialData?.following.results ?? fetchSocial()`
-3. `allFriendsCached(followingList)` — if all users have a valid `ra_fa_*` cache entry, skip 'loading' state and resolve instantly
-4. Otherwise set `friendsActivityStatus = 'loading'`; `fetchFriendsActivity` fetches one user at a time (1000ms gap between API calls), streams results via `onUser` callback
-5. On complete: `friendsActivityStatus = 'done'`; on unrecoverable error: `'error'`
-
-### Mine view (ActivityTab)
+### ActivityTab
 
 Savepoint's timeline from `assets/activity-ui.js` (styles: the "Activity timelines" block in `assets/ui.css`): `ActivitySummary` — the dex entries that moved: the page passes rows (`moved` in ActivityTab: games with unlocks in the last 14 days, from `achievements` joined to `games`/`ALL_GAMES`; before = unlocked now − unlocks in the window) drawn as a two-tone `.dring` (`--b` before %, dim; `--p` now %) around the game icon, dex number, console, +N and before → now; three shown, "N more entries" for the rest. Its toggle (remembered as `cheevodex:activitySummary`, open from md) opens past-year index lines, current / best streak, and the year heatmap), sticky `DayHead`s under the tab bar (`.tl-tabs`), and one `MyRun` per run of unlocks in one game: the shared `RunStrip` (icon, title with Subset / tilde tags, subset name, mode icon, console, time range; +N and points in gold; the run's edge and a faint wash in its mode colour, gold hardcore / grey softcore) over the full `unlockRow`s; runs over 5 fold after 4. Picking a day in the heatmap filters the timeline. Dates and times use `assets/time.js` (viewer's timezone).
-
-### Feed rendering (ActivityTab, Friends view)
-
-- `mergedFeed`: own `achievements` + all `friendsActivity` values, sorted newest-first
-- `feedGroups`: consecutive same-user+game runs within 1-hour window → session objects
-- `party`: friends (not you) in the feed with their unlocks and last active, newest first: the strip on top (`.fstrip` / `.fpal`, Everyone first). Tapping one sets `friendSel`, narrowing the timeline and showing a Profile link
-- `friendDays`: friends' runs (filtered), first `visibleSessionCount` (100 more per Show more days), grouped by day; within a day, a friend's consecutive runs become one post. Each day has a `DayHead` (unlocks · friends) and a rail (`.fposts`) of `FriendPost`s: avatar node, name, time, and "+N in N games" when there's more than one run
-- Colours: each friend's avatar ring and name use `friendColor(username)` (hue, saturation and lightness from a hash of the username, within readable bounds; set as `--fc`). The rail (`.fposts`) is padded 6px and the strip has no negative margin, because the content column clips past its left edge; +N is gold; the run's left edge and the strip's faint wash are its mode (`.frun.hc` gold, `.sc` grey, `.mix` split, with hardcore badges underlined in gold)
-- `FriendRun`: the shared `RunStrip` (icon, title with Subset / tilde tags, subset name, mode icon, console, time range; +N and points) linking to the game in compare mode, then a strip of badges (10 on desktop, 7 on phones, gold edge for hardcore) that opens to the full `unlockRow`s
-- Sync time, Refresh and Reset (icon chips) sit beside the Mine / Friends chips; friends whose fetch failed are listed in one quiet line under the strip
 
 ## `rawData` Memo
 
@@ -289,7 +256,7 @@ Computed via `useMemo` from `achievementChunks`. Format: `{ "YYYY-MM-DD": { coun
 Triggered by `?u=<username>` query param. `isVisitorMode = !!targetUser`.
 
 - `fetchProfile(creds.username, creds.apiKey, targetUser)` fetches the target user's data.
-- Valid tabs restricted to `['overview', 'recent', 'progress']` — backlog, activity, social and stats are disabled.
+- Valid tabs restricted to `['overview', 'recent', 'progress']` — backlog, activity and stats are disabled.
 - Topbar breadcrumb shows visited username instead of "Log out" button.
 - `document.title` updates to the visited user's username.
 
@@ -307,7 +274,7 @@ The same sticky `TabBar` as desktop, pinned under the status bar (`top: env(safe
 
 ### Bottom nav
 
-`assets/mobile-nav.js` links pages: Profile, Search, Consoles, Social (`profile/?tab=social`), Menu (Changelog, refresh, purge, debug, log out). On your own profile Social and Profile follow the tab: `setTab` sends `cdx:tab` (the nav lights Social on the Social tab, Profile on the others), and tapping Social here sends `cdx:open-tab`, which switches tabs without a reload. A visitor's profile (`?u=`) has no Social tab, so there Social opens your own.
+`assets/mobile-nav.js` links pages: Profile, Search, Consoles, Social (`social/`), Menu (Changelog, refresh, purge, debug, log out). From md the same four pages are links in the top bar (`PageLinks` in `assets/ui.js`).
 
 ### User stats
 

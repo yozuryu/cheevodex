@@ -34,7 +34,11 @@ cheevodex/
 │   ├── mobile-nav.js   # Shared bottom nav IIFE (mobile only, < 768px)
 │   ├── pwa-install.js  # Install banner
 │   ├── update-notice.js # New-edition notice (new version published → Reload)
-│   └── ui.js           # Shared Topbar (with the Cheevodex brand) + Footer (React.createElement, no JSX)
+│   └── ui.js           # Shared Topbar (Cheevodex brand, desktop page links, ☰ menu) + Footer (React.createElement, no JSX)
+│
+├── social/             # Social: friends' unlocks, following / followers, Compare (docs/pages/social.md)
+│   ├── index.html
+│   └── app.js
 │
 ├── profile/            # Main profile page (also visitor mode via ?u=<username>)
 │   ├── index.html

@@ -1,16 +1,22 @@
 # Changelog
 
-## v26.11.21 — Social in the bottom bar, a note when the dex has a new edition
+## v26.11.21 — Social gets its own page, a note when the dex has a new edition
 
 ### Structure
 
 - **A note when a new version is out.** When Cheevodex is updated while you have it open, "A new edition of the dex" slides up with the version number. Reload brings in the new edition; × hides the note. The Refresh in the menu stays
 - **Updates arrive whole.** A new version now always stores the new files, even right after it's published, instead of sometimes keeping copies from minutes before
 
+### Social
+
+- **Social is its own page.** Your friends' unlocks, who you follow and who follows you, and Compare, together in one place instead of split between the profile's Social tab and Activity's Friends view. On phones three chips switch between Unlocks, Following and Followers; on a wide screen the unlocks sit beside the people
+- **The profile is about you.** Its Social tab is gone and Activity shows only your own runs. Old links to either open the Social page
+
 ### Navigation
 
-- **Social in the bottom bar.** Following, followers and your friends' runs are one tap away, in the place of Changelog. On your profile it switches tabs without reloading, and the bar lights Social or Profile as you move between tabs
+- **Social in the bottom bar,** in the place of Changelog
 - **Changelog moved into Menu,** its first row. Menu stays lit while you read it
+- **Page links on desktop.** Profile, Search, Consoles and Social sit in the top bar, the current one lit; ☰ keeps Changelog, refresh, purge, debug and log out
 
 ## v26.11.14 — Dex cards with the completion ring
 

@@ -21,7 +21,8 @@ Personal RetroAchievements profile tracker. Static site — React, Tailwind, Luc
 | Repo layout, tech stack, data flow, caching, auth, PWA | [`docs/architecture.md`](docs/architecture.md) |
 | Global rules: styling, design system, code conventions, changelog | [`docs/rules.md`](docs/rules.md) |
 | Login page | [`docs/pages/login.md`](docs/pages/login.md) |
-| Profile page (tabs, mount sequence, modals, compare, visitor mode) | [`docs/pages/profile.md`](docs/pages/profile.md) |
+| Profile page (tabs, mount sequence, modals, visitor mode) | [`docs/pages/profile.md`](docs/pages/profile.md) |
+| Social page (friends' unlocks, following / followers, compare) | [`docs/pages/social.md`](docs/pages/social.md) |
 | Game page (achievements, friend comparison, leaderboards) | [`docs/pages/game.md`](docs/pages/game.md) |
 | Adding a new game to the Professor Oak Challenge guide | [`docs/poc-data-generation.md`](docs/poc-data-generation.md) |
 | Achievement page | [`docs/pages/achievement.md`](docs/pages/achievement.md) |

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, X, FileText, RotateCcw, LogOut, Trash2, Gamepad2, Bug } from 'lucide-react';
+import { Menu, X, FileText, RotateCcw, LogOut, Trash2, Gamepad2, Bug, Users, User, Search } from 'lucide-react';
 
 /**
  * Shared UI components — Topbar and Footer.
@@ -231,7 +231,6 @@ function MenuDropdown({ onClose }) {
   }
 
   const rows = [
-    { Icon: Gamepad2,  label: 'Consoles',    href: '../console/',   color: 'var(--gold)' },
     { Icon: FileText,  label: 'Changelog',   href: '../changelog/', color: 'var(--aqua)' },
     null, // divider
     { Icon: RotateCcw, label: 'Refresh Data', onClick: handleRefresh,    color: 'var(--accent)' },
@@ -289,6 +288,26 @@ function TopbarMenu() {
   );
 }
 
+// ── Page links (desktop) ──────────────────────────────────────────────────────
+// The phone's bottom-bar destinations as links in the top bar from md up (the top bar is hidden on phones,
+// assets/mobile-nav.js). The current page is lit blue, like the bottom bar. ☰ holds the rest.
+const PAGE_LINKS = [
+  { Icon: User,     label: 'Profile',  href: '../profile/', match: p => /\/(profile|game|achievement)\//.test(p) },
+  { Icon: Search,   label: 'Search',   href: '../search/',  match: p => p.includes('/search/') },
+  { Icon: Gamepad2, label: 'Consoles', href: '../console/', match: p => p.includes('/console/') },
+  { Icon: Users,    label: 'Social',   href: '../social/',  match: p => p.includes('/social/') },
+];
+
+function PageLinks() {
+  const path = window.location.pathname;
+  return React.createElement('nav', { className: 'tnav hidden md:flex items-center', 'aria-label': 'Pages' },
+    ...PAGE_LINKS.map(l => {
+      const on = l.match(path);
+      return React.createElement('a', { key: l.label, href: l.href, className: `tnav-a${on ? ' on' : ''}`, ...(on ? { 'aria-current': 'page' } : {}) },
+        React.createElement(l.Icon, { size: 12, strokeWidth: 2 }), l.label);
+    }));
+}
+
 // ── Topbar ────────────────────────────────────────────────────────────────────
 
 export function Topbar({ crumbs = [], right }) {
@@ -341,6 +360,7 @@ export function Topbar({ crumbs = [], right }) {
   if (right) {
     items.push(React.createElement('div', { key: 'right', className: 'shrink-0' }, right));
   }
+  items.push(React.createElement(PageLinks, { key: 'pages' }));
   items.push(React.createElement(DebugFab, { key: 'debug' }));
   items.push(React.createElement(TopbarMenu, { key: 'menu' }));
 

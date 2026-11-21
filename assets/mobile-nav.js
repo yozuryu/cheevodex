@@ -14,9 +14,7 @@
 
   const path       = window.location.pathname;
   const isProfile  = path.includes('/profile');
-  const params     = new URLSearchParams(window.location.search);
-  const ownProfile = isProfile && !params.get('u');            // a visitor's profile has no Social tab
-  const onSocial   = ownProfile && params.get('tab') === 'social';
+  const onSocial   = path.includes('/social/');
   const onChangelog = path.includes('/changelog/');           // the changelog lives under Menu
 
   // ── Sheet icon SVGs (16px) ─────────────────────────────────────────────────
@@ -34,7 +32,7 @@
       id: 'profile',
       label: 'Profile',
       href: BASE + '/profile/',
-      active: (isProfile && !onSocial) || path.includes('/game/') || path.includes('/achievement/'),
+      active: isProfile || path.includes('/game/') || path.includes('/achievement/'),
       color: 'var(--accent)',
       icon: ICON20('<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
     },
@@ -57,7 +55,7 @@
     {
       id: 'social',
       label: 'Social',
-      href: BASE + '/profile/?tab=social',
+      href: BASE + '/social/',
       active: onSocial,
       color: 'var(--accent)',
       icon: ICON20('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>'),
@@ -246,23 +244,6 @@
   }).join('');
 
   document.body.appendChild(nav);
-
-  // ── Social / Profile on the profile page: its tabs switch without a reload ──
-  if (ownProfile) {
-    const profileBtn = nav.querySelector('[data-id="profile"]'), socialBtn = nav.querySelector('[data-id="social"]');
-    const light = (social) => {
-      profileBtn.classList.toggle('mnav-active', !social);
-      socialBtn.classList.toggle('mnav-active', social);
-      const cur = (el, on) => on ? el.setAttribute('aria-current', 'page') : el.removeAttribute('aria-current');
-      cur(profileBtn, !social);
-      cur(socialBtn, social);
-    };
-    window.addEventListener('cdx:tab', e => light(e.detail === 'social'));
-    socialBtn.addEventListener('click', e => {
-      e.preventDefault();
-      window.dispatchEvent(new CustomEvent('cdx:open-tab', { detail: 'social' }));
-    });
-  }
 
   // ── Sheet logic ────────────────────────────────────────────────────────────
   const menuNavBtn = nav.querySelector('[data-id="menu"]');
