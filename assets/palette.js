@@ -189,7 +189,7 @@ function PageRow({ page }) {
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 // Phone (< 768 px): the whole screen, the field at the bottom above the keyboard (sized to the visual viewport), filters
-// above it, results stacked up from it so the best match is nearest the thumb; nothing is highlighted until arrow keys are used.
+// above it; what's above starts at the top and reads top-down, best match first; nothing is highlighted until arrow keys are used.
 // Desktop: a centred box, field on top, best match first and highlighted, Tab cycles the filters, and (≥ 900 px, with results)
 // a preview of the highlighted result beside the list. Empty: Recent, Jump back in (your last played games), People, Try.
 
@@ -396,8 +396,8 @@ function Palette({ onClose }) {
     if (openFirst.current && data && (!term || found?.query === term)) { openFirst.current = false; open(flat[0]); }
   }, [term, found, data, kind]);
   useEffect(() => { listRef.current?.querySelector('.on')?.scrollIntoView({ block: 'nearest' }); }, [active]);
-  // Phones: results stack up from the field, so start at the bottom
-  useEffect(() => { if (phone && listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight; }, [phone, groups, term]);
+  // A new search starts at its best match, at the top
+  useEffect(() => { if (listRef.current) listRef.current.scrollTop = 0; }, [term, kind]);
 
   const open = item => {
     if (!item) return;
@@ -472,9 +472,8 @@ function Palette({ onClose }) {
     noteLines(notes));
 
   // ── Results ──
-  const shown = phone ? [...groups].reverse() : groups;       // phones: the best group nearest the field, its best item last
-  const resultList = shown.map(gr => h('div', { key: gr.label, className: 'cpl-group', role: 'group', 'aria-label': gr.label },
-    h('div', { className: 'cpl-label' }, h('span', null, gr.label)), (phone ? [...gr.items].reverse() : gr.items).map(row)));
+  const resultList = groups.map(gr => h('div', { key: gr.label, className: 'cpl-group', role: 'group', 'aria-label': gr.label },
+    h('div', { className: 'cpl-label' }, h('span', null, gr.label)), gr.items.map(row)));
   const query = term;
   const searching = !!q.trim() && !data;                    // typed before the saved data was read: shimmer rows
   const settled = !term || found?.query === term;           // the results are for exactly what is typed
@@ -487,7 +486,7 @@ function Palette({ onClose }) {
     : results && !results.groups.length && settled ? [h('div', { key: 'none', className: 'cpl-none' }, h('b', null, `Nothing saved here matches “${query}”`),
         h('span', null, 'The search looks through what this device has already loaded.')), noteLines(notes)]
     : results && !groups.length ? h('div', { key: 'none', className: 'cpl-none' }, h('b', null, `No ${KINDS.find(k => k[0] === kind)[1].toLowerCase()} match “${query}”`))
-    : [phone && noteLines(gameNote), ...resultList, !phone && noteLines(gameNote),
+    : [...resultList, noteLines(gameNote),
        query && h('a', { key: 'all', className: 'cpl-all', href: `${BASE}console/?q=${encodeURIComponent(query)}` }, h(Svg, { name: 'search', size: 13 }), `See all results for “${query}”`)];
   const filters = term && results && h('div', { className: 'cpl-filters', role: 'tablist', 'aria-label': 'Show' },
     KINDS.map(([k, label]) => h('button', { key: k, type: 'button', role: 'tab', 'aria-selected': kind === k, className: `cpl-f ${kind === k ? 'on' : ''}`, disabled: k !== 'all' && !results.counts[k],
@@ -532,11 +531,12 @@ css.textContent = `
   .cpl.wide { width: min(880px, 100%); }
   @keyframes cpl-bd { from { opacity: 0; } }
   @keyframes cpl-in { from { opacity: 0; transform: translateY(-8px) scale(.98); } }
-  .cpl-bar { position: relative; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 16px; height: 54px; border-bottom: 1px solid var(--line); color: var(--ink-3); flex-shrink: 0; }
+  .cpl-bar { position: relative; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 16px; height: 54px; border-bottom: 1px solid rgb(var(--c-accent) / 0.55); color: var(--ink-3); flex-shrink: 0; }      /* desktop: a blue edge under the field, as the phone's field has a blue frame */
   .cpl-field { flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; gap: 10px; }
   /* Loading, or a slow search: the magnifier cross-fades into a small spinner (flat, no sweep) */
   .cpl-lead { position: relative; display: grid; place-items: center; width: 18px; height: 18px; flex-shrink: 0; }
   .cpl-lead > * { grid-area: 1 / 1; transition: opacity .18s, transform .18s; }
+  .cpl-lead svg { color: var(--accent); }      /* blue, like the phone's Search tile */
   .cpl-spin { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line-2); border-top-color: var(--accent); opacity: 0; transform: scale(.6); animation: cpl-rot .7s linear infinite; }
   .cpl-bar.busy .cpl-spin { opacity: 1; transform: scale(1); }
   .cpl-bar.busy .cpl-lead svg { opacity: 0; transform: scale(.6); }
@@ -649,18 +649,18 @@ css.textContent = `
   .cpl .md-only { display: none; }
   @media (min-width: 768px) { .cpl .md-only { display: flex; } }
   /* Phones: the whole screen; the field at the bottom above the keyboard (the root follows the visual viewport), filters above it,
-     what's above stacked toward the field. Before you type: Try, People, Jump back in (tiles), Recent nearest the thumb */
+     what's above starts at the top. Before you type: Recent, Jump back in (tiles), People, Try */
   @media (max-width: 767px) {
     .cpl-root { padding: 0; background: var(--page); align-items: stretch; bottom: auto; height: 100dvh; }
     .cpl { width: 100%; max-height: none; height: 100%; border: 0; border-radius: 0; box-shadow: none; padding-top: env(safe-area-inset-top, 0px); animation: cpl-up .2s ease-out; }
     @keyframes cpl-up { from { opacity: 0; transform: translateY(16px); } }
-    .cpl-list { padding: 6px 8px; } .cpl-stack { min-height: 100%; display: flex; flex-direction: column; justify-content: flex-end; }
+    .cpl-list { padding: 6px 8px; }
     .cpl-bar { border-bottom: 0; border-top: 1px solid var(--line); background: var(--bar); height: 62px; padding: 8px 12px; }
     .cpl-field { height: 44px; padding: 0 12px; background: var(--box); border: 1px solid var(--accent); border-radius: 6px; }
     .cpl-cancel { display: block; }
     .cpl-filters { border-bottom: 0; border-top: 1px solid var(--line-soft); padding: 8px 10px; }
     .cpl-home { display: flex; flex-direction: column; align-items: stretch; gap: 12px; padding: 0; }
-    .s-try { order: 1; } .s-ppl { order: 2; } .s-jump { order: 3; } .s-rec { order: 4; } .cpl-home > .cpl-notes { order: 0; }
+    .s-rec { order: 1; } .s-jump { order: 2; } .s-ppl { order: 3; } .s-try { order: 4; } .cpl-home > .cpl-notes { order: 5; }
     .cpl-jump { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 0 2px; }
     .cpl-jg { flex-direction: column; align-items: stretch; gap: 6px; padding: 8px; background: var(--box-hi); border: 1px solid var(--line); border-radius: 4px; }
     .cpl-jg img, .cpl-jg .cpl-icon { width: 100%; height: auto; aspect-ratio: 1; }

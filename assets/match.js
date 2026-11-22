@@ -1,7 +1,7 @@
 // Typo-tolerant word matching, shared by the command palette (assets/palette.js) and the Consoles page
 // (console/app.js). No JSX, no imports. The promo site's demo (cheevodex-site src/components/SearchDemo.tsx)
 // has a copy of match(): keep the two in step.
-// Word based: every word typed must match a word of the name, from its start (best), inside it, or within a
+// Word based: every word typed must match a word of the name (or two or three of its words run together: "megaman"), from its start (best), inside it, or within a
 // typo or two (Damerau–Levenshtein: one for 4–6 letters, two from 7), so "breth of fyre" finds Breath of Fire
 // and "pixl" finds pixelmoth; numbers must match exactly ("persona 4" isn't Persona 3). Lower is better;
 // names with fewer words beyond the ones typed come first. null = no match.
@@ -27,8 +27,9 @@ export function dl(a, b, max) {
   }
   return p[n];
 }
-// One typed word against a name's words: exact, start, inside first (cheap); a typo only when none of those hit
-// and `typos` is on
+// One typed word against a name's words: exact, start, inside first (cheap); then the name's neighbouring words run
+// together, two or three of them ("megaman" → Mega Man, "supermario" → Super Mario), for a word typed without its
+// spaces; a typo (against single or joined words) only when none of those hit and `typos` is on
 export function tokenScore(t, ws, typos = true) {
   let best = null;
   for (const w of ws) {
@@ -36,7 +37,19 @@ export function tokenScore(t, ws, typos = true) {
     if (w.startsWith(t)) best = 0.1;
     else if (best == null && t.length >= 3 && w.includes(t)) best = 0.4;
   }
+  if (best != null) return best;
+  const joined = [];
+  if (t.length >= 4) for (let i = 0; i < ws.length - 1; i++) {
+    const two = ws[i] + ws[i + 1];
+    joined.push(two);
+    if (i < ws.length - 2) joined.push(two + ws[i + 2]);
+  }
+  for (const j of joined) {
+    if (j === t) return 0.05;
+    if (j.startsWith(t) && t.length > j.length - ws[ws.length - 1].length) best = best == null ? 0.15 : Math.min(best, 0.15);
+  }
   if (best != null || !typos) return best;
+  ws = ws.concat(joined);
   const allow = /^\d+$/.test(t) ? 0 : t.length >= 7 ? 2 : t.length >= 4 ? 1 : 0;   // three letters is too short to guess a typo
   if (!allow) return null;
   for (const w of ws) {

@@ -219,7 +219,8 @@ html :has(> .sec-mark) { border-bottom: 1px solid rgb(var(--c-accent) / 0.35); }
 /* Desktop search field in the top bar: looks like a field, opens the command palette */
 .tsearch { align-items: center; gap: 8px; width: 230px; margin-right: 8px; height: 26px; padding: 0 6px 0 10px; border: 1px solid var(--line); border-radius: 3px;
   background: var(--well); color: var(--ink-3); font: 500 11.5px var(--font); cursor: pointer; transition: border-color .15s, color .15s; }
-.tsearch:hover { border-color: var(--line-2); color: var(--ink-2); }
+.tsearch > svg { color: var(--accent); }      /* the blue of the phone's Search tile, as an accent: a field you type into, not a button */
+.tsearch:hover { border-color: rgb(var(--c-accent) / 0.55); color: var(--ink-2); }
 .tsearch:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .tsearch-t { flex: 1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tsearch kbd { font: 500 10px var(--mono); color: var(--ink-2); background: var(--box-hi); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 3px; padding: 0 5px; }

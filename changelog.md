@@ -4,10 +4,11 @@
 
 ### Search
 
-- **The search field sits above the keyboard on a phone,** right where you tapped Search, with Cancel beside it; results stack up from it, the best match nearest your thumb
+- **The search field sits above the keyboard on a phone,** right where you tapped Search, with Cancel beside it; results read from the top, the best match first
 - **Something to tap before you type.** Your recent searches, the games you were just playing with your progress, the people you follow, and a few example searches
 - **Filter the results** by Games, Players or Consoles; on a computer, Tab switches between them
 - **See a game before you open it.** On a computer the highlighted result shows beside the list: its art, your progress, your last unlock and which friends played it lately
+- **Find a game typed without its spaces.** "megaman" finds Mega Man, "supermario" Super Mario
 - **Calmer on a phone.** No result looks selected until you use arrow keys, and what isn't saved yet is one short line instead of a card
 
 ### Navigation
