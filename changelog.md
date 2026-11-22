@@ -1,5 +1,19 @@
 # Changelog
 
+## v26.11.22 — A bottom bar of its own, and a search built for the thumb
+
+### Search
+
+- **The search field sits above the keyboard on a phone,** right where you tapped Search, with Cancel beside it; results stack up from it, the best match nearest your thumb
+- **Something to tap before you type.** Your recent searches, the games you were just playing with your progress, the people you follow, and a few example searches
+- **Filter the results** by Games, Players or Consoles; on a computer, Tab switches between them
+- **See a game before you open it.** On a computer the highlighted result shows beside the list: its art, your progress, your last unlock and which friends played it lately
+- **Calmer on a phone.** No result looks selected until you use arrow keys, and what isn't saved yet is one short line instead of a card
+
+### Navigation
+
+- **A new bottom bar.** Profile, Social, Consoles and Menu share the bar with their names; the open one has its icon in blue, its name in white and a short blue line under it. Search is a solid blue tile in the right corner, raised over the bar, where your thumb rests
+
 ## v26.11.21 — Search everything from anywhere, Social gets its own page
 
 ### Structure

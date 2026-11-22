@@ -124,19 +124,19 @@
 
     .mnav-item:active { background: rgb(var(--c-accent) / 0.06); }
 
-    /* Search, in the middle: a raised round button over the bar's top edge (opens the command palette) */
-    .mnav-fab { overflow: visible; }
-    .mnav-fab:active { background: none; }
-    .mnav-fab .mnav-icon {
-      width: 50px; height: 50px; margin-top: -22px; border-radius: 50%;
-      background: var(--accent); color: var(--page); border: 4px solid var(--bar);
-      box-shadow: 0 6px 16px rgb(0 0 0 / 0.45), 0 0 0 1px var(--line);
+    /* The four places share the bar; search is a solid blue tile in the right corner, raised over the bar's top edge,
+       where the thumb rests (opens the command palette) */
+    .mnav-tabs { flex: 1; display: flex; min-width: 0; padding: 0 2px; }
+    .mnav-tile {
+      flex: 0 0 auto; align-self: flex-start; width: 84px; height: 66px; min-height: 0; margin: -12px 10px 0 4px; padding: 0; gap: 4px;
+      border-radius: 6px; background: var(--accent); color: var(--page);
+      box-shadow: 0 0 0 4px var(--bar), 0 10px 24px rgb(0 0 0 / 0.5);
       transition: transform 0.12s, background 0.15s;
     }
-    .mnav-fab .mnav-icon svg { stroke: var(--page) !important; }
-    .mnav-fab:active .mnav-icon { transform: scale(0.94); background: var(--accent-hi); }
-    .mnav-fab .mnav-label { color: var(--ink-2); }
-    .mnav-fab.mnav-active::before { display: none; }
+    .mnav-tile:active { background: var(--accent-hi); transform: scale(0.96); }
+    .mnav-tile .mnav-icon, .mnav-tile .mnav-icon svg { width: 22px; height: 22px; }
+    .mnav-tile .mnav-icon svg { stroke: var(--page); stroke-width: 2.4; }
+    .mnav-tile .mnav-label { color: var(--page); font-weight: 700; }
 
     .mnav-icon {
       width: 20px; height: 20px;
@@ -147,23 +147,19 @@
 
     .mnav-label {
       font-family: var(--font);
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
       line-height: 1;
       white-space: nowrap;
     }
 
-    .mnav-item.mnav-active { color: var(--mnav-color, var(--gold)); }
-    .mnav-item.mnav-active .mnav-icon svg { stroke: var(--mnav-color, var(--gold)); }
-    .mnav-item.mnav-active::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 15%; right: 15%;
-      height: 2px;
-      background: var(--mnav-color, var(--gold));
-      border-radius: 0 0 2px 2px;
+    /* The open place: its icon blue, its name white and bold, a short blue bar under the name */
+    .mnav-tabs .mnav-item.mnav-active { color: var(--ink); }
+    .mnav-tabs .mnav-item.mnav-active .mnav-icon svg { stroke: var(--accent); }
+    .mnav-tabs .mnav-item.mnav-active .mnav-label { font-weight: 700; }
+    .mnav-tabs .mnav-item.mnav-active::after {
+      content: ''; position: absolute; bottom: 5px; left: 50%; width: 22px; margin-left: -11px; height: 3px;
+      border-radius: 2px; background: var(--accent);
     }
 
     /* ── Menu: a bottom sheet on phones (drag it down to close), a popover under ☰ on desktop ── */
@@ -252,13 +248,12 @@
   nav.className = 'mnav';
   nav.setAttribute('aria-label', 'Main navigation');
 
-  nav.innerHTML = tabs.map((t) => {
+  const item = (t, extra = '') => {
     const isBtn = !t.href;
     const tag   = isBtn ? 'button' : 'a';
     const attr  = isBtn ? 'type="button"' : `href="${t.href}"`;
     return `<${tag} ${attr}
-        class="mnav-item${t.active ? ' mnav-active' : ''}${t.fab ? ' mnav-fab' : ''}"
-        style="--mnav-color: ${t.color};"
+        class="mnav-item${t.active ? ' mnav-active' : ''}${extra}"
         data-id="${t.id}"
         ${t.active && !isBtn ? 'aria-current="page"' : ''}
         aria-label="${t.label}"
@@ -266,7 +261,8 @@
         <span class="mnav-icon">${t.icon}</span>
         <span class="mnav-label">${t.label}</span>
       </${tag}>`;
-  }).join('');
+  };
+  nav.innerHTML = `<div class="mnav-tabs">${tabs.filter(t => !t.fab).map(t => item(t)).join('')}</div>${tabs.filter(t => t.fab).map(t => item(t, ' mnav-tile')).join('')}`;
 
   document.body.appendChild(nav);
 
