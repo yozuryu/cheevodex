@@ -83,7 +83,8 @@ async function capture(browser) {
                 const hcRun = within('.frun.hc');
                 return { strip: r(document.querySelector('.fstrip')), feed: r(feed),
                     pts: { avatar: mid(within('.fpost-av'), 'l'), hc: hcRun ? [Math.round(hcRun.getBoundingClientRect().left + scrollX), Math.round(hcRun.getBoundingClientRect().top + scrollY + Math.min(110, hcRun.getBoundingClientRect().height - 20))] : null,
-                        subset: mid(within('.frun-h .subset-tag'), 'r'), badge: mid(within('.frun-b img:last-of-type'), 'r') } };
+                        subset: mid(within('.frun-h .subset-tag'), 'r'), badge: mid(within('.frun-b img:last-of-type'), 'r'),
+                        badges: [...document.querySelectorAll('.frun-b')].map(b => mid([...b.querySelectorAll('img')].filter(i => i.getBoundingClientRect().width && getComputedStyle(i).display !== 'none').pop(), 'r')).filter(p => p && p[1] > top && p[1] < top + 520) } };
             });
             fs.writeFileSync(path.join(SHOTS, 'd-friends.json'), JSON.stringify(layout, null, 1));
         }
@@ -218,10 +219,13 @@ ${parts.map(call).join('')}`;
             const x0 = Math.min(L.strip[0], L.feed[0]), w = Math.max(L.strip[0] + L.strip[2], L.feed[0] + L.feed[2]) - x0;   // one column, one scale
             const DW = 960, k = DW / (w * 2), X = 320, stripH = Math.round(L.strip[3] * 2 * k), Y = 168 + stripH + 22, FH = 860;
             const at = p => p && [Math.round(X + (p[0] - x0) * 2 * k), Math.round(Y + (p[1] - L.feed[1]) * 2 * k)];
-            const P = L.pts || {}, [a, b, sb, g] = [at(P.avatar), at(P.hc), at(P.subset), at(P.badge)];
+            const P = L.pts || {};
+            // "Every badge" points at the first badge row far enough below the subset label to keep the two labels apart
+            const badgeAt = P.subset && P.badges?.length ? (P.badges.find(p => p[1] - P.subset[1] >= 45) || P.badge) : P.badge;
+            const [a, b, sb, g] = [at(P.avatar), at(P.hc), at(P.subset), at(badgeAt)];
             // Labels on one side need ~120px each: push a label down along its target's edge (a gold run's edge is tall)
             if (a && b && b[1] - a[1] < 130) b[1] = a[1] + 130;
-            if (sb && g && Math.abs(g[1] - sb[1]) < 130) g[1] = Math.max(g[1], sb[1] + 130);
+            if (sb && g && Math.abs(g[1] - sb[1]) < 130 && !P.badges?.length) g[1] = Math.max(g[1], sb[1] + 130);
             return `
 <div class="abs" style="left:0;right:0;top:52px;text-align:center"><h2 class="px" style="font-size:54px;line-height:1">Everyone you follow, on <span class="blue">one timeline.</span></h2></div>
 ${crop('d-friends', x0 * 2, L.strip[1] * 2, w * 2, L.strip[3] * 2, DW, `left:${X}px;top:168px`)}
